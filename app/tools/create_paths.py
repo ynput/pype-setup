@@ -3,15 +3,14 @@
 # create config file if there is none
 
 import os
+import re
 import platform
-from .config import _config_get_toml, toml_config
-
-preset_configurations = "My-Testing"
+from .config import _dic_to_nested_obj, toml_config
 
 
-def get_paths(dict={}):
-
-    conf = _config_get_toml(dict)
+def get_paths(dict=dict()):
+    # will get configuratoins and convert paths templates into proper paths
+    conf = _dic_to_nested_obj(dict)
     required = ['app', 'app_store']
     for i in required:
         path = os.path.normpath(os.path.join(
@@ -39,6 +38,12 @@ def _convert_all_paths(source, destination):
         if isinstance(v, dict):
             _convert_all_paths(source, v)
         else:
+            if (isinstance(v, str)) and ("[" in v):
+                found_list = re.findall(r'(\[.*?\])', v)
+                if source.sys.python.dev.mode:
+                    if found_list:
+                        v.replace("this", found_list[1])
+                        print(v)
             if "path" in k:
                 destination[k] = os.path.normpath(v.format(**source))
             if "qt" in k:

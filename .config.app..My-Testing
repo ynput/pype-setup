@@ -5,7 +5,7 @@
 [sys.python.dev]
     version = "python3"
     path = "__DEV__/{sys.python.dev.version}/dist/{platform}/bin"
-    mode = true
+    mode = true # all small caps
 
 [sys.python]
     path = "{root}/python[/{sys.python.dev.path}][/bin]"

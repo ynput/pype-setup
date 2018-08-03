@@ -1,0 +1,4 @@
+*.qmlc
+*.jsc
+*.pyc
+__pycache__/

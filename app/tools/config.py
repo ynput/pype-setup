@@ -4,7 +4,7 @@ import os
 from ..vendor import toml
 
 
-class _config_get_toml(dict):
+class _dic_to_nested_obj(dict):
     """
     - converting dict into root.item.subitem.subitem_item
     - can be selected from two ways of working with the entity
@@ -22,7 +22,7 @@ class _config_get_toml(dict):
     def __init__(self, dct):
         for key, value in dct.items():
             if hasattr(value, 'keys'):
-                value = _config_get_toml(value)
+                value = _dic_to_nested_obj(value)
             self[key] = value
 
 
@@ -34,6 +34,6 @@ def toml_config(file="file_path"):
         print(file)
         with open(file, 'r') as f:
             config_file = toml.loads(f.read())
-            app = _config_get_toml(config_file)
+            app = _dic_to_nested_obj(config_file)
         # print(app)
         return app
