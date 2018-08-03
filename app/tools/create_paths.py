@@ -4,7 +4,6 @@
 
 import os
 import re
-import platform
 from .config import _dic_to_nested_obj, toml_config
 
 
@@ -31,6 +30,11 @@ def get_paths(dict=dict()):
     return conf
 
 
+# pattern = r'[thistext]'
+# text = 'this is text and [thistext] and [thisext]'
+# print(text.replace(pattern, 'thistext'))
+
+
 def _convert_all_paths(source, destination):
     if "{root}" in source.app_store.path:
         source.app_store.path = source.app_store.path.format(**source)
@@ -40,10 +44,25 @@ def _convert_all_paths(source, destination):
         else:
             if (isinstance(v, str)) and ("[" in v):
                 found_list = re.findall(r'(\[.*?\])', v)
-                if source.sys.python.dev.mode:
-                    if found_list:
-                        v.replace("this", found_list[1])
+                print(found_list)
+                if found_list:
+                    if source.sys.python.dev.mode:
+                        v = v.replace(found_list[1], "").replace(found_list[0], found_list[0].replace(
+                            "[", "").replace("]", "").format(**source))
                         print(v)
+                    else:
+                        if "/bin" in v:
+                            v = v.replace(found_list[0], "").replace(
+                                "[", "").replace("]", "").format(**source)
+                            print(v)
+                        else:
+                            for i in found_list:
+                                try:
+                                    v = v.replace(i, i.replace(
+                                        "[", "").replace("]", "").format(**source))
+                                except:
+                                    v = v.replace(i, "")
+
             if "path" in k:
                 destination[k] = os.path.normpath(v.format(**source))
             if "qt" in k:
