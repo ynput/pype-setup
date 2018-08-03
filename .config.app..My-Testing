@@ -4,7 +4,7 @@
 
 [sys.python.dev]
     version = "python3"
-    path = "__dev__/{sys.python.dev.version}/dist/{platform}/bin"
+    path = "__DEV__/{sys.python.dev.version}/dist/{platform}/bin"
     mode = true
 
 [sys.python]
