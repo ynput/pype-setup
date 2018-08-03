@@ -1,0 +1,9 @@
+[run]
+source = avalon
+
+[report]
+include = *avalon*
+omit = 
+    */vendor*
+    */tests*
+    */run_*

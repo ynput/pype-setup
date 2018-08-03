@@ -1,0 +1,55 @@
+
+# toml .configuration file generated automatically if not present
+# please adjust this file as `your preset`
+
+[sys.python.dev]
+    version = "python3"
+    path = "__dev__/{sys.python.dev.version}/dist/{platform}/bin"
+    mode = true
+
+[sys.python]
+    path = "{root}/python[/{sys.python.dev.path}][/bin]"
+
+[sys.avalon]
+    path = "{app_store.path}/avalon-core"
+    git = "git@github.com:avalon-core.git"
+    qt = "{root}/python/Qt5"
+
+[sys.pyblish]
+    python = "python3"
+    path = "{app_store.path}/pyblish-base"
+    git = "git@github.com:pyblish-base"
+    qt = "{root}/python/Qt5"
+
+
+[databases]
+    [databases.mongo]
+    server = "192.168.1.10"
+    ports = [8001, 8002]
+    connection_max = 5000
+    enabled = true
+
+    [databases.mongo.install]
+    git = "" # path to our db git bakup
+    url = "" # path to download files for installation
+    path = "" # path to installation (can be `unc` even on windows)
+
+    [databases.ftrack]
+    server = "192.168.1.2"
+    ports = [5790, 5791]
+    connection_max = 5000
+    enabled = true
+
+    [databases.ftrack-connect.install]
+    git = "" # path to our db git bakup
+    url = "" # path to download files for installation
+    path = "" # path to installation (can be `unc` even on windows)
+
+[storages]
+    [storage.alpha]
+    ip = "10.0.0.1"
+    dc = "//alpha"
+
+    [storage.beta]
+    ip = "10.0.0.2"
+    dc = "storage01"

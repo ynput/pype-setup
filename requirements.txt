@@ -1,0 +1,5 @@
+# TODO: example - need to change to yours
+avalon-core>=1.8.2
+avalon-launcher>=1.3.3
+avalon-pipeline>=1.3.3
+pyblish-base>=1.3.4

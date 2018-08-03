@@ -1,0 +1,103 @@
+
+# toml .configuration file generated automatically if not present
+# please adjust this file as `your preset`
+
+
+# add anything related main proces. Remember most of crucial dependecies are
+# set in resources.txt maintaned by pip. If you are sure yours is not then
+# you can set all dependecies here and activate.py will solve it.
+# look into example of adding new plugin into lower section `adding plugins`
+
+path = "{root}/app_store"
+
+#path to dir with shortcut linked to installed app
+# rest of the path is comming from individual `app{version}.toml` files as
+# such as version, variablses for sys and session avalon, pyblish
+# platform conditions are also set in `app{version}.toml`
+[bin.maya]
+path = "{root}/bin/maya/{platform}/Maya"
+[bin.nuke]
+path = "{root}/bin/nuke/Nuke"
+[bin.fusion]
+path = "{root}/bin/fusion/Fusion"
+[bin.resolve]
+path = "{root}/bin/resolve/Resolve"
+[bin.blender]
+path = "{root}/bin/blender/Blender"
+
+
+
+## main plugins
+### Maya
+[avalon.maya]
+    git = "git@github.com:avalon-maya.git"
+    path = "{root}/app-store/avalon-maya"
+    qt = "{app_store.avalon.maya.path}/vendor/Qt"
+[pyblish.maya]
+    git = "git@github.com:pyblish-maya.git"
+    path = "{root}/app-store/pyblish-maya"
+    qt = "{app_store.pyblish.maya.path}/vendor/Qt"
+
+
+### Nuke
+[avalon.nuke]
+    git = "git@github.com:avalon-nuke.git"
+    path = "{root}/app-store/avalon-nuke"
+    qt = "{app_store.avalon.nuke.path}/vendor/Qt"
+[pyblish.nuke]
+    git = "git@github.com:pyblish-nuke.git"
+    path = "{root}/app-store/pyblish-nuke"
+    qt = "{app_store.pyblish.nuke.path}/vendor/Qt"
+
+
+### Fusion
+[avalon.fusion]
+    git = "git@github.com:avalon-fusion.git"
+    path = "{root}/app-store/avalon-fusion"
+    qt = "{app_store.avalon.fusion.path}/vendor/Qt"
+[pyblish.fusion]
+    git = "git@github.com:pyblish-fusion.git"
+    path = "{root}/app-store/pyblish-fusion"
+    qt = "{app_store.pyblish.fusion.path}/vendor/Qt"
+
+
+### blender
+[avalon.blender]
+    git = "git@github.com:avalon-blender.git"
+    path = "{root}/app-store/avalon-blender"
+    qt = "{app_store.avalon.blender.path}/vendor/Qt"
+[pyblish.blender]
+    git = "git@github.com:pyblish-blender.git"
+    path = "{root}/app-store/pyblish-blender"
+    qt = "{app_store.pyblish.blender.path}/vendor/Qt"
+    
+
+### CG-Wire
+#### Zou
+[cg-wire.zou]
+    git = "https://github.com/cgwire/zou.git"
+    path = "{root}/resources/app-store/cgwire/zou"
+    qt = "{app_store.avalon.blender.path}/vendor/Qt"
+
+
+## additional plugins
+
+# unhash under if you wnat to add your package into running session
+#
+# [plugin_add]
+# # name of the package
+# "plugin.name" = "__my_package_name"
+# #state git repository and .gitsubmodules path
+# "plugin.git" = "git@github.com:__my_github_repository/__my_package.git"
+# "plugin.depepencence" = [ "avalon-core", "avalon-pipeline", "pyblish-base", "pyblish-nuke", "pyblish-nukestudio"]
+# # relative path to package within the project
+# plugin_path = [
+#                 "{avalon.root}resources/app-store/{plugin.name}";
+#                 "/git/{plugin_git}",
+#                 # and dependency to python-dev
+#                 "{avalon.root}python-dev/{sys.main.avalon}/dist/{sys.platform}/bin",
+#                 "{avalon.root}python-dev/{sys.main.pyblish}/dist/{sys.platform}/bin",
+#                 # of just sys_path for the dependency
+#                 "{avalon}",
+#                 "{pyblish}",
+#             ]
