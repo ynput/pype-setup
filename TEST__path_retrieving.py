@@ -27,7 +27,7 @@ def main():
     Conf = app.tools.create_paths.get_paths(properities)
 
     # Conf.app_store.path = Conf.app_store.path.format(**Conf)
-    for k, v in Conf.sys.items():
+    for k, v in Conf.app_store.items():
         print(k, v)
 
 

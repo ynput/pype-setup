@@ -46,22 +46,28 @@ def _convert_all_paths(source, destination):
                 found_list = re.findall(r'(\[.*?\])', v)
                 print(found_list)
                 if found_list:
-                    if source.sys.python.dev.mode:
-                        v = v.replace(found_list[1], "").replace(found_list[0], found_list[0].replace(
-                            "[", "").replace("]", "").format(**source))
-                        print(v)
-                    else:
-                        if "/bin" in v:
-                            v = v.replace(found_list[0], "").replace(
-                                "[", "").replace("]", "").format(**source)
+                    if "/bin" in v:
+                        if source.sys.python.dev.mode:
+                            v = v.replace(found_list[1],
+                                          "").replace(found_list[0],
+                                                      found_list[0].replace("[",
+                                                                            "").replace("]",
+                                                                                        "").format(**source))
                             print(v)
                         else:
-                            for i in found_list:
-                                try:
-                                    v = v.replace(i, i.replace(
-                                        "[", "").replace("]", "").format(**source))
-                                except:
-                                    v = v.replace(i, "")
+                            v = v.replace(found_list[0],
+                                          "").replace("[",
+                                                      "").replace("]",
+                                                                  "").format(**source)
+                        print(v)
+                    else:
+                        for i in found_list:
+                            try:
+                                v = v.replace(i, i.replace("[",
+                                                           "").replace("]",
+                                                                       "").format(**source))
+                            except:
+                                v = v.replace(i, "")
 
             if "path" in k:
                 destination[k] = os.path.normpath(v.format(**source))

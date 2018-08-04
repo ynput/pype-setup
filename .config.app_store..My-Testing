@@ -31,46 +31,58 @@ path = "{root}/bin/blender/Blender"
 ### Maya
 [avalon.maya]
     git = "git@github.com:avalon-maya.git"
-    path = "{root}/app-store/avalon-maya"
+    path = "{root}/app-store/avalon-maya[/{module}]"
     qt = "{app_store.avalon.maya.path}/vendor/Qt"
 [pyblish.maya]
     git = "git@github.com:pyblish-maya.git"
-    path = "{root}/app-store/pyblish-maya"
+    path = "{root}/app-store/pyblish-maya[/{module}]"
     qt = "{app_store.pyblish.maya.path}/vendor/Qt"
 
 
 ### Nuke
 [avalon.nuke]
     git = "git@github.com:avalon-nuke.git"
-    path = "{root}/app-store/avalon-nuke"
+    path = "{root}/app-store/avalon-nuke[/{module}]"
     qt = "{app_store.avalon.nuke.path}/vendor/Qt"
 [pyblish.nuke]
     git = "git@github.com:pyblish-nuke.git"
-    path = "{root}/app-store/pyblish-nuke"
+    path = "{root}/app-store/pyblish-nuke[/{module}]"
     qt = "{app_store.pyblish.nuke.path}/vendor/Qt"
 
 
 ### Fusion
 [avalon.fusion]
     git = "git@github.com:avalon-fusion.git"
-    path = "{root}/app-store/avalon-fusion"
+    path = "{root}/app-store/avalon-fusion[/{module}]"
     qt = "{app_store.avalon.fusion.path}/vendor/Qt"
 [pyblish.fusion]
     git = "git@github.com:pyblish-fusion.git"
-    path = "{root}/app-store/pyblish-fusion"
+    path = "{root}/app-store/pyblish-fusion[/{module}]"
     qt = "{app_store.pyblish.fusion.path}/vendor/Qt"
 
 
 ### blender
 [avalon.blender]
     git = "git@github.com:avalon-blender.git"
-    path = "{root}/app-store/avalon-blender"
+    path = "{root}/app-store/avalon-blender[/{module}]"
     qt = "{app_store.avalon.blender.path}/vendor/Qt"
 [pyblish.blender]
     git = "git@github.com:pyblish-blender.git"
-    path = "{root}/app-store/pyblish-blender"
+    path = "{root}/app-store/pyblish-blender[/{module}]"
     qt = "{app_store.pyblish.blender.path}/vendor/Qt"
-    
+
+
+### academy >> input search engine to find answer or tutorial > within `avalon.tray`
+[avalon.academy]
+    git = "git@github.com:avalon-academy.git"
+    path = "{root}/app-store/avalon-academy[/{module}]"
+    qt = "{app_store.avalon.academy.path}/vendor/Qt"
+
+### tray
+[avalon.tray]
+    git = "git@github.com:avalon-tray.git"
+    path = "{root}/app-store/avalon-tray[/{module}]"
+    qt = "{app_store.avalon.tray.path}/vendor/Qt"
 
 ### CG-Wire
 #### Zou

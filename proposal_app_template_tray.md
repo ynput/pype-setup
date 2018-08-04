@@ -2,10 +2,10 @@
 
 > **avalon-app** and **app_store**
 
-- the app will `globalize` environment for `stand-alone `or [`[conf.bin.{app}]`]() related processes
-- we will install the app to the system we are working on and by [`[{avalon-app.root.path}/.config.app..My_config_preset]`]() all will be
+- the app will `globalize` environment for `stand-alone` or any installed application in **.config file** [`[conf.bin.{app}]`](https://github.com/jezscha/avalon-app/blob/682469d31b98510f6f6efb2b247f8550e445d105/.config.app_store..My-Testing#L18) related processes
+- we will install the app to the system we are working on and by [`[{avalon-app.root.path}/.config.app..My_config_preset]`](https://github.com/jezscha/avalon-app/blob/master/.config.app..My-Testing) all will be
 set to the **user/dev **environment
-- `avalon-core`, `pyblish-base` is installed by default and rest of `packages` (apps) in [`[{app_store.path}/{avalon.maya.path}]`]()
+- `avalon-core`, `pyblish-base` is installed in [.config.app..My-Testing](https://github.com/jezscha/avalon-app/blob/master/.config.app..My-Testing) by default and rest of `packages` (apps) in [`[{app_store.path}/{avalon.maya.path}]`]()
 - ass you can see we are working with `format()` by nesting all data from `toml` files as  **.config**. All is converted on the go. From here is anything possible :)
 - Toml conf files will also hold ability for changing different `presets` and it could be used
 in combination of interface from `avalon-tray` **app**.
@@ -25,9 +25,9 @@ in combination of interface from `avalon-tray` **app**.
             None,
             'Save database',
             ],
-        '&Avalon Users': [
+        'Avalon Users': [
             'Config User',
-            'Cre&ate new user',
+            'Create new user',
             ],
         'Avalon Workfiles': [
             'Config Workfiles',
