@@ -9,11 +9,16 @@ set to the **user/dev **environment
 - ass you can see we are working with `format()` by nesting all data from `toml` files as  **.config**. All is converted on the go. From here is anything possible :)
 - Toml conf files will also hold ability for changing different `presets` and it could be used
 in combination of interface from `avalon-tray` **app**.
+- all required apps are downloaded and extracted into app-store as **zip** files from url pointing to `github/.../*-master.zip`. Git and pip are not usable as they have to be installed on user's os.
+</br>
+</br>
+</br>
 
 > **avalon-tray**
 
 - allows **user/dev** better interaction with the **avalon/pyblish** `ecosystem`
 - it has to be set in `app_store` .conf file and on start is automatically started (if not installed: it will run avalon-core tray icon)
+- if avalon-academy is installed menu includes text input where user can get access to help and tutorials
 
 ```python
 #the menu structure:
