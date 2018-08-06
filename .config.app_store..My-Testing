@@ -28,66 +28,114 @@ path = "{root}/bin/blender/Blender"
 
 
 ## main plugins
+# setting menu
+[avalon]
+menu = ['Config core','Create new project','______','Save database',]
+
+[pyblish]
+menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins manager',]
+
+
+### academy >> input search engine to find answer or tutorial > within `avalon.tray`
+[avalon.academy]
+    git = "git@github.com:avalon-academy.git"
+    url = "https://github.com/avalon-academy/archive/master.zip"
+    path = "{root}/app-store/avalon-academy/avalon_academy"
+    qt = "{app_store.avalon.academy.path}/vendor/Qt"
+    menu = ['Config Academy', '______', 'Submit new',]
+
+### tray
+[avalon.tray]
+    git = "git@github.com:avalon-tray.git"
+    url = "https://github.com/avalon-tray/archive/master.zip"
+    path = "{root}/app-store/avalon-tray/avalon_tray"
+    qt = "{app_store.avalon.tray.path}/vendor/Qt"
+
+### workfiles
+[avalon.workfiles]
+    git = "git@github.com:avalon-workfiles.git"
+    url = "https://github.com/avalon-workfiles/archive/master.zip"
+    path = "{root}/app-store/avalon-workfiles/avalon_workfiles"
+    qt = "{app_store.avalon.workfiles.path}/vendor/Qt"
+
+### Users
+[avalon.users]
+    git = "git@github.com:avalon-users.git"
+    url = "https://github.com/avalon-users/archive/master.zip"
+    path = "{root}/app-store/avalon-users/avalon_users"
+    qt = "{app_store.avalon.users.path}/vendor/Qt"
+    # optional menu.actions
+    menu = ['Config User', 'Create new user',]
+
+### Pipeline - in this case used as default, but if custom, then linked to
+### company own pipeline repository
+[avalon.pipeline]
+    git = "git@github.com:avalon-pipeline.git"
+    url = "https://github.com/avalon-pipeline/archive/master.zip"
+    path = "{root}/app-store/avalon-pipeline/avalon_pipeline"
+    qt = "{app_store.avalon.pipeline.path}/vendor/Qt"
+    # optional menu.actions
+    menu = ['Config pipeline', 'Create new template', '______', 'Templates manager']
+
+
 ### Maya
 [avalon.maya]
     git = "git@github.com:avalon-maya.git"
-    path = "{root}/app-store/avalon-maya[/{module}]"
+    url = "https://github.com/avalon-maya/archive/master.zip"
+    path = "{root}/app-store/avalon-maya-master/avalon_maya"
     qt = "{app_store.avalon.maya.path}/vendor/Qt"
 [pyblish.maya]
     git = "git@github.com:pyblish-maya.git"
-    path = "{root}/app-store/pyblish-maya[/{module}]"
+    url = "https://github.com/pyblish-maya/archive/master.zip"
+    path = "{root}/app-store/pyblish-maya/pyblish_maya"
     qt = "{app_store.pyblish.maya.path}/vendor/Qt"
 
 
 ### Nuke
 [avalon.nuke]
     git = "git@github.com:avalon-nuke.git"
-    path = "{root}/app-store/avalon-nuke[/{module}]"
+    url = "https://github.com/avalon-nuke/archive/master.zip"
+    path = "{root}/app-store/avalon-nuke/avalon_nuke"
     qt = "{app_store.avalon.nuke.path}/vendor/Qt"
 [pyblish.nuke]
     git = "git@github.com:pyblish-nuke.git"
-    path = "{root}/app-store/pyblish-nuke[/{module}]"
+    path = "{root}/app-store/pyblish-nuke/pyblish_nuke"
     qt = "{app_store.pyblish.nuke.path}/vendor/Qt"
 
 
 ### Fusion
 [avalon.fusion]
     git = "git@github.com:avalon-fusion.git"
-    path = "{root}/app-store/avalon-fusion[/{module}]"
+    url = "https://github.com/avalon-fusion/archive/master.zip"
+    path = "{root}/app-store/avalon-fusion/avalon_fusion"
     qt = "{app_store.avalon.fusion.path}/vendor/Qt"
 [pyblish.fusion]
     git = "git@github.com:pyblish-fusion.git"
-    path = "{root}/app-store/pyblish-fusion[/{module}]"
+    path = "{root}/app-store/pyblish-fusion/pyblish_fusion"
     qt = "{app_store.pyblish.fusion.path}/vendor/Qt"
 
 
 ### blender
 [avalon.blender]
     git = "git@github.com:avalon-blender.git"
-    path = "{root}/app-store/avalon-blender[/{module}]"
+    url = "https://github.com/avalon-blender/archive/master.zip"
+    path = "{root}/app-store/avalon-blender/avalon_blender"
     qt = "{app_store.avalon.blender.path}/vendor/Qt"
 [pyblish.blender]
     git = "git@github.com:pyblish-blender.git"
-    path = "{root}/app-store/pyblish-blender[/{module}]"
+    url = "https://github.com/pyblish-blender/archive/master.zip"
+    path = "{root}/app-store/pyblish-blender/pyblish_blender"
     qt = "{app_store.pyblish.blender.path}/vendor/Qt"
 
 
-### academy >> input search engine to find answer or tutorial > within `avalon.tray`
-[avalon.academy]
-    git = "git@github.com:avalon-academy.git"
-    path = "{root}/app-store/avalon-academy[/{module}]"
-    qt = "{app_store.avalon.academy.path}/vendor/Qt"
-
-### tray
-[avalon.tray]
-    git = "git@github.com:avalon-tray.git"
-    path = "{root}/app-store/avalon-tray[/{module}]"
-    qt = "{app_store.avalon.tray.path}/vendor/Qt"
-
 ### CG-Wire
+[cg-wire]
+menu = ['Config CG-wire','______','Pull database','Push database']
+
 #### Zou
 [cg-wire.zou]
     git = "https://github.com/cgwire/zou.git"
+    url = "https://github.com/cgwire/zou/archive/master.zip"
     path = "{root}/resources/app-store/cgwire/zou"
     qt = "{app_store.avalon.blender.path}/vendor/Qt"
 

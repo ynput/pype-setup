@@ -11,14 +11,16 @@
     path = "{root}/python[/{sys.python.dev.path}][/bin]"
 
 [sys.avalon]
-    path = "{app_store.path}/avalon-core"
     git = "git@github.com:avalon-core.git"
+    url = "https://github.com/getavalon/core/archive/master.zip"
+    path = "{app_store.path}/avalon-core"
     qt = "{root}/python/Qt5"
 
 [sys.pyblish]
     python = "python3"
-    path = "{app_store.path}/pyblish-base"
     git = "git@github.com:pyblish-base"
+    url = "https://github.com/pyblish/pyblish-base/archive/master.zip"
+    path = "{app_store.path}/pyblish-base-master"
     qt = "{root}/python/Qt5"
 
 
@@ -31,7 +33,7 @@
 
     [databases.mongo.install]
     git = "" # path to our db git bakup
-    url = "" # path to download files for installation
+    url = "http://downloads.mongodb.org/win32/mongodb-win32-x86_64-2008plus-ssl-v4.0-latest-signed.msi" # path to download files for installation
     path = "" # path to installation (can be `unc` even on windows)
 
     [databases.ftrack]

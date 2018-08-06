@@ -1,14 +1,15 @@
-import os
+
 import sys
 import textwrap
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 menu_layout_dict = {'Install avalon plugins': 'action',
                     'Plugins': {
                         'Avalon Core': [
                             'Config core',
                             'Create new project',
-                            None,
+                            '______',
                             'Save database',
                         ],
                         'Avalon Users': [
@@ -21,18 +22,18 @@ menu_layout_dict = {'Install avalon plugins': 'action',
                         'Pyblish': [
                             'Config Pyblish',
                             'Create new micro-plugin',
-                            None,
+                            '______',
                             'Micro-plugins manager'
                         ],
                         'Pipeline': [
                             'Config pipeline',
                             'Create new template',
-                            None,
+                            '______',
                             'Templates manager'
                         ],
                         'CG-wire': [
                             'Config CG-wire',
-                            None,
+                            '______',
                             'Pull database',
                             'Push database'
                         ]
@@ -41,12 +42,11 @@ menu_layout_dict = {'Install avalon plugins': 'action',
                     'Minimalize': "action",
                     #'Close': "action"
                     }
-# print(menu_layout_dict)
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
-    def __init__(self, icon, parent=None):
+    def __init__(self, icon, parent=None, layout_dict=dict()):
         QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
         self.tray = QtWidgets.QSystemTrayIcon(icon, parent)
         # print(tray)
@@ -59,7 +59,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         # project_name_lbl = QtWidgets.QLabel('<b>Project Name</b>')
         # self.main_layout.addWidget(project_name_lbl)
         menu.setProperty('menu', 'on')
-        label = QtWidgets.QLabel('Avalon', menu)
+        QtWidgets.QLabel('Avalon', menu)
         menu.setStyleSheet(textwrap.dedent('''
                                             QWidget {
                                                 background-color: #444444;
@@ -80,15 +80,15 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
                                            )
                            )
 
-        for key, value in menu_layout_dict.items():
+        for key, value in layout_dict.items():
 
             if value == 'action':
                 # menu = QtWidgets.QMenu(menu)
                 # menu = QtWidgets.QMenu(menu)
-                separator = menu.addSeparator()
+                menu.addSeparator()
                 # spacer = QtWidgets.QWidget()
                 menu.addAction(key)
-                print(key, value)
+                # print(key, value)
 
             else:
                 # menu = QtWidgets.QMenu(menu)
@@ -101,10 +101,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
                     # print(skey, svalue)
                     # plugins_Menu = avalon_plugin.addMenu(skey)
                     for action in svalue:
-                        if action == None:
+                        if action is '______':
                             avalon_plugin.addSeparator()
                         else:
-                            plugins_Action = avalon_plugin.addAction(action)
+                            avalon_plugin.addAction(action)
                 menu.addMenu(avalon_plugins)
 
         exitAction = menu.addAction("Exit")
@@ -115,7 +115,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         # main_layout.addWidget(menu)
 
     def eventFilter(self, object, event):
-        print(self, object, event)
+        # print(self, object, event)
         # if event.type() == QtCore.QEvent.MouseButtonPress:
         #     print("You pressed the button")
         #     return True
@@ -128,20 +128,13 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         QtCore.QCoreApplication.exit()
 
 
-def _sys_tray(image):
+def _sys_tray(image, layout_dict=menu_layout_dict):
     # code source: https://stackoverflow.com/questions/893984/pyqt-show-menu-in-a-system-tray-application  - add answer PyQt5
     #PyQt4 to PyQt5 version: https://stackoverflow.com/questions/20749819/pyqt5-failing-import-of-qtgui
     app = QtWidgets.QApplication(sys.argv)
     w = QtWidgets.QWidget()
-    trayIcon = SystemTrayIcon(QtGui.QIcon(image), w)
+    trayIcon = SystemTrayIcon(icon=QtGui.QIcon(image), parent=w, layout_dict=layout_dict)
     # menu =
 
     trayIcon.show()
     sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    avalon_core_icon = os.path.join(
-        os.environ['AVALON_LAUNCHER'], "launcher", "res", "icon", "main.png")
-    print(avalon_core_icon)
-    _sys_tray(avalon_core_icon)

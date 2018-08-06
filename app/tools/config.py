@@ -1,6 +1,5 @@
-import toml
-import os
 
+import os
 from ..vendor import toml
 
 
@@ -21,7 +20,7 @@ class _dic_to_nested_obj(dict):
 
     def __init__(self, dct):
         for key, value in dct.items():
-            if hasattr(value, 'keys'):
+            if isinstance(value, dict):
                 value = _dic_to_nested_obj(value)
             self[key] = value
 

@@ -38,13 +38,15 @@ def get_paths(dict=dict()):
 def _convert_all_paths(source, destination):
     if "{root}" in source.app_store.path:
         source.app_store.path = source.app_store.path.format(**source)
+        destination = _dic_to_nested_obj(source)
     for k, v in destination.items():
         if isinstance(v, dict):
             _convert_all_paths(source, v)
+
         else:
             if (isinstance(v, str)) and ("[" in v):
                 found_list = re.findall(r'(\[.*?\])', v)
-                print(found_list)
+                # print(found_list)
                 if found_list:
                     if "/bin" in v:
                         if source.sys.python.dev.mode:

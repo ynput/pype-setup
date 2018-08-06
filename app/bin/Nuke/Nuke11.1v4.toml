@@ -1,10 +1,6 @@
 # all data here will crate awarness of all nuke related apps as:
 # [nuke, nukex, nuke-studio, nuke-assist, hiero, hiero-player]
 #
-# - `.bat` files are pointing to default nuke installation dir `C:\\Program Files`
-#   or other location
-# - `.bat` can get **arguments[]** from cmd and convert paths dynamically
-#   and point to `Nuke{app-store.bin.nuke.version}.exe`
 
 # set verson we are looking for in default nuke installation dir
 version = "10.1v5"
