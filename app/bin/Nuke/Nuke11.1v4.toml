@@ -3,7 +3,7 @@
 #
 
 # set verson we are looking for in default nuke installation dir
-version = "10.1v5"
+version = "11.1v4"
 
 [platform]
 windows = 'C:\\Program Files\Nuke'
@@ -11,10 +11,10 @@ linux = '/usr/local/Nuke'
 darvin = '/Applications/Nuke'
 
 [required.avalon] # path to `avalon_nuke` needed for running nuke avalon
-path = "{app.sys.pyblish.path}" # path to `avalon_nuke` needed for running nuke avalon
+path = "{app.sys.avalon.path}" # path to `avalon_nuke` needed for running nuke avalon
 
 [required.pyblish] # path to `pyblish_nuke` needed for running nuke pyblish
-path = "{app.sys.avalon.path}"
+path = "{app.sys.pyblish.path}"
 ui = "qml"
 
 [required.qt] # path to `qt` compatible to nuke qt needed for running nuke pyblish

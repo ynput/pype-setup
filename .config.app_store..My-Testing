@@ -15,15 +15,15 @@ path = "{root}/app_store"
 # such as version, variablses for sys and session avalon, pyblish
 # platform conditions are also set in `app{version}.toml`
 [bin.maya]
-path = "{root}/bin/maya/{platform}/Maya"
+path = "{root}/bin/Maya"
 [bin.nuke]
-path = "{root}/bin/nuke/Nuke"
+path = "{root}/bin/Nuke"
 [bin.fusion]
-path = "{root}/bin/fusion/Fusion"
+path = "{root}/bin/Fusion"
 [bin.resolve]
-path = "{root}/bin/resolve/Resolve"
+path = "{root}/bin/Resolve"
 [bin.blender]
-path = "{root}/bin/blender/Blender"
+path = "{root}/bin/Blender"
 
 
 
