@@ -1,9 +1,8 @@
-
 import os
 import platform
 import sys
 
-
+#
 properities = {
     'platform': platform.system().lower(),
     'tray_icon': {'path': '{root}/resources/icon/main.png'},
@@ -14,16 +13,16 @@ properities = {
 }
 
 
-def set_pth_modules(properities):
-    for k, v in properities.items():
+def set_pth_modules(p):
+    for k, v in p.items():
         if isinstance(v, list):
             for i in v:
-                path = os.path.normpath(i.format(**properities))
+                path = os.path.normpath(i.format(**p))
                 # print(path)
                 sys.path.append(path)
         if isinstance(v, dict):
             for vk, vv in v.items():
-                v[vk] = vv.format(**properities)
+                v[vk] = vv.format(**p)
 
 
 def main():
@@ -34,8 +33,8 @@ def main():
     # adding and formating data from .confs.toml into properities dict of
     # app.__init__.
     app.init(properities)
-    print(app.cfg.tray_icon.path)
-    print(app.cfg.app_store.avalon.maya.path)
+    for a in app.cfg.app_store:
+        print(a)
     app.tray._sys_tray(os.path.normpath(app.cfg.tray_icon.path))
 
 

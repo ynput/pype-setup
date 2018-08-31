@@ -1,18 +1,12 @@
-
-# toml .configuration file generated automatically if not present
+# toml .configuration file
 # please adjust this file as `your preset`
 
-
-# add anything related main proces. Remember most of crucial dependecies are
-# set in resources.txt maintaned by pip. If you are sure yours is not then
-# you can set all dependecies here and activate.py will solve it.
-# look into example of adding new plugin into lower section `adding plugins`
-
+# path to app_store folder
 path = "{root}/app_store"
 
-#path to dir with shortcut linked to installed app
-# rest of the path is comming from individual `app{version}.toml` files as
-# such as version, variablses for sys and session avalon, pyblish
+## Path to dir with shortcut linked to installed app
+# rest of the path is coming from individual `app{version}.toml` files as
+# such as version, variables for sys and session avalon, pyblish
 # platform conditions are also set in `app{version}.toml`
 [bin.maya]
 path = "{root}/bin/Maya"
@@ -39,7 +33,7 @@ menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins ma
 ### academy >> input search engine to find answer or tutorial > within `avalon.tray`
 [avalon.academy]
     git = "git@github.com:avalon-academy.git"
-    url = "https://github.com/avalon-academy/archive/master.zip"
+    zip = "https://github.com/avalon-academy/archive/master.zip"
     path = "{root}/app-store/avalon-academy/avalon_academy"
     qt = "{app_store.avalon.academy.path}/vendor/Qt"
     menu = ['Config Academy', '______', 'Submit new',]
@@ -47,21 +41,21 @@ menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins ma
 ### tray
 [avalon.tray]
     git = "git@github.com:avalon-tray.git"
-    url = "https://github.com/avalon-tray/archive/master.zip"
+    zip = "https://github.com/avalon-tray/archive/master.zip"
     path = "{root}/app-store/avalon-tray/avalon_tray"
     qt = "{app_store.avalon.tray.path}/vendor/Qt"
 
 ### workfiles
 [avalon.workfiles]
     git = "git@github.com:avalon-workfiles.git"
-    url = "https://github.com/avalon-workfiles/archive/master.zip"
+    zip = "https://github.com/avalon-workfiles/archive/master.zip"
     path = "{root}/app-store/avalon-workfiles/avalon_workfiles"
     qt = "{app_store.avalon.workfiles.path}/vendor/Qt"
 
 ### Users
 [avalon.users]
     git = "git@github.com:avalon-users.git"
-    url = "https://github.com/avalon-users/archive/master.zip"
+    zip = "https://github.com/avalon-users/archive/master.zip"
     path = "{root}/app-store/avalon-users/avalon_users"
     qt = "{app_store.avalon.users.path}/vendor/Qt"
     # optional menu.actions
@@ -71,7 +65,7 @@ menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins ma
 ### company own pipeline repository
 [avalon.pipeline]
     git = "git@github.com:avalon-pipeline.git"
-    url = "https://github.com/avalon-pipeline/archive/master.zip"
+    zip = "https://github.com/avalon-pipeline/archive/master.zip"
     path = "{root}/app-store/avalon-pipeline/avalon_pipeline"
     qt = "{app_store.avalon.pipeline.path}/vendor/Qt"
     # optional menu.actions
@@ -81,7 +75,7 @@ menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins ma
 ### Maya
 [avalon.maya]
     git = "git@github.com:avalon-maya.git"
-    url = "https://github.com/avalon-maya/archive/master.zip"
+    zip = "https://github.com/avalon-maya/archive/master.zip"
     path = "{root}/app-store/avalon-maya-master/avalon_maya"
     qt = "{app_store.avalon.maya.path}/vendor/Qt"
 [pyblish.maya]
