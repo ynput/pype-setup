@@ -2,7 +2,8 @@ import os
 import platform
 import sys
 
-#
+# sets main running session environmnent
+# and define .config preset
 properities = {
     'platform': platform.system().lower(),
     'tray_icon': {'path': '{root}/resources/icon/main.png'},
@@ -14,6 +15,7 @@ properities = {
 
 
 def set_pth_modules(p):
+    # will go trough all values and convert namespaces into paths
     for k, v in p.items():
         if isinstance(v, list):
             for i in v:

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# todo: convert to a.app installation
+# this is just wip file with bunch of snipets collected from other projects
+# TODO: : convert to avalon_app installation
 
 from __future__ import print_function
 try:
@@ -11,6 +12,7 @@ except ImportError:
 
 from distutils.command.build_py import build_py as _build_py
 from setuptools.command.sdist import sdist as _sdist
+
 import os
 import sys
 from os import path

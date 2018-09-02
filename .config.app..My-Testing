@@ -3,25 +3,24 @@
 # please adjust this file as `your preset`
 
 [sys.python.dev]
-    version = "python3"
+    version = "3.6.6"
     path = "__DEV__/{sys.python.dev.version}/dist/{platform}/bin"
-    mode = true # all small caps
+    mode = true # all small caps > if true then executable run from __DEV__
 
 [sys.python]
-    path = "{root}/python[/{sys.python.dev.path}][/bin]"
+    path = "{root}/python[/{sys.python.dev.path}]"
 
-[sys.avalon]
-    git = "git@github.com:avalon-core.git"
-    url = "https://github.com/getavalon/core/archive/master.zip"
-    path = "{app_store.path}/avalon-core"
-    qt = "{root}/python/Qt5"
+[avalon]
+    git = "git@github.com:pypeclub/avalon-core.git|master" # brach is optional
+    zip = "https://github.com/pypeclub/avalon-core/archive/master.zip"
+    path = "{app_store.path}/avalon-core/avalon"
+    qt = "{root}/python[/__DEV__]/Qt5"
 
-[sys.pyblish]
-    python = "python3"
-    git = "git@github.com:pyblish-base"
-    url = "https://github.com/pyblish/pyblish-base/archive/master.zip"
-    path = "{app_store.path}/pyblish-base-master"
-    qt = "{root}/python/Qt5"
+[pyblish]
+    git = "git@github.com:pypeclub/pyblish-base.git|master" # brach is optional
+    zip = "https://github.com/pyblish/pyblish-base/archive/master.zip"
+    path = "{app_store.path}/pyblish-base/pyblish"
+    qt = "{root}/python[/__DEV__]/Qt5"
 
 
 [databases]
@@ -34,7 +33,7 @@
     [databases.mongo.install]
     git = "" # path to our db git bakup
     url = "http://downloads.mongodb.org/win32/mongodb-win32-x86_64-2008plus-ssl-v4.0-latest-signed.msi" # path to download files for installation
-    path = "" # path to installation (can be `unc` even on windows)
+    path = ""
 
     [databases.ftrack]
     server = "192.168.1.2"

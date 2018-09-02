@@ -6,3 +6,5 @@
 
 # bootstrap
 - this is `user` python bootstrap folder
+- all files will be moved to [user_home]/.avalon_app > only .pyc files
+- 

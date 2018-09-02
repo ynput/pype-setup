@@ -1,3 +1,6 @@
+# just prove of work for zip downloads within the app initialization
+# it is a alternative for git installation
+
 from urllib.request import urlopen
 from io import BytesIO
 from zipfile import ZipFile

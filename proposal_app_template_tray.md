@@ -1,4 +1,4 @@
-# Proposal: **avalon-app/app-store**, **avalon-tray**
+# Proposal: **app-store**, **app.tray**
 
 > **avalon-app** and **app_store**
 
@@ -10,14 +10,14 @@
 
 - ass you can see we are working with `format()` by nesting all data from `toml` files as  **.config**. All is converted on the go even with optional path elements. From here is anything possible :)
 
-- Toml conf files will also hold ability for changing different `presets` and it could be used in combination of interface from `avalon-tray` app.
+- Toml conf files will also hold ability for changing different `presets` and it could be used in combination of interface from `app.tray` app.
 
-- in case **git** is not present on user's system it will download all required apps and extracted them into app-store as **zip** files from url pointing to `github/.../*-master.zip`. Paths are stored in _.config_ files
+- in case **git** is not present on user workstation system it will download all required apps and extracted them into app-store as **zip** files from url pointing to `github/.../*-master.zip`. Paths are stored in _.config_ files
 </br>
 </br>
 </br>
 
-> **avalon-tray**
+> **app.tray**
 
 - allows **user/dev** better interaction with the **avalon/pyblish** `ecosystem`
 
@@ -25,4 +25,4 @@
 
 - if avalon-academy is installed menu includes text input where user can get access to help and tutorials
 
-- there is a git repository you can try yourself. It looks like this:
+-
