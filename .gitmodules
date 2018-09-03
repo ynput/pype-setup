@@ -1,0 +1,56 @@
+[submodule "app_store/avalon-core"]
+	path = app_store/avalon-core
+	url = git@github.com:pypeclub/avalon-core.git
+	branch = master
+[submodule "app_store/pyblish-base"]
+	path = app_store/pyblish-base
+	url = git@github.com:pypeclub/pyblish-base.git
+	branch = master
+[submodule "app_store/avalon-users"]
+	path = app_store/avalon-users
+	url = git@github.com:pypeclub/avalon-users.git
+	branch = master
+[submodule "app_store/avalon-config"]
+	path = app_store/avalon-config
+	url = git@github.com:pypeclub/avalon-config.git
+	branch = master
+[submodule "app_store/avalon-hudini"]
+	path = app_store/avalon-hudini
+	url = git@github.com:pypeclub/avalon-hudini.git
+	branch = master
+[submodule "app_store/avalon-launcher"]
+	path = app_store/avalon-launcher
+	url = git@github.com:pypeclub/avalon-launcher.git
+	branch = master
+[submodule "app_store/avalon-nuke"]
+	path = app_store/avalon-nuke
+	url = git@github.com:pypeclub/avalon-nuke.git
+	branch = master
+[submodule "app_store/avalon-maya"]
+	path = app_store/avalon-maya
+	url = git@github.com:pypeclub/avalon-maya.git
+	branch = master
+[submodule "app_store/avalon-hiero"]
+	path = app_store/avalon-hiero
+	url = git@github.com:pypeclub/avalon-hiero.git
+	branch = master
+[submodule "app_store/pyblish-qml"]
+	path = app_store/pyblish-qml
+	url = git@github.com:pypeclub/pyblish-qml.git
+	branch = master
+[submodule "app_store/avalon-template"]
+	path = app_store/avalon-template
+	url = git@github.com:pypeclub/avalon-template.git
+	branch = master
+[submodule "app_store/avalon-fusion"]
+	path = app_store/avalon-fusion
+	url = git@github.com:pypeclub/avalon-fusion.git
+	branch = master
+[submodule "app_store/avalon-resolve"]
+	path = app_store/avalon-resolve
+	url = git@github.com:pypeclub/avalon-resolve.git
+	branch = master
+[submodule "app_store/avalon-academy"]
+	path = app_store/avalon-academy
+	url = git@github.com:pypeclub/avalon-academy.git
+	branch = master

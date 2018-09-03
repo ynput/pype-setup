@@ -14,25 +14,14 @@ path = "{root}/bin/Maya"
 path = "{root}/bin/Nuke"
 [bin.fusion]
 path = "{root}/bin/Fusion"
-# [bin.resolve]
-# path = "{root}/bin/Resolve"
+[bin.resolve]
+path = "{root}/bin/Resolve"
 # [bin.blender]
 # path = "{root}/bin/Blender"
 
 
 
-## main plugins
-# setting menu
-[avalon]
-# demonstration purouse only > this will come later from the tool itself
-menu = ['Config core','Create new project','______','Save database',]
-
-[pyblish]
-# demonstration purouse only > this will come later from the tool itself
-# microplugin manager: spin of [w_hotbox](http://www.nukepedia.com/python/ui/w_hotbox)
-menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins manager',]
-
-
+## ADITIONAL PLUGINS
 ### Users
 [avalon.users]
     git = "git@github.com:pypeclub/avalon-users.git|master" # brach is optional
@@ -57,6 +46,16 @@ menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins ma
     # demonstration purouse only > this will come later from the tool itself
     menu = ['Create new template', '______', 'Templates manager']
 
+### academy >> input search engine to find answer or tutorial > within `avalon.tray`
+[avalon.academy]
+    git = "git@github.com:pypeclub/avalon-academy.git|master"
+    zip = "https://github.com/pypeclub/avalon-academy/archive/master.zip"
+    path = "{app-store.path}/avalon-academy/academy"
+    qt = "{app_store.avalon.academy.path}/vendor/Qt"
+    # demonstration purouse only > this will come later from the tool itself
+    menu = ['Config Academy', '______', 'Submit new',]
+
+
 # INTEGRATIONS
 ### Maya
 [avalon.maya]
@@ -72,7 +71,6 @@ menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins ma
     path = "{app-store.path}/avalon-nuke/avalon_nuke"
     qt = "{app_store.avalon.nuke.path}/vendor/Qt"
 
-
 ### Fusion
 [avalon.fusion]
     git = "git@github.com:pypeclub/avalon-fusion.git|master" # brach is optional
@@ -80,21 +78,23 @@ menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins ma
     path = "{app-store.path}/avalon-fusion/avalon_fusion"
     qt = "{app_store.avalon.fusion.path}/vendor/Qt"
 
+### Hudini
+[avalon.hudini]
+    git = "git@github.com:pypeclub/avalon-hudini.git|master" # brach is optional
+    url = "https://github.com/pypeclub/avalon-hudini/archive/master.zip"
+    path = "{app-store.path}/avalon-hudini/avalon_hudini"
+    qt = "{app_store.avalon.hudini.path}/vendor/Qt"
+
+### Resolve
+[avalon.resolve]
+    git = "git@github.com:pypeclub/avalon-resolve.git|master" # brach is optional
+    url = "https://github.com/pypeclub/avalon-resolve/archive/master.zip"
+    path = "{app-store.path}/avalon-resolve/avalon_resolve"
+    qt = "{app_store.avalon.resolve.path}/vendor/Qt"
 
 
 ## additional plugins
 
-#
-# ### academy >> input search engine to find answer or tutorial > within `avalon.tray`
-# [avalon.academy]
-#     git = "git@github.com:avalon-academy.git"
-#     "git.branch" = "master"
-#     zip = "https://github.com/avalon-academy/archive/master.zip"
-#     path = "{root}/app-store/avalon-academy/avalon_academy"
-#     qt = "{app_store.avalon.academy.path}/vendor/Qt"
-#     menu = ['Config Academy', '______', 'Submit new',]
-#
-#
 # ### CG-Wire
 # [cg-wire]
 # menu = ['Config CG-wire','______','Pull database','Push database']

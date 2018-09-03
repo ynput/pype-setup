@@ -10,16 +10,33 @@
 [sys.python]
     path = "{root}/python[/{sys.python.dev.path}]"
 
+##############################################################################
 [avalon]
     git = "git@github.com:pypeclub/avalon-core.git|master" # brach is optional
     zip = "https://github.com/pypeclub/avalon-core/archive/master.zip"
     path = "{app_store.path}/avalon-core/avalon"
+    qt = "{root}/python[/__DEV__]/Qt5"
+    # demonstration purouse only > this will come later from the tool itself
+    menu = ['Config core','Create new project','______','Save database',]
+
+[avalon.launcher]
+    git = "git@github.com:pypeclub/avalon-launcher.git|master" # brach is optional
+    zip = "https://github.com/pypeclub/avalon-launcher/archive/master.zip"
+    path = "{app_store.path}/avalon-launcher/launcher"
     qt = "{root}/python[/__DEV__]/Qt5"
 
 [pyblish]
     git = "git@github.com:pypeclub/pyblish-base.git|master" # brach is optional
     zip = "https://github.com/pyblish/pyblish-base/archive/master.zip"
     path = "{app_store.path}/pyblish-base/pyblish"
+    qt = "{root}/python[/__DEV__]/Qt5"
+    # microplugin manager: spin of [w_hotbox](http://www.nukepedia.com/python/ui/w_hotbox)
+    menu = ['Config Pyblish', 'Create new micro-plugin', '______', 'Micro-plugins manager',]
+
+[pyblish.qml]
+    git = "git@github.com:pypeclub/pyblish-qml.git|master" # brach is optional
+    zip = "https://github.com/pyblish/pyblish-qml/archive/master.zip"
+    path = "{app_store.path}/pyblish-qml/pyblish_qml"
     qt = "{root}/python[/__DEV__]/Qt5"
 
 
