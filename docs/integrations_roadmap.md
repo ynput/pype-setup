@@ -32,7 +32,7 @@
 _Maya® 3D animation, modeling, simulation, and rendering software provides an integrated, powerful toolset. Use it for animation, environments, motion graphics, virtual reality, and character creation._
 > **Link**: [Overview](https://www.autodesk.eu/products/maya/overview)</br>
 > **Supported version**: 2016 and newer </br>
-> **Features**: Wrapper, Publisher, Asset browser, Workfiles, Instance Creator, Asset Loader, Container Manager </br>
+> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles, Instance Creator, Container Manager </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -41,7 +41,7 @@ _Maya® 3D animation, modeling, simulation, and rendering software provides an i
 _Houdini FX combines superior performance and dramatic, ease-of-use to deliver a powerful and accessible 3D experience to VFX artists creating feature films, commercials or video games_
 > **Link**: [Houdini FX](https://www.sidefx.com/products/houdini-fx/)</br>
 > **Supported version**: ??? </br>
-> **Features**: Wrapper, Publisher, Asset browser, Workfiles, Instance Creator, Asset Loader, Container Manager </br>
+> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles, Instance Creator, Container Manager </br>
 > **Release date**: winter 2018 (basic), spring 2019 (extended)</br>
 
 </br>
@@ -50,7 +50,7 @@ _Houdini FX combines superior performance and dramatic, ease-of-use to deliver a
 _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based compositing, editorial and review. The Nuke family's unparalleled flexibility and collaborative workflows help you get the highest quality results—fast._
 > **Link**: [Overview](https://www.foundry.com/products/nuke)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Publisher, Asset browser, Workfiles, Instance Creator, Asset Loader, Container Manager </br>
+> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles, Instance Creator</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -59,7 +59,7 @@ _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based co
 _Nuke's spin for Roto and Paint only_
 > **Link**: [Overview](https://www.foundry.com/products/nuke)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -68,7 +68,7 @@ _Nuke's spin for Roto and Paint only_
 _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based compositing, editorial and review. The Nuke family's unparalleled flexibility and collaborative workflows help you get the highest quality results—fast._
 > **Link**: [Overview](https://www.foundry.com/products/nuke)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -77,16 +77,16 @@ _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based co
 _Hiero is part of the Nuke family, offering the same powerful multi-track editorial timeline as Nuke Studio. Producers, VFX editors, and coordinators get greater visibility over projects, while seamless timeline sharing with other Hiero seats, HieroPlayer and Nuke Studio reduces the need to reconform for review._
 > **Link**: [Overview](https://www.foundry.com/products/hiero)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles  </br>
 > **Release date**: winter 2018 </br>
 
 </br>
 
 ### DaVinci Resolve:
-_Short description of the software_
-> **Link**: [link text](httls://thislink.domane)</br>
-> **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+_The world’s first solution that combines professional offline and online editing, color correction, audio post production and now visual effects all in one software tool!_
+> **Link**: [Overview](https://www.blackmagicdesign.com/products/davinciresolve/)</br>
+> **Supported version**: 15 and newer </br>
+> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -95,7 +95,7 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -104,7 +104,7 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -113,7 +113,7 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -122,7 +122,7 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles, Instance Creator, Container Manager </br>
 > **Release date**: winter 2018 </br>
 
 </br></br>
