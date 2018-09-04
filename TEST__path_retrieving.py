@@ -35,8 +35,13 @@ def main():
     # adding and formating data from .confs.toml into properities dict of
     # app.__init__.
     app.init(properities)
-    for a in app.cfg.app_store:
-        print(a)
+    # print(app.cfg, sep=' ', end='n', file=sys.stdout, flush=False)
+    # for a in app.cfg.app_store.avalon:
+    #     print(a.path)
+    #     try:
+    #         print(a.qt)
+    #     except:
+    #         pass
     app.tray._sys_tray(os.path.normpath(app.cfg.tray_icon.path))
 
 

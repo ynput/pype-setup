@@ -26,7 +26,7 @@ path = "{root}/bin/Resolve"
 [avalon.users]
     git = "git@github.com:pypeclub/avalon-users.git|master" # brach is optional
     zip = "https://github.com/pypeclub/avalon-users/archive/master.zip"
-    path = "{app-store.path}/avalon-users/users"
+    path = "{app_store.path}/avalon-users/users"
     # demonstration purouse only > this will come later from the tool itself
     menu = ['Config User', 'Create new user',]
 
@@ -35,13 +35,13 @@ path = "{root}/bin/Resolve"
 [avalon.config]
     git = "git@github.com:pypeclub/avalon-config.git|master" # brach is optional
     zip = "https://github.com/pypeclub/avalon-config/archive/master.zip"
-    path = "{app-store.path}/avalon-config/config"
+    path = "{app_store.path}/avalon-config/config"
 
 ### avalon-template
 [avalon.template]
     git = "git@github.com:pypeclub/avalon-template.git|master" # brach is optional
     zip = "https://github.com/pypeclub/avalon-template/archive/master.zip"
-    path = "{app-store.path}/avalon-template/template"
+    path = "{app_store.path}/avalon-template/template"
     qt = "{app_store.avalon.template.path}/vendor/Qt"
     # demonstration purouse only > this will come later from the tool itself
     menu = ['Create new template', '______', 'Templates manager']
@@ -50,7 +50,7 @@ path = "{root}/bin/Resolve"
 [avalon.academy]
     git = "git@github.com:pypeclub/avalon-academy.git|master"
     zip = "https://github.com/pypeclub/avalon-academy/archive/master.zip"
-    path = "{app-store.path}/avalon-academy/academy"
+    path = "{app_store.path}/avalon-academy/academy"
     qt = "{app_store.avalon.academy.path}/vendor/Qt"
     # demonstration purouse only > this will come later from the tool itself
     menu = ['Config Academy', '______', 'Submit new',]
@@ -61,35 +61,35 @@ path = "{root}/bin/Resolve"
 [avalon.maya]
     git = "git@github.com:pypeclub/avalon-maya.git|master" # brach is optional
     zip = "https://github.com/pypeclub/avalon-maya/archive/master.zip"
-    path = "{app-store.path}/avalon-maya/avalon_maya"
+    path = "{app_store.path}/avalon-maya/avalon_maya"
     qt = "{app_store.avalon.maya.path}/vendor/Qt"
 
 ### Nuke
 [avalon.nuke]
     git = "git@github.com:pypeclub/avalon-nuke.git|master" # brach is optional
     url = "https://github.com/pypeclub/avalon-nuke/archive/master.zip"
-    path = "{app-store.path}/avalon-nuke/avalon_nuke"
+    path = "{app_store.path}/avalon-nuke/avalon_nuke"
     qt = "{app_store.avalon.nuke.path}/vendor/Qt"
 
 ### Fusion
 [avalon.fusion]
     git = "git@github.com:pypeclub/avalon-fusion.git|master" # brach is optional
     url = "https://github.com/pypeclub/avalon-fusion/archive/master.zip"
-    path = "{app-store.path}/avalon-fusion/avalon_fusion"
+    path = "{app_store.path}/avalon-fusion/avalon_fusion"
     qt = "{app_store.avalon.fusion.path}/vendor/Qt"
 
 ### Hudini
 [avalon.hudini]
     git = "git@github.com:pypeclub/avalon-hudini.git|master" # brach is optional
     url = "https://github.com/pypeclub/avalon-hudini/archive/master.zip"
-    path = "{app-store.path}/avalon-hudini/avalon_hudini"
+    path = "{app_store.path}/avalon-hudini/avalon_hudini"
     qt = "{app_store.avalon.hudini.path}/vendor/Qt"
 
 ### Resolve
 [avalon.resolve]
     git = "git@github.com:pypeclub/avalon-resolve.git|master" # brach is optional
     url = "https://github.com/pypeclub/avalon-resolve/archive/master.zip"
-    path = "{app-store.path}/avalon-resolve/avalon_resolve"
+    path = "{app_store.path}/avalon-resolve/avalon_resolve"
     qt = "{app_store.avalon.resolve.path}/vendor/Qt"
 
 
@@ -104,5 +104,5 @@ path = "{root}/bin/Resolve"
 #     git = "https://github.com/cgwire/zou.git"
 #     "git.branch" = "master"
 #     url = "https://github.com/cgwire/zou/archive/master.zip"
-#     path = "{root}/resources/app-store/cgwire/zou"
+#     path = "{root}/resources/app_store/cgwire/zou"
 #     qt = "{app_store.avalon.blender.path}/vendor/Qt"

@@ -5,7 +5,7 @@
 [sys.python.dev]
     version = "3.6.6"
     path = "__DEV__/{sys.python.dev.version}/dist/{platform}/bin"
-    mode = true # all small caps > if true then executable run from __DEV__
+    mode = false # all small caps > if true then executable run from __DEV__
 
 [sys.python]
     path = "{root}/python[/{sys.python.dev.path}]"
