@@ -32,7 +32,7 @@
 _Maya® 3D animation, modeling, simulation, and rendering software provides an integrated, powerful toolset. Use it for animation, environments, motion graphics, virtual reality, and character creation._
 > **Link**: [Overview](https://www.autodesk.eu/products/maya/overview)</br>
 > **Supported version**: 2016 and newer </br>
-> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles, Instance Creator, Container Manager </br>
+> **Features**: `Wrapper`, `Publisher`, `Asset browser/loader`, `Workfiles`, `Instance Creator`, `Container Manager` </br>
 > **Release date**: winter 2018 </br>
 
 </br>
