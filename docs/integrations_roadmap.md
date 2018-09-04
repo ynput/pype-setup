@@ -229,11 +229,8 @@ _Short description of the software_
 - you should be able to do simple drawing and annotations on shots, storyboard
 - you should be able to quickly sketch scheduling and do snapshot of it so you could do several versions and pehrhaps comment to identify
 - it has to be able hold several workflow schema templates
-<<<<<<< HEAD
 - it would save to Google drive and sync whenever it would be possible
 - synchronizable with `Storyboard Pro` of `Flix`
 - able to preview story script with film strip vertically on side to see the flow, Technical script for directors made simple.
 - should be colaborative
-- [ChromeAppDev youtube intro](https://www.youtube.com/watch?v=f3NctLbtsNE&feature=youtu.be) 
-=======
->>>>>>> af3eddef8f9c528efc935c2002a78a656cb9925f
+- [ChromeAppDev youtube intro](https://www.youtube.com/watch?v=f3NctLbtsNE&feature=youtu.be)
