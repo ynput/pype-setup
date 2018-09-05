@@ -52,6 +52,7 @@ _Maya® 3D animation, modeling, simulation, and rendering software provides an i
 [`Instance Creator`](#instance),
 [`Container Manager`](#container),
 </br>
+> **Repository**: [avalon-maya](https://github.com/pypeclub/avalon-maya) </br>
 > **Release date**: winter 2018 </br>
 
 </br>
