@@ -25,14 +25,33 @@
  - research needed
  - feature request bellow
 
+## List of Avalon integraton tools:
+ - [`Wrapper`](#wrapper) - in an app menu actions and link to studio tool repository
+ - [`Project manager`](#project) - stand-alone or in an app ui for setting/altering basic attributes of project
+ - [`Template Manager`](#template) - ui tool for defining folder structure and name conventions of each project
+ - [`Publisher`](#publish)
+ - [`Asset browser/loader`](#asset_load)
+ - [`Asset create`](#asset_create)
+ - [`Workfiles`](#workfile)
+ - [`Instance Creator`](#instance)
+ - [`Container Manager`](#container)
+
 ****
 
+****
 ## 1. Production softwares: <a name="1"></a>
 ### Maya:
 _Maya® 3D animation, modeling, simulation, and rendering software provides an integrated, powerful toolset. Use it for animation, environments, motion graphics, virtual reality, and character creation._
 > **Link**: [Overview](https://www.autodesk.eu/products/maya/overview)</br>
 > **Supported version**: 2016 and newer </br>
-> **Features**: `Wrapper`, `Publisher`, `Asset browser/loader`, `Workfiles`, `Instance Creator`, `Container Manager` </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Publisher`](#publish),
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+[`Instance Creator`](#instance),
+[`Container Manager`](#container),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -41,7 +60,14 @@ _Maya® 3D animation, modeling, simulation, and rendering software provides an i
 _Houdini FX combines superior performance and dramatic, ease-of-use to deliver a powerful and accessible 3D experience to VFX artists creating feature films, commercials or video games_
 > **Link**: [Houdini FX](https://www.sidefx.com/products/houdini-fx/)</br>
 > **Supported version**: ??? </br>
-> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles, Instance Creator, Container Manager </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Publisher`](#publish),
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+[`Instance Creator`](#instance),
+[`Container Manager`](#container),
+</br>
 > **Release date**: winter 2018 (basic), spring 2019 (extended)</br>
 
 </br>
@@ -50,7 +76,13 @@ _Houdini FX combines superior performance and dramatic, ease-of-use to deliver a
 _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based compositing, editorial and review. The Nuke family's unparalleled flexibility and collaborative workflows help you get the highest quality results—fast._
 > **Link**: [Overview](https://www.foundry.com/products/nuke)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles, Instance Creator</br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Publisher`](#publish),
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+[`Instance Creator`](#instance),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -59,7 +91,12 @@ _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based co
 _Nuke's spin for Roto and Paint only_
 > **Link**: [Overview](https://www.foundry.com/products/nuke)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles</br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Publisher`](#publish),
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -68,7 +105,15 @@ _Nuke's spin for Roto and Paint only_
 _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based compositing, editorial and review. The Nuke family's unparalleled flexibility and collaborative workflows help you get the highest quality results—fast._
 > **Link**: [Overview](https://www.foundry.com/products/nuke)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Project manager`](#project),
+[`Publisher`](#publish),
+[`Asset create`](#asset_create)
+[`Template Manager`](#template)
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -77,7 +122,15 @@ _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based co
 _Hiero is part of the Nuke family, offering the same powerful multi-track editorial timeline as Nuke Studio. Producers, VFX editors, and coordinators get greater visibility over projects, while seamless timeline sharing with other Hiero seats, HieroPlayer and Nuke Studio reduces the need to reconform for review._
 > **Link**: [Overview](https://www.foundry.com/products/hiero)</br>
 > **Supported version**: 10.5 and newer</br>
-> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles  </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Project manager`](#project),
+[`Publisher`](#publish),
+[`Asset create`](#asset_create)
+[`Template Manager`](#template)
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+ </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -86,7 +139,15 @@ _Hiero is part of the Nuke family, offering the same powerful multi-track editor
 _The world’s first solution that combines professional offline and online editing, color correction, audio post production and now visual effects all in one software tool!_
 > **Link**: [Overview](https://www.blackmagicdesign.com/products/davinciresolve/)</br>
 > **Supported version**: 15 and newer </br>
-> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Project manager`](#project),
+[`Publisher`](#publish),
+[`Asset create`](#asset_create)
+[`Template Manager`](#template)
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -95,7 +156,12 @@ _The world’s first solution that combines professional offline and online edit
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Publisher`](#publish),
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -104,7 +170,12 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Publisher`](#publish),
+[`Asset browser/loader`](#asset_load),
+`Workfiles`
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -113,7 +184,12 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, Asset browser/loader, Workfiles </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Publisher`](#publish),
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -122,7 +198,17 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Project manager, Publisher, Shots/Asset creator, Template Manager, Asset browser/loader, Workfiles, Instance Creator, Container Manager </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Project manager`](#project),
+[`Publisher`](#publish),
+[`Asset create`](#asset_create)
+[`Template Manager`](#template)
+[`Asset browser/loader`](#asset_load),
+[`Workfiles`](#workfile),
+[`Instance Creator`](#instance),
+[`Container Manager`](#container),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br></br>
@@ -132,7 +218,10 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+[`Wrapper`](#wrapper),
+[`Asset browser/loader`](#asset_load),
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -141,7 +230,9 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files, Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -150,7 +241,9 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+
+</br>
 > **Release date**: winter 2018 </br>
 
 </br></br>
@@ -160,7 +253,9 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -169,7 +264,9 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+
+</br>
 > **Release date**: winter 2018 </br>
 
 </br></br>
@@ -179,7 +276,9 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -188,7 +287,9 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+
+</br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -197,7 +298,9 @@ _Short description of the software_
 _Short description of the software_
 > **Link**: [link text](httls://thislink.domane)</br>
 > **Supported version**: </br>
-> **Features**: Wrapper, Publisher, project assets, work-files </br>
+> **Features**:
+
+</br>
 > **Release date**: winter 2018 </br>
 
 </br></br>
