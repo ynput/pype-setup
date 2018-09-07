@@ -30,41 +30,63 @@ _Short introduction of an application, usually taken from its official website._
  - Blackmagic - DaVinci Resolve / Fusion
  - Adobe - Photoshop, AfterEffects
  - Blender
+
 2. [Review:](#2)
  - RV
  - DjV
+
 3. [Render farm management:](#3)
  - Deadline
  - RoyalRender
+
 4. [Production management solutions:](#4)
  - Ftrack
  - Shotgun
  - CG Wire
+
 5. [Studio asset management:](#5)
  - research needed
  - feature request bellow
+
 6. [Production planning solution:](#6)
  - research needed
  - feature request bellow
 
+</br></br>
 ****
+
 ## List of Avalon integration tools ([details](#integrators)):
    - [`Wrapper`](#wrapper) - sets environment | app menu with actions | link to studio tool repository
+
    - [`Project manager (gui)`](#project) - stand-alone or in an app interface for setting/altering basic attributes of project
+
    - [`Template Manager (gui)`](#template) - interface for management of folder structure, name conventions and data & colorspace workflow definitions of each project also it is great place for definition of project schema
+
    - [`Publisher (gui)`](#publish) - interface (Pyblish) for publishing of task submitions for review and following job inputs.
+
    - [`Asset browser/loader (gui)`](#asset_load) - interface for browsing and loading available assets into a working scene or script.
+
    - [`Asset create (gui)`](#asset_create) - tool for creating a new asset from working scene or script
+
    - [`Workfiles (gui)`](#workfile) - interface for selecting or versioning working files
+
    - [`Instance Creator (gui)`](#instance) - tool for creating instance from selected object in a scene or script
+
    - [`Container Manager (gui)`](#container) - tool for visualising of loaded assets and its versions in a scene or script. This tool can be used for checking/changing version of assets
+
    - [`Job submiter`](#submiter) - submits job on to a render farm, producion hooks could be mounted before or after render actions
+
    - [`DB sync`](#db-sync) - pulling pushing of databases on demand
+
    - [`Locations sync`](#loc-sync) - a serve hook for synchronization of project file storage location between avalon and other [production planning solutions](#6)
+
    - [`Launcher convert`](#launch-action) - dynamic hook which converts avalon's launchers onto any used [production planning solution](#6) actions for its front-end software launching
+
    - [`Event server`](#eserver) - production server runnig actions regarding available context of defined hooks
+
    - [`Hooks`](#hooks) - custom hooks
 
+</br></br>
 ****
 ## 1. Production softwares: <a name="1"></a>
 ### Maya:
@@ -77,8 +99,7 @@ _Maya® 3D animation, modeling, simulation, and rendering software provides an i
 [`Asset browser/loader (gui)`](#asset_load),
 [`Workfiles (gui)`](#workfile),
 [`Instance Creator (gui)`](#instance),
-[`Container Manager (gui)`](#container),
-</br>
+[`Container Manager (gui)`](#container)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-maya](https://github.com/pypeclub/avalon-maya) </br>
@@ -96,8 +117,7 @@ _Houdini FX combines superior performance and dramatic, ease-of-use to deliver a
 [`Asset browser/loader (gui)`](#asset_load),
 [`Workfiles (gui)`](#workfile),
 [`Instance Creator (gui)`](#instance),
-[`Container Manager (gui)`](#container),
-</br>
+[`Container Manager (gui)`](#container)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-houdini](https://github.com/pypeclub/avalon-houdini) </br>
@@ -114,8 +134,7 @@ _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based co
 [`Publisher (gui)`](#publish),
 [`Asset browser/loader (gui)`](#asset_load),
 [`Workfiles (gui)`](#workfile),
-[`Instance Creator (gui)`](#instance),
-</br>
+[`Instance Creator (gui)`](#instance)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-nuke](https://github.com/pypeclub/avalon-nuke) </br>
@@ -131,8 +150,7 @@ _Nuke's spin for Roto and Paint only_
 [`Wrapper`](#wrapper),
 [`Publisher (gui)`](#publish),
 [`Asset browser/loader (gui)`](#asset_load),
-[`Workfiles (gui)`](#workfile),
-</br>
+[`Workfiles (gui)`](#workfile)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-nuke](https://github.com/pypeclub/avalon-nuke) </br>
@@ -151,8 +169,7 @@ _Nuke®, NukeX® and Nuke Studio® offer cutting-edge toolkits for node-based co
 [`Asset create (gui)`](#asset_create)
 [`Template Manager (gui)`](#template)
 [`Asset browser/loader (gui)`](#asset_load),
-[`Workfiles (gui)`](#workfile),
-</br>
+[`Workfiles (gui)`](#workfile)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-nuke](https://github.com/pypeclub/avalon-nuke) &
@@ -172,11 +189,10 @@ _Hiero is part of the Nuke family, offering the same powerful multi-track editor
 [`Asset create (gui)`](#asset_create)
 [`Template Manager (gui)`](#template)
 [`Asset browser/loader (gui)`](#asset_load),
-[`Workfiles (gui)`](#workfile),
- </br>
- > **Repository**:
- [pypeclub](https://github.com/pypeclub) /
- [avalon-hiero](https://github.com/pypeclub/avalon-hiero) </br>
+[`Workfiles (gui)`](#workfile)</br>
+> **Repository**:
+[pypeclub](https://github.com/pypeclub) /
+[avalon-hiero](https://github.com/pypeclub/avalon-hiero) </br>
 > **Release date**: winter 2018 </br>
 
 </br>
@@ -192,8 +208,7 @@ _The world’s first solution that combines professional offline and online edit
 [`Asset create (gui)`](#asset_create)
 [`Template Manager (gui)`](#template)
 [`Asset browser/loader (gui)`](#asset_load),
-[`Workfiles (gui)`](#workfile),
-</br>
+[`Workfiles (gui)`](#workfile)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-resolve](https://github.com/pypeclub/avalon-resolve) </br>
@@ -209,8 +224,7 @@ _Short description of the software_
 [`Wrapper`](#wrapper),
 [`Publisher (gui)`](#publish),
 [`Asset browser/loader (gui)`](#asset_load),
-[`Workfiles (gui)`](#workfile),
-</br>
+[`Workfiles (gui)`](#workfile)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-fusion](https://github.com/pypeclub/avalon-fusion) </br>
@@ -226,8 +240,7 @@ _Short description of the software_
 [`Wrapper`](#wrapper),
 [`Publisher (gui)`](#publish),
 [`Asset browser/loader (gui)`](#asset_load),
-`Workfiles (gui)`
-</br>
+[`Workfiles (gui)`](#workfile)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-photoshop](https://github.com/pypeclub/avalon-photoshop) </br>
@@ -243,8 +256,7 @@ _Short description of the software_
 [`Wrapper`](#wrapper),
 [`Publisher (gui)`](#publish),
 [`Asset browser/loader (gui)`](#asset_load),
-[`Workfiles (gui)`](#workfile),
-</br>
+[`Workfiles (gui)`](#workfile)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-aftereffects](https://github.com/pypeclub/avalon-aftereffects) </br>
@@ -264,8 +276,7 @@ _Short description of the software_
 [`Asset browser/loader (gui)`](#asset_load),
 [`Workfiles (gui)`](#workfile),
 [`Instance Creator (gui)`](#instance),
-[`Container Manager (gui)`](#container),
-</br>
+[`Container Manager (gui)`](#container)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-blender](https://github.com/pypeclub/avalon-blender) </br>
@@ -280,8 +291,7 @@ _Short description of the software_
 > **Supported version**: </br>
 > **Features**:
 [`Wrapper`](#wrapper),
-[`Asset browser/loader (gui)`](#asset_load),
-</br>
+[`Asset browser/loader (gui)`](#asset_load)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-hiero](https://github.com/pypeclub/avalon-hiero) </br>
@@ -294,11 +304,10 @@ _RV is high performance professional playback and review application optimized f
 > **Supported version**: ? </br>
 > **Features**:
 [`Wrapper`](#wrapper),
-[`Asset browser/loader (gui)`](#asset_load)
-</br>
+[`Asset browser/loader (gui)`](#asset_load)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
-[avalon-rv](https://github.com/pypeclub/avalon-rv) </br>
+[avalon-rv](https://github.com/pypeclub/avalon-rv)</br>
 > **Release date**: winter 2018 </br>
 </br>
 
@@ -308,8 +317,7 @@ _Short description of the software_
 > **Supported version**: </br>
 > **Features**:
 [`Wrapper`](#wrapper),
-[`Asset browser/loader (gui)`](#asset_load)
-</br>
+[`Asset browser/loader (gui)`](#asset_load)</br>
 > **Release date**: summer 2019 </br>
 
 </br></br>
@@ -320,8 +328,7 @@ _Deadline is a hassle-free administration and compute management toolkit for Win
 > **Links**: [website](https://deadline.thinkboxsoftware.com/)</br>
 > **Supported version**: ?</br>
 > **Features**:
-[`Job submiter`](#submiter)
-</br>
+[`Job submiter`](#submiter)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-deadline](https://github.com/pypeclub/avalon-deadline) </br>
@@ -334,8 +341,7 @@ _Royal Render is a mighty application to organize your render jobs. The high end
 > **Links**: [website](http://www.royalrender.de)</br>
 > **Supported version**: v7 and newer</br>
 > **Features**:
-[`Job submiter`](#submiter)
-</br>
+[`Job submiter`](#submiter)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-royalrender](https://github.com/pypeclub/avalon-royalrender) </br>
@@ -353,8 +359,7 @@ _Ftrack is a scalable cloud-based project management solution used in the media 
 [`Locations sync`](#loc-sync),
 [`Launcher convert`](#launch-action),
 [`Event server`](#eserver),
-[`Hooks`](#hooks)
-</br>
+[`Hooks`](#hooks)</br>
 > **Repository**:
 [pypeclub](https://github.com/pypeclub) /
 [avalon-ftrack](https://github.com/pypeclub/avalon-ftrack) </br>
@@ -369,8 +374,7 @@ _Tools that connect entire studios, teams, and creative workflows._
 [`DB sync`](#db-sync),
 [`Launcher convert`](#launch-action),
 [`Event server`](#eserver),
-[`Hooks`](#hooks)
-</br>
+[`Hooks`](#hooks)</br>
 > **Release date**: summer 2019 </br>
 
 </br>
@@ -382,8 +386,7 @@ _CGWire is a production tracking solution aimed to provide services for small to
 [`DB sync`](#db-sync),
 [`Launcher convert`](#launch-action),
 [`Event server`](#eserver),
-[`Hooks`](#hooks)
-</br>
+[`Hooks`](#hooks)</br>
 > **Release date**: winter 2018 </br>
 
 </br></br>
