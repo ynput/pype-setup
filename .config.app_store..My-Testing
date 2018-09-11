@@ -92,6 +92,34 @@ path = "{root}/bin/Resolve"
     path = "{app_store.path}/avalon-resolve/avalon_resolve"
     qt = "{app_store.avalon.resolve.path}/vendor/Qt"
 
+### Blender
+[avalon.blender]
+    git = "git@github.com:pypeclub/avalon-blender.git|master" # brach is optional
+    url = "https://github.com/pypeclub/avalon-blender/archive/master.zip"
+    path = "{app_store.path}/avalon-blender/avalon_blender"
+    qt = "{app_store.avalon.blender.path}/vendor/Qt"
+
+### Photoshop
+[avalon.photoshop]
+    git = "git@github.com:pypeclub/avalon-photoshop.git|master" # brach is optional
+    url = "https://github.com/pypeclub/avalon-photoshop/archive/master.zip"
+    path = "{app_store.path}/avalon-photoshop/avalon_photoshop"
+    qt = "{app_store.avalon.photoshop.path}/vendor/Qt"
+
+### After Effects
+[avalon.aftereffects]
+    git = "git@github.com:pypeclub/avalon-aftereffects.git|master" # brach is optional
+    url = "https://github.com/pypeclub/avalon-aftereffects/archive/master.zip"
+    path = "{app_store.path}/avalon-aftereffects/avalon_aftereffects"
+    qt = "{app_store.avalon.aftereffects.path}/vendor/Qt"
+
+### Ftrack
+[avalon.ftrack]
+    git = "git@github.com:pypeclub/avalon-ftrack.git|master" # brach is optional
+    url = "https://github.com/pypeclub/avalon-ftrack/archive/master.zip"
+    path = "{app_store.path}/avalon-ftrack/avalon_ftrack"
+    qt = "{app_store.avalon.ftrack.path}/vendor/Qt"
+
 
 ## additional plugins
 
