@@ -6,18 +6,6 @@
 	path = app_store/pyblish-base
 	url = git@github.com:pypeclub/pyblish-base.git
 	branch = master
-[submodule "app_store/studio-config"]
-	path = app_store/studio-config
-	url = git@github.com:pypeclub/studio-config.git
-	branch = master
-[submodule "app_store/studio-templates"]
-	path = app_store/studio-templates
-	url = git@github.com:pypeclub/studio-templates.git
-	branch = master
-[submodule "app_store/studio-projects"]
-	path = app_store/studio-projects
-	url = git@github.com:pypeclub/studio-templates.git
-	branch = master
 [submodule "app_store/avalon-hudini"]
 	path = app_store/avalon-hudini
 	url = git@github.com:pypeclub/avalon-hudini.git
@@ -49,4 +37,16 @@
 [submodule "app_store/avalon-resolve"]
 	path = app_store/avalon-resolve
 	url = git@github.com:pypeclub/avalon-resolve.git
+	branch = master
+[submodule "app_store/studio-templates"]
+	path = app_store/studio-templates
+	url = git@github.com:pypeclub/studio-templates.git
+	branch = master
+[submodule "app_store/studio-projects"]
+	path = app_store/studio-projects
+	url = git@github.com:pypeclub/studio-projects.git
+	branch = master
+[submodule "app_store/studio-config"]
+	path = app_store/studio-config
+	url = git@github.com:pypeclub/studio-config.git
 	branch = master
