@@ -22,115 +22,78 @@ path = "{root}/bin/Resolve"
 
 
 ## ADITIONAL PLUGINS
-### Users
-[avalon.users]
-    git = "git@github.com:pypeclub/avalon-users.git|master" # brach is optional
-    zip = "https://github.com/pypeclub/avalon-users/archive/master.zip"
-    path = "{app_store.path}/avalon-users/users"
-    # demonstration purouse only > this will come later from the tool itself
-    menu = ['Config User', 'Create new user',]
 
-### Config - in this case used as default, but if custom, then linked to
-### company own config repository
-[avalon.config]
-    git = "git@github.com:pypeclub/avalon-config.git|master" # brach is optional
-    zip = "https://github.com/pypeclub/avalon-config/archive/master.zip"
-    path = "{app_store.path}/avalon-config/config"
+## studio configs
+### config
+[studio.config]
+    git = "git@github.com:pypeclub/studio-config.git|master" # brach is optional
+    path = "{app_store.path}/studio-config/config"
 
-### avalon-template
-[avalon.template]
-    git = "git@github.com:pypeclub/avalon-template.git|master" # brach is optional
-    zip = "https://github.com/pypeclub/avalon-template/archive/master.zip"
-    path = "{app_store.path}/avalon-template/template"
-    qt = "{app_store.avalon.template.path}/vendor/Qt"
-    # demonstration purouse only > this will come later from the tool itself
-    menu = ['Create new template', '______', 'Templates manager']
+### templates
+[studio.templates]
+    git = "git@github.com:pypeclub/studio-templates.git|master" # brach is optional
+    path = "{app_store.path}/studio-templates/templates"
 
-### academy >> input search engine to find answer or tutorial > within `avalon.tray`
-[avalon.academy]
-    git = "git@github.com:pypeclub/avalon-academy.git|master"
-    zip = "https://github.com/pypeclub/avalon-academy/archive/master.zip"
-    path = "{app_store.path}/avalon-academy/academy"
-    qt = "{app_store.avalon.academy.path}/vendor/Qt"
-    # demonstration purouse only > this will come later from the tool itself
-    menu = ['Config Academy', '______', 'Submit new',]
+### projects
+[studio.projects]
+    git = "git@github.com:pypeclub/studio-projects.git|master" # brach is optional
+    path = "{app_store.path}/studio-projects/projects"
 
 
 # INTEGRATIONS
 ### Maya
 [avalon.maya]
     git = "git@github.com:pypeclub/avalon-maya.git|master" # brach is optional
-    zip = "https://github.com/pypeclub/avalon-maya/archive/master.zip"
     path = "{app_store.path}/avalon-maya/avalon_maya"
     qt = "{app_store.avalon.maya.path}/vendor/Qt"
 
 ### Nuke
 [avalon.nuke]
     git = "git@github.com:pypeclub/avalon-nuke.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-nuke/archive/master.zip"
     path = "{app_store.path}/avalon-nuke/avalon_nuke"
     qt = "{app_store.avalon.nuke.path}/vendor/Qt"
 
 ### Fusion
 [avalon.fusion]
     git = "git@github.com:pypeclub/avalon-fusion.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-fusion/archive/master.zip"
     path = "{app_store.path}/avalon-fusion/avalon_fusion"
     qt = "{app_store.avalon.fusion.path}/vendor/Qt"
 
 ### Hudini
 [avalon.hudini]
     git = "git@github.com:pypeclub/avalon-hudini.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-hudini/archive/master.zip"
     path = "{app_store.path}/avalon-hudini/avalon_hudini"
     qt = "{app_store.avalon.hudini.path}/vendor/Qt"
 
 ### Resolve
 [avalon.resolve]
     git = "git@github.com:pypeclub/avalon-resolve.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-resolve/archive/master.zip"
     path = "{app_store.path}/avalon-resolve/avalon_resolve"
     qt = "{app_store.avalon.resolve.path}/vendor/Qt"
 
 ### Blender
 [avalon.blender]
     git = "git@github.com:pypeclub/avalon-blender.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-blender/archive/master.zip"
     path = "{app_store.path}/avalon-blender/avalon_blender"
     qt = "{app_store.avalon.blender.path}/vendor/Qt"
 
 ### Photoshop
 [avalon.photoshop]
     git = "git@github.com:pypeclub/avalon-photoshop.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-photoshop/archive/master.zip"
     path = "{app_store.path}/avalon-photoshop/avalon_photoshop"
     qt = "{app_store.avalon.photoshop.path}/vendor/Qt"
 
 ### After Effects
 [avalon.aftereffects]
     git = "git@github.com:pypeclub/avalon-aftereffects.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-aftereffects/archive/master.zip"
     path = "{app_store.path}/avalon-aftereffects/avalon_aftereffects"
     qt = "{app_store.avalon.aftereffects.path}/vendor/Qt"
 
 ### Ftrack
 [avalon.ftrack]
     git = "git@github.com:pypeclub/avalon-ftrack.git|master" # brach is optional
-    url = "https://github.com/pypeclub/avalon-ftrack/archive/master.zip"
     path = "{app_store.path}/avalon-ftrack/avalon_ftrack"
     qt = "{app_store.avalon.ftrack.path}/vendor/Qt"
 
 
-## additional plugins
-
-# ### CG-Wire
-# [cg-wire]
-# menu = ['Config CG-wire','______','Pull database','Push database']
-#
-# #### Zou
-# [cg-wire.zou]
-#     git = "https://github.com/cgwire/zou.git"
-#     "git.branch" = "master"
-#     url = "https://github.com/cgwire/zou/archive/master.zip"
-#     path = "{root}/resources/app_store/cgwire/zou"
-#     qt = "{app_store.avalon.blender.path}/vendor/Qt"
+## additional plugins bellow please

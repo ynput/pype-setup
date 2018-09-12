@@ -13,7 +13,6 @@
 ##############################################################################
 [avalon]
     git = "git@github.com:pypeclub/avalon-core.git|master" # brach is optional
-    zip = "https://github.com/pypeclub/avalon-core/archive/master.zip"
     path = "{app_store.path}/avalon-core/avalon"
     qt = "{root}/python[/__DEV__]/Qt5"
     # demonstration purouse only > this will come later from the tool itself
@@ -21,13 +20,11 @@
 
 [avalon.launcher]
     git = "git@github.com:pypeclub/avalon-launcher.git|master" # brach is optional
-    zip = "https://github.com/pypeclub/avalon-launcher/archive/master.zip"
     path = "{app_store.path}/avalon-launcher/launcher"
     qt = "{root}/python[/__DEV__]/Qt5"
 
 [pyblish]
     git = "git@github.com:pypeclub/pyblish-base.git|master" # brach is optional
-    zip = "https://github.com/pyblish/pyblish-base/archive/master.zip"
     path = "{app_store.path}/pyblish-base/pyblish"
     qt = "{root}/python[/__DEV__]/Qt5"
     # microplugin manager: spin of [w_hotbox](http://www.nukepedia.com/python/ui/w_hotbox)
@@ -35,39 +32,39 @@
 
 [pyblish.qml]
     git = "git@github.com:pypeclub/pyblish-qml.git|master" # brach is optional
-    zip = "https://github.com/pyblish/pyblish-qml/archive/master.zip"
     path = "{app_store.path}/pyblish-qml/pyblish_qml"
     qt = "{root}/python[/__DEV__]/Qt5"
 
 
-[databases]
-    [databases.mongo]
-    server = "192.168.1.10"
-    ports = [8001, 8002]
-    connection_max = 5000
-    enabled = true
+[databases.mongo]
+  ip = "192.168.1.10"
+  ports = [8001, 8002]
+  connection_max = 5000
+  enabled = true
 
-    [databases.mongo.install]
-    git = "" # path to our db git bakup
-    url = "http://downloads.mongodb.org/win32/mongodb-win32-x86_64-2008plus-ssl-v4.0-latest-signed.msi" # path to download files for installation
-    path = ""
+[databases.mongo.install]
+  git = "" # path to our db git bakup
+  url = "http://downloads.mongodb.org/win32/mongodb-win32-x86_64-2008plus-ssl-v4.0-latest-signed.msi" # path to download files for installation
+  path = ""
 
-    [databases.ftrack]
-    server = "192.168.1.2"
-    ports = [5790, 5791]
-    connection_max = 5000
-    enabled = true
+[databases.ftrack]
+  ip = "192.168.1.2"
+  ports = [5790, 5791]
+  connection_max = 5000
+  enabled = true
 
-    [databases.ftrack-connect.install]
-    git = "" # path to our db git bakup
-    url = "" # path to download files for installation
-    path = "" # path to installation (can be `unc` even on windows)
+[[storages]]
+  location = "kr-01"
+  ip = "10.0.0.1"
+  name = "projects"
+  mount.windows = "P:/projects"
+  mount.mac = "/Volume/projects"
+  mount.linux = "/mnt/projects"
 
-[storages]
-    [storage.alpha]
-    ip = "10.0.0.1"
-    dc = "//alpha"
-
-    [storage.beta]
-    ip = "10.0.0.2"
-    dc = "storage01"
+[[storages]]
+  location = "kr-02"
+  ip = "10.0.0.2"
+  name = "pipeline"
+  mount.windows = "I:/pipeline"
+  mount.mac = "/Volume/pipeline"
+  mount.linux = "/mnt/pipeline"
