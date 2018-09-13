@@ -46,3 +46,7 @@
 	path = app_store/studio-projects
 	url = git@github.com:pypeclub/studio-projects.git
 	branch = master
+[submodule "app_store/studio-config"]
+	path = app_store/studio-config
+	url = git@github.com:pypeclub/studio-config.git
+	branch = master
