@@ -3,7 +3,12 @@
 #
 
 # set verson we are looking for in default nuke installation dir
-version = "11.1v4"
+# every new releaced version added here
+versions = ["11.1v4", "11.2v3"]
+# VERSION[exe_name_split[0]:exe_name_split[1]]
+exe_name_split = [0:-2]
+# used for creating name used on executables
+name_template = "Nuke{version[0:-2]}"
 
 [platform]
 windows = 'C:\\Program Files\Nuke'

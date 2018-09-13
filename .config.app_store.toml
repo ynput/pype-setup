@@ -27,72 +27,72 @@ path = "{root}/bin/Resolve"
 ### config
 [studio.config]
     git = "git@github.com:pypeclub/studio-config.git|master" # brach is optional
-    path = "{app_store.path}/studio-config/config"
+    path = "{app_store.path}/studio-config"
 
 ### templates
 [studio.templates]
     git = "git@github.com:pypeclub/studio-templates.git|master" # brach is optional
-    path = "{app_store.path}/studio-templates/templates"
+    path = "{app_store.path}/studio-templates"
 
 ### projects
 [studio.projects]
     git = "git@github.com:pypeclub/studio-projects.git|master" # brach is optional
-    path = "{app_store.path}/studio-projects/projects"
+    path = "{app_store.path}/studio-projects"
 
 
 # INTEGRATIONS
 ### Maya
 [avalon.maya]
     git = "git@github.com:pypeclub/avalon-maya.git|master" # brach is optional
-    path = "{app_store.path}/avalon-maya/avalon_maya"
+    path = "{app_store.path}/avalon-maya"
     qt = "{app_store.avalon.maya.path}/vendor/Qt"
 
 ### Nuke
 [avalon.nuke]
     git = "git@github.com:pypeclub/avalon-nuke.git|master" # brach is optional
-    path = "{app_store.path}/avalon-nuke/avalon_nuke"
+    path = "{app_store.path}/avalon-nuke"
     qt = "{app_store.avalon.nuke.path}/vendor/Qt"
 
 ### Fusion
 [avalon.fusion]
     git = "git@github.com:pypeclub/avalon-fusion.git|master" # brach is optional
-    path = "{app_store.path}/avalon-fusion/avalon_fusion"
+    path = "{app_store.path}/avalon-fusion"
     qt = "{app_store.avalon.fusion.path}/vendor/Qt"
 
 ### Hudini
 [avalon.hudini]
     git = "git@github.com:pypeclub/avalon-hudini.git|master" # brach is optional
-    path = "{app_store.path}/avalon-hudini/avalon_hudini"
+    path = "{app_store.path}/avalon-hudini"
     qt = "{app_store.avalon.hudini.path}/vendor/Qt"
 
 ### Resolve
 [avalon.resolve]
     git = "git@github.com:pypeclub/avalon-resolve.git|master" # brach is optional
-    path = "{app_store.path}/avalon-resolve/avalon_resolve"
+    path = "{app_store.path}/avalon-resolve"
     qt = "{app_store.avalon.resolve.path}/vendor/Qt"
 
 ### Blender
 [avalon.blender]
     git = "git@github.com:pypeclub/avalon-blender.git|master" # brach is optional
-    path = "{app_store.path}/avalon-blender/avalon_blender"
+    path = "{app_store.path}/avalon-blender"
     qt = "{app_store.avalon.blender.path}/vendor/Qt"
 
 ### Photoshop
 [avalon.photoshop]
     git = "git@github.com:pypeclub/avalon-photoshop.git|master" # brach is optional
-    path = "{app_store.path}/avalon-photoshop/avalon_photoshop"
+    path = "{app_store.path}/avalon-photoshop"
     qt = "{app_store.avalon.photoshop.path}/vendor/Qt"
 
 ### After Effects
 [avalon.aftereffects]
     git = "git@github.com:pypeclub/avalon-aftereffects.git|master" # brach is optional
-    path = "{app_store.path}/avalon-aftereffects/avalon_aftereffects"
+    path = "{app_store.path}/avalon-aftereffects"
     qt = "{app_store.avalon.aftereffects.path}/vendor/Qt"
 
 ### Ftrack
 [avalon.ftrack]
     git = "git@github.com:pypeclub/avalon-ftrack.git|master" # brach is optional
-    path = "{app_store.path}/avalon-ftrack/avalon_ftrack"
+    path = "{app_store.path}/avalon-ftrack"
     qt = "{app_store.avalon.ftrack.path}/vendor/Qt"
 
 
