@@ -10,19 +10,19 @@
 	path = app_store/studio-config
 	url = git@github.com:pypeclub/studio-config.git
 	branch = master
-[submodule "app/reps/avalon-core"]
-	path = app/reps/avalon-core
+[submodule "app/repos/avalon-core"]
+	path = app/repos/avalon-core
 	url = https://github.com/getavalon/core.git
 	branch = master
-[submodule "app/reps/avalon-launcher"]
-	path = app/reps/avalon-launcher
+[submodule "app/repos/avalon-launcher"]
+	path = app/repos/avalon-launcher
 	url = https://github.com/getavalon/launcher.git
 	branch = master
-[submodule "app/reps/pyblish-base"]
-	path = app/reps/pyblish-base
+[submodule "app/repos/pyblish-base"]
+	path = app/repos/pyblish-base
 	url = https://github.com/pyblish/pyblish-base.git
 	branch = master
-[submodule "app/reps/pyblish-qml"]
-	path = app/reps/pyblish-qml
+[submodule "app/repos/pyblish-qml"]
+	path = app/repos/pyblish-qml
 	url = https://github.com/pyblish/pyblish-qml.git
 	branch = master
