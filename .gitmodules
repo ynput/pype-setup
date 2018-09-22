@@ -1,43 +1,3 @@
-[submodule "app_store/avalon-core"]
-	path = app_store/avalon-core
-	url = git@github.com:pypeclub/avalon-core.git
-	branch = master
-[submodule "app_store/pyblish-base"]
-	path = app_store/pyblish-base
-	url = git@github.com:pypeclub/pyblish-base.git
-	branch = master
-[submodule "app_store/avalon-hudini"]
-	path = app_store/avalon-hudini
-	url = git@github.com:pypeclub/avalon-hudini.git
-	branch = master
-[submodule "app_store/avalon-launcher"]
-	path = app_store/avalon-launcher
-	url = git@github.com:pypeclub/avalon-launcher.git
-	branch = master
-[submodule "app_store/avalon-nuke"]
-	path = app_store/avalon-nuke
-	url = git@github.com:pypeclub/avalon-nuke.git
-	branch = master
-[submodule "app_store/avalon-maya"]
-	path = app_store/avalon-maya
-	url = git@github.com:pypeclub/avalon-maya.git
-	branch = master
-[submodule "app_store/avalon-hiero"]
-	path = app_store/avalon-hiero
-	url = git@github.com:pypeclub/avalon-hiero.git
-	branch = master
-[submodule "app_store/pyblish-qml"]
-	path = app_store/pyblish-qml
-	url = git@github.com:pypeclub/pyblish-qml.git
-	branch = master
-[submodule "app_store/avalon-fusion"]
-	path = app_store/avalon-fusion
-	url = git@github.com:pypeclub/avalon-fusion.git
-	branch = master
-[submodule "app_store/avalon-resolve"]
-	path = app_store/avalon-resolve
-	url = git@github.com:pypeclub/avalon-resolve.git
-	branch = master
 [submodule "app_store/studio-templates"]
 	path = app_store/studio-templates
 	url = git@github.com:pypeclub/studio-templates.git
@@ -49,4 +9,20 @@
 [submodule "app_store/studio-config"]
 	path = app_store/studio-config
 	url = git@github.com:pypeclub/studio-config.git
+	branch = master
+[submodule "app/reps/avalon-core"]
+	path = app/reps/avalon-core
+	url = https://github.com/getavalon/core.git
+	branch = master
+[submodule "app/reps/avalon-launcher"]
+	path = app/reps/avalon-launcher
+	url = https://github.com/getavalon/launcher.git
+	branch = master
+[submodule "app/reps/pyblish-base"]
+	path = app/reps/pyblish-base
+	url = https://github.com/pyblish/pyblish-base.git
+	branch = master
+[submodule "app/reps/pyblish-qml"]
+	path = app/reps/pyblish-qml
+	url = https://github.com/pyblish/pyblish-qml.git
 	branch = master
