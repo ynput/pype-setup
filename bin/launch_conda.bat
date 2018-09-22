@@ -133,7 +133,7 @@ if "%REMOTE_ENV_ON%"=="1" (
 
 
 :: get all submodules and update them if they are not
-IF EXIST %~dp0avalon-setup\bin GOTO SUBMODULES_EXISTS
+IF EXIST %~dp0..\app\repos\avalon-core\avalon GOTO SUBMODULES_EXISTS
 echo [92m^>^>^>[0m Git submodules in [ [96m%~dp0avalon-setup[0m ] missing ...
 
 :: Initialize submodules
