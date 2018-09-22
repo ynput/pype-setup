@@ -1,13 +1,13 @@
-[submodule "app_store/studio-templates"]
-	path = app_store/studio-templates
+[submodule "studio/studio-templates"]
+	path = studio/studio-templates
 	url = git@github.com:pypeclub/studio-templates.git
 	branch = master
-[submodule "app_store/studio-projects"]
-	path = app_store/studio-projects
+[submodule "studio/studio-projects"]
+	path = studio/studio-projects
 	url = git@github.com:pypeclub/studio-projects.git
 	branch = master
-[submodule "app_store/studio-config"]
-	path = app_store/studio-config
+[submodule "studio/studio-config"]
+	path = studio/studio-config
 	url = git@github.com:pypeclub/studio-config.git
 	branch = master
 [submodule "app/repos/avalon-core"]
