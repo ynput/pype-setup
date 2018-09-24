@@ -11,7 +11,7 @@ if __name__ == "__main__":
     repository_path = os.getcwd()
     branch = 'dir-rework'
     repository_url = "git@github.com:pypeclub/pype-setup.git"
-	
+
     print("Making \"{0}\" into git repository.".format(repository_path))
 
     if IS_WIN32:
@@ -35,17 +35,13 @@ if __name__ == "__main__":
 
     # Copy .git directory from cloned repository
     tempdir = tempfile.mkdtemp()
-    git_clone = subprocess.Popen(["git", "clone", "-b", branch, repository_url], cwd=tempdir, env=_env, shell=True)
-    print("git_clone: ", git_clone)
+    subprocess.call(["git", "clone", repository_url], cwd=tempdir)
     src = os.path.join(tempdir, "avalon-environment", ".git")
     dst = os.path.join(repository_path, ".git")
     if not os.path.exists(dst):
         shutil.copytree(src, dst)
 
     # Initialising git repository
-    git_init = subprocess.Popen(["git", "init"], env=_env, shell=True)
-    git_checkout = subprocess.Popen(["git", "checkout", branch], env=_env, shell=True)
-    print("git_checkout: ", git_checkout)
-    print("git_init: ", git_init)
-    git_add = subprocess.Popen(["git", "add", "."], env=_env, shell=True)
-    print("git_add: ", git_add)
+    subprocess.Popen(["git", "init"])
+    subprocess.Popen(["git", "checkout", branch])
+    subprocess.call(["git", "add", "."])
