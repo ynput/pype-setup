@@ -26,3 +26,7 @@
 	path = app/repos/pyblish-qml
 	url = https://github.com/pyblish/pyblish-qml.git
 	branch = master
+[submodule "app/repos/avalon-examples"]
+	path = app/repos/avalon-examples
+	url = https://github.com/getavalon/examples.git
+	branch = master
