@@ -63,7 +63,7 @@ echo [92m^>^>^>[0m Remote environemt in [ [96m%REMOTE_ENV_DIR%[0m ]
 :: Set minimum PATH for conda to function.
 :: PATH has to have "C:\Windows\System32" for conda to function properly.
 :: Specifically for "cmd" and "chcp" executables.
-set PATH=%INSTALLATION_DIRECTORY%\Scripts;%PATH_ORIG%
+set PATH=%INSTALLATION_DIRECTORY%\Scripts;C:\Windows\System32
 
 :: Activate conda by activating the root environment
 call activate root
@@ -124,10 +124,10 @@ if "%SYNC_ENV%"=="1" (
 )
 
 if "%REMOTE_ENV_ON%"=="1" (
-    set PATH="%REMOTE_ENV_DIR%";"%REMOTE_ENV_DIR%\Scripts";"%PATH%"
+    set PATH="%REMOTE_ENV_DIR%";"%REMOTE_ENV_DIR%\Scripts";"%REMOTE_ENV_DIR%\Library\bin";"C:\Windows\System32"
     echo [92m^>^>^>[0m Running env from: [ [96m"%REMOTE_ENV_DIR%"[0m ]
 ) else (
-    set PATH="%LOCAL_ENV_DIR%";"%LOCAL_ENV_DIR%\Scripts";"%PATH%"
+    set PATH="%LOCAL_ENV_DIR%";"%LOCAL_ENV_DIR%\Scripts";"%LOCAL_ENV_DIR%\Library\bin";"C:\Windows\System32"
     echo [92m^>^>^>[0m Running env from: [ [96m"%LOCAL_ENV_DIR%"[0m ]
 )
 
