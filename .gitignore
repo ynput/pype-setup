@@ -4,4 +4,4 @@
 __pycache__/
 *.py[cod]
 bin/python
-app/bin
+app/_bin
