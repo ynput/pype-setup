@@ -7,8 +7,9 @@ set PATH=%~dp0app;%PATH%
 
 set AVALON_CONFIG=config
 set AVALON_LAUNCHER=%~dp0app\repos\avalon-launcher
-set AVALON_PYTHONPATH=%~dp0..\..\avalon-core-toke-nuke
-::%~dp0app\repos\avalon-core
+set AVALON_PYTHONPATH=%~dp0app\repos\avalon-core
+set AVALON_EXAMPLES=%~dp0app\repos\avalon-examples
+::%~dp0..\..\avalon-core-toke-nuke
 set AVALON_CORE=%AVALON_PYTHONPATH%
 
 set AVALON_MONGO=mongodb://localhost:27017
