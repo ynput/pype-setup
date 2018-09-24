@@ -2,7 +2,9 @@ import os
 import shutil
 import subprocess
 import tempfile
+import sys
 
+IS_WIN32 = sys.platform == "win32"
 
 if __name__ == "__main__":
 
@@ -12,14 +14,36 @@ if __name__ == "__main__":
 
     print("Making \"{0}\" into git repository.".format(repository_path))
 
+    if IS_WIN32:
+        _env = {
+            key: os.getenv(key)
+            for key in ("USERNAME",
+                        "SYSTEMROOT",
+                        "PYTHONPATH",
+                        "PATH")
+            if os.getenv(key)
+        }
+    else:
+    # OSX and Linux users are left to fend for themselves.
+        _env = os.environ.copy()
+
+
+    for key in _env.items():
+        print(key)
+        if key in ("PATH","PYTHONPATH"):
+            print(key, value)
+
     # Copy .git directory from cloned repository
     tempdir = tempfile.mkdtemp()
-    subprocess.call(["git", "clone", repository_url], cwd=tempdir)
+    git_clone = subprocess.Popen(["git", "clone", repository_url], cwd=tempdir, env=_env, shell=True)
+    print("git_clone: ", git_clone)
     src = os.path.join(tempdir, "avalon-environment", ".git")
     dst = os.path.join(repository_path, ".git")
     if not os.path.exists(dst):
         shutil.copytree(src, dst)
 
     # Initialising git repository
-    subprocess.call(["git", "init"])
-    subprocess.call(["git", "add", "."])
+    git_init = subprocess.Popen(["git", "init"], env=_env, shell=True)
+    print("git_init: ", git_init)
+    git_add = subprocess.Popen(["git", "add", "."], env=_env, shell=True)
+    print("git_add: ", git_add)
