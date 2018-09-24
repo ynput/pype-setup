@@ -35,13 +35,13 @@ if __name__ == "__main__":
 
     # Copy .git directory from cloned repository
     tempdir = tempfile.mkdtemp()
-    subprocess.call(["git", "clone", repository_url], cwd=tempdir)
+    subprocess.call(["git", "clone", repository_url], cwd=tempdir, shell=True)
     src = os.path.join(tempdir, "avalon-environment", ".git")
     dst = os.path.join(repository_path, ".git")
     if not os.path.exists(dst):
         shutil.copytree(src, dst)
 
     # Initialising git repository
-    subprocess.Popen(["git", "init"])
-    subprocess.Popen(["git", "checkout", branch])
-    subprocess.call(["git", "add", "."])
+    subprocess.Popen(["git", "init"], shell=True)
+    subprocess.Popen(["git", "checkout", branch], shell=True)
+    subprocess.call(["git", "add", "."], shell=True)
