@@ -2,9 +2,6 @@
 title Avalon conda environment setup
 cls :: clear the screen command
 
-:: set path_orig to protect it to downstream
-set PATH_ORIG=%PATH%
-
 :: Change the working directory to the conda-git-deployment directory.
 :: "pushd" is being used so any UNC paths get mapped until a restart happens.
 pushd %~dp0
