@@ -1,4 +1,16 @@
+import os
+import sys
 import re
+import toml
+
+
+'''
+TODO: function for reading from toml
+TODO: function for writing to toml
+TODO: check if shema validate can be used
+TODO: check if precaching function can be used
+TODO: cached versions of software tomls to ~/.pype/software
+'''
 
 
 class _dic_to_nested_obj(dict):
