@@ -1,0 +1,12 @@
+executable = "Nuke11"
+schema = "avalon-core:application-1.0"
+application_dir = "nuke"
+label = "Nuke11.2v3 Non-commercial"
+
+[environment]
+# NUKE_PATH = [
+#   "{AVALON_CORE}/setup/nuke/NUKE_PATH",
+# #   "{AVALON_CORE}/setup/nuke/tools"
+# ]
+PYBLISH_QML_PYQT5='{LOCAL_ENV_DIR}\Lib\site-packages\PyQt5'
+PYBLISH_QML_PYTHON_EXECUTABLE='{LOCAL_ENV_DIR}\python.exe'

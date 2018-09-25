@@ -1,52 +1,32 @@
-[submodule "app_store/avalon-core"]
-	path = app_store/avalon-core
-	url = git@github.com:pypeclub/avalon-core.git
+[submodule "studio/studio-templates"]
+	path = studio/studio-templates
+	url = git@github.com:pypeclub/studio-templates.git
 	branch = master
-[submodule "app_store/pyblish-base"]
-	path = app_store/pyblish-base
-	url = git@github.com:pypeclub/pyblish-base.git
+[submodule "studio/studio-projects"]
+	path = studio/studio-projects
+	url = git@github.com:pypeclub/studio-projects.git
 	branch = master
-[submodule "app_store/studio-config"]
-	path = app_store/studio-config
+[submodule "studio/studio-config"]
+	path = studio/studio-config
 	url = git@github.com:pypeclub/studio-config.git
 	branch = master
-[submodule "app_store/studio-templates"]
-	path = app_store/studio-templates
-	url = git@github.com:pypeclub/studio-templates.git
+[submodule "app/repos/avalon-core"]
+	path = app/repos/avalon-core
+	url = https://github.com/getavalon/core.git
 	branch = master
-[submodule "app_store/studio-projects"]
-	path = app_store/studio-projects
-	url = git@github.com:pypeclub/studio-templates.git
+[submodule "app/repos/avalon-launcher"]
+	path = app/repos/avalon-launcher
+	url = https://github.com/getavalon/launcher.git
 	branch = master
-[submodule "app_store/avalon-hudini"]
-	path = app_store/avalon-hudini
-	url = git@github.com:pypeclub/avalon-hudini.git
+[submodule "app/repos/pyblish-base"]
+	path = app/repos/pyblish-base
+	url = https://github.com/pyblish/pyblish-base.git
 	branch = master
-[submodule "app_store/avalon-launcher"]
-	path = app_store/avalon-launcher
-	url = git@github.com:pypeclub/avalon-launcher.git
+[submodule "app/repos/pyblish-qml"]
+	path = app/repos/pyblish-qml
+	url = https://github.com/pyblish/pyblish-qml.git
 	branch = master
-[submodule "app_store/avalon-nuke"]
-	path = app_store/avalon-nuke
-	url = git@github.com:pypeclub/avalon-nuke.git
-	branch = master
-[submodule "app_store/avalon-maya"]
-	path = app_store/avalon-maya
-	url = git@github.com:pypeclub/avalon-maya.git
-	branch = master
-[submodule "app_store/avalon-hiero"]
-	path = app_store/avalon-hiero
-	url = git@github.com:pypeclub/avalon-hiero.git
-	branch = master
-[submodule "app_store/pyblish-qml"]
-	path = app_store/pyblish-qml
-	url = git@github.com:pypeclub/pyblish-qml.git
-	branch = master
-[submodule "app_store/avalon-fusion"]
-	path = app_store/avalon-fusion
-	url = git@github.com:pypeclub/avalon-fusion.git
-	branch = master
-[submodule "app_store/avalon-resolve"]
-	path = app_store/avalon-resolve
-	url = git@github.com:pypeclub/avalon-resolve.git
+[submodule "app/repos/avalon-examples"]
+	path = app/repos/avalon-examples
+	url = https://github.com/getavalon/examples.git
 	branch = master

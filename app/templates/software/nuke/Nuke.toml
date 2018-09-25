@@ -1,0 +1,21 @@
+# basic software setting
+
+[discover]
+  # platform.system()
+  path = {windows = ["C:/Program Files",], linux = ["/usr/local",], darwin = ["/Applications",]}
+
+[executable]
+  version_compile = r'(?P<version>\d+[.]\d[v]\d)' # release version, re.compile expression
+  windows = "{software.name}{version}/{software.name}{version[0:-2]}.exe" # {software.name} corresponds to the name of toml file
+  linux = "{software.name}{version}/{software.name}{version[0:-2]}"
+  darvin = "{software.name}{version}/{software.name}{version}.app/Contents/MacOS/{software.name}{version}"
+  # path = platform and version compiled path, this key is generated on fly
+
+path = "{discover.path}/{executable.path}"
+
+icon = "{discover.path}/{software.name}{version}/plugins/icons/NukeApp64.png"
+
+flags = [""]
+
+[environment]
+  main = ["avalon", "pyblish", "qml"]
