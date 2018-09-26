@@ -9,7 +9,7 @@
 [submodule "studio/studio-config"]
 	path = studio/studio-config
 	url = git@github.com:pypeclub/studio-config.git
-	branch = master
+	branch = initialisation
 [submodule "app/repos/avalon-launcher"]
 	path = app/repos/avalon-launcher
 	url = https://github.com/getavalon/launcher.git
@@ -33,4 +33,4 @@
 [submodule "app/repos/avalon-core"]
 	path = app/repos/avalon-core
 	url = git@github.com:pypeclub/avalon-core.git
-	branch = master
+	branch = pypeclub-nuke-workflow-jezschaj

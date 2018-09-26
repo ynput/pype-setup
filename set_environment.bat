@@ -17,8 +17,12 @@ set AVALON_CORE=%AVALON_PYTHONPATH%
 set AVALON_DB_DATA=C:\data\db
 set AVALON_MONGO=mongodb://localhost:27017
 
+:: studio
+set PYPE_STUDIO_CONFIG=%~dp0studio\studio-config
+set PYPE_STUDIO_TEMPLATES=%~dp0studio\studio-templates
+
 :: Setup PYTHONPATH
 set PYTHONPATH=%~dp0app\repos\pyblish-base;%PYTHONPATH%
 set PYTHONPATH=%~dp0app\repos\pyblish-qml;%PYTHONPATH%
 set PYTHONPATH=%~dp0app\repos\pyblish-lite;%PYTHONPATH%
-set PYTHONPATH=%~dp0studio\studio-config;%PYTHONPATH%
+set PYTHONPATH=%PYPE_STUDIO_CONFIG%;%PYTHONPATH%

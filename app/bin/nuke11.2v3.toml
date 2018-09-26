@@ -8,5 +8,6 @@ PYBLISH_GUI = [
         "lite"
     ]
 NUKE_PATH = [
-  "{AVALON_CORE}/setup/nuke"
+  "{AVALON_CORE}/setup/nuke",
+  "{PYPE_STUDIO_CONFIG}/setup/nuke/nuke_path"
 ]
