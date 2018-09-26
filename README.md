@@ -63,3 +63,5 @@
 
 
 4. any additional python packages for avalon could be added into `app/bin/pythonpath`
+
+5. back up Atoms settings by `atom/menu/packages/synchronize settings/backup`. It is recommended to do so before any new package is installed or changed settings. This way you can always go back by `.../restore`
