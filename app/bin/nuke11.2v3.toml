@@ -4,9 +4,9 @@ application_dir = "nuke"
 label = "Nuke11.2v3"
 
 [environment]
+PYBLISH_GUI = [
+        "lite"
+    ]
 NUKE_PATH = [
-  "{AVALON_CORE}/setup/nuke",
-#   "{AVALON_CORE}/setup/nuke/tools"
+  "{AVALON_CORE}/setup/nuke"
 ]
-PYBLISH_QML_PYQT5='{LOCAL_ENV_DIR}\Lib\site-packages\PyQt5'
-PYBLISH_QML_PYTHON_EXECUTABLE='{LOCAL_ENV_DIR}\python.exe'

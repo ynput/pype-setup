@@ -1,3 +1,5 @@
-call %~dp0bin\launch_conda.bat
-set AVALON_DB_DATA=C:\data\db
+set SYNC_ENV=0
+set REMOTE_ENV_ON=0
+call %~dp0set_environment.bat
+
 call python %~dp0bin\server.py %*

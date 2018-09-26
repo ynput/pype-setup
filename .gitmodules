@@ -30,3 +30,7 @@
 	path = app/repos/avalon-examples
 	url = https://github.com/getavalon/examples.git
 	branch = master
+[submodule "app/repos/pyblish-lite"]
+	path = app/repos/pyblish-lite
+	url = https://github.com/pyblish/pyblish-lite.git
+	branch = master
