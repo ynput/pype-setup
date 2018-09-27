@@ -11,3 +11,4 @@ dependencies:
     - pep8
     - jedi
     - flake8
+    - psutil
