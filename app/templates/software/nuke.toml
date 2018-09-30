@@ -1,0 +1,48 @@
+
+# path which to look into and search for available versions
+[_discover_]
+  path = "{PYPE_STUDIO_SOFTWARE}/nuke"
+
+# attributes for dynamic launcher generator
+[_exe_build_]
+  version_pattern = r'(?P<version>\d+[.]\d[v]\d)' # release version, re.compile expression
+  available_versions = [] # leave it empty it will be dynamically appended
+
+  # platform dependent part {software} is taken from this file name
+  # path will be converted from dict() to string just with platform related path
+  "path.windows" = "{software}{version}/{software}{version[0:-2]}.exe"
+  "path.linux" = "{software}{version}/{software}{version[0:-2]}"
+  "path.darvin" = "{software}{version}/{software}{version}.app/Contents/MacOS/{software}{version}"
+
+[_cmd_]
+  flags = [""]
+  splash = ""
+  path = "{_discover_.path}/{_exe_build_.path}"
+  # for subprocess.call()
+  command = ["{_required_.label}", "{_cmd_.path}", "{_cmd_.flags}"]
+
+[_required_]
+  schema = "avalon-core:application-1.0"
+  label = "{software} - {version}"
+  application_dir = "{software}"
+  description = "Node based compositing software"
+  icon = "{_discover_.path}/{software}{version}/plugins/icons/NukeApp64.png"
+  default_dirs = []
+  executable = "{software}{version}"
+
+[_required_.environment]
+  NUKE_PATH = [
+  "{AVALON_CORE}/setup/nuke",
+  "{PYPE_STUDIO_TOOLS}/nuke/{platform}",
+  "{PYPE_STUDIO_TOOLS}/nuke/{platform}/{version[0:-4]}" # only release version,
+  "{PYPE_STUDIO_TOOLS}/nuke/common"
+  ]
+
+[environment]
+  # added from software/common
+  software = [
+  "ocio",
+  "ffmpeg",
+  "djv-viewer"
+  "deadline"
+  ]

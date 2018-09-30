@@ -99,11 +99,12 @@ def _install(root=None):
     # Enable overriding from local environment
     for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
                              ("PYBLISH_QML", "pyblish-qml"),
+                             ("PYBLISH_LITE", "pyblish-lite"),
                              ("AVALON_CORE", "avalon-core"),
                              ("AVALON_LAUNCHER", "avalon-launcher"),
                              ("AVALON_EXAMPLES", "avalon-examples")):
         if dependency not in os.environ:
-            os.environ[dependency] = os.path.join(REPO_DIR, "git", name)
+            os.environ[dependency] = os.path.join(REPO_DIR, "repos", name)
 
     os.environ["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
@@ -112,7 +113,10 @@ def _install(root=None):
         os.environ["PATH"],
 
         # Add generic binaries
-        os.path.join(REPO_DIR, "bin"),
+        os.path.join(REPO_DIR, "templates"),
+
+        # Add generic binaries
+        os.path.join(REPO_DIR, "templates", "software"),
 
         # Add OS-level dependencies
         os.path.join(REPO_DIR, "bin", platform.system().lower()),
@@ -122,11 +126,12 @@ def _install(root=None):
         # Append to PYTHONPATH
         os.getenv("PYTHONPATH", "").split(os.pathsep) + [
             # Third-party dependencies for Avalon
-            os.path.join(REPO_DIR, "bin", "pythonpath"),
+            os.path.join(REPO_DIR, "vendor"),
 
             # Default config and dependency
             os.getenv("PYBLISH_BASE"),
             os.getenv("PYBLISH_QML"),
+            os.getenv("PYBLISH_LITE"),
 
             # The Launcher itself
             os.getenv("AVALON_LAUNCHER"),
@@ -255,7 +260,7 @@ def main():
 
     cd = os.path.dirname(os.path.abspath(__file__))
     examplesdir = os.getenv("AVALON_EXAMPLES",
-                            os.path.join(cd, "git", "avalon-examples"))
+                            os.path.join(cd, "repos", "avalon-examples"))
 
     if kwargs.import_:
         fname = os.path.join(examplesdir, "import.py")

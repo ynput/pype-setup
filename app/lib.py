@@ -24,7 +24,8 @@ class _dic_to_nested_obj(dict):
 
     Arguments:
         dct (dictionary): nested dictionary
-        slicing_pairs (list): list of list pairs example: (key, list of two int())
+        slicing_pairs (list): list of list pairs example:
+        (key, list of two int())
     """
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
@@ -36,7 +37,9 @@ class _dic_to_nested_obj(dict):
                 value = _dic_to_nested_obj(value, slicing_pairs)
 
             try:
-                cut_from, cut_to = [found[1] for found in slicing_pairs if key in found[0]][0]
+                cut_from, cut_to = [found[1]
+                                    for found in slicing_pairs
+                                    if key in found[0]][0]
                 self[key] = value[cut_from:cut_to]
             except Exception:
                 self[key] = value
@@ -91,7 +94,13 @@ def _slicing(template):
     find_sliced = sliced_key.findall(template)
     for i, sliced in enumerate(find_sliced):
         slicing = slice_only.findall(sliced)
-        numbers_get = [int(n) for n in slicing[i].replace("[", "").replace("]", "").split(":")]
+        numbers_get = [
+            int(n) for n in slicing[i].replace(
+                "[", ""
+            ).replace(
+                "]", ""
+            ).split(":")
+        ]
         clean_key = sliced.replace(slicing[i], "")
         template = template.replace(slicing[i], "")
         pairs.append((clean_key, numbers_get))
@@ -109,6 +118,9 @@ def convert_template(template, data):
         data (directory): containing keys to be filled into template
     """
     template, slicing_pairs = _slicing(template)
-    converted = _solve_optional(template, _dic_to_nested_obj(data, slicing_pairs))
+    converted = _solve_optional(
+        template,
+        _dic_to_nested_obj(data, slicing_pairs)
+    )
 
     return converted
