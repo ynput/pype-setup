@@ -6,7 +6,7 @@ call %~dp0bin\launch_conda.bat
 set PATH=%~dp0app;%PATH%
 
 :: Setup Avalon
-set AVALON_CONFIG=config
+set AVALON_CONFIG=pype
 set AVALON_LAUNCHER=%~dp0app\repos\avalon-launcher
 set AVALON_PYTHONPATH=%~dp0app\repos\avalon-core
 set AVALON_EXAMPLES=%~dp0app\repos\avalon-examples
@@ -17,6 +17,8 @@ set AVALON_CORE=%AVALON_PYTHONPATH%
 set AVALON_DB_DATA=C:\data\db
 set AVALON_MONGO=mongodb://localhost:27017
 
+:: workfile Setup
+set AVALON_WORKFILE_TEMPLATE="{project[name]}_{task[name]}_v{version:0>3}<_{comment}>"
 :: studio
 set PYPE_STUDIO_CONFIG=%~dp0studio\studio-config
 set PYPE_STUDIO_TEMPLATES=%~dp0studio\studio-templates

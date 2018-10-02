@@ -81,6 +81,30 @@ def install():
         shutil.rmtree(tempdir)
 
 
+def _studio_depandecies():
+    # Studio repositories
+    add_to_path = []
+    add_to_pythonpath = []
+    for studio_env, name, directory, where in (
+        ("PYPE_STUDIO_CONFIG", "studio-config", "config", "pythonpath"),
+        ("PYPE_STUDIO_TEMPLATES", "studio-templates", "templates", "path"),
+        ("PYPE_STUDIO_PROJECTS", "studio-projects", "projects", "path"),
+    ):
+        if studio_env not in os.environ:
+            path = os.path.join(
+                os.path.dirname(REPO_DIR),
+                "studio",
+                name
+            )
+            if "path" in where:
+                path = os.path.join(path, directory)
+                add_to_path.append(path)
+            else:
+                add_to_pythonpath.append(path)
+            os.environ[studio_env] = path
+    return add_to_path, add_to_pythonpath
+
+
 def _install(root=None):
     missing_dependencies = list()
     for dependency in ("PyQt5",):
@@ -106,6 +130,14 @@ def _install(root=None):
         if dependency not in os.environ:
             os.environ[dependency] = os.path.join(REPO_DIR, "repos", name)
 
+    add_to_path, add_to_pythonpath = _studio_depandecies()
+
+    software = os.path.join(REPO_DIR, "templates",
+                            "software")  # if not os.environ["PYPE_STUDIO_TEMPLATES"] else ""
+
+    templates = os.path.join(REPO_DIR,
+                             "templates")  # if not os.environ["PYPE_STUDIO_TEMPLATES"] else ""
+
     os.environ["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
         os.path.join(REPO_DIR),
@@ -113,14 +145,11 @@ def _install(root=None):
         os.environ["PATH"],
 
         # Add generic binaries
-        os.path.join(REPO_DIR, "templates"),
-
-        # Add generic binaries
-        os.path.join(REPO_DIR, "templates", "software"),
+        templates, software,
 
         # Add OS-level dependencies
         os.path.join(REPO_DIR, "bin", platform.system().lower()),
-    ])
+    ] + add_to_path)
 
     os.environ["PYTHONPATH"] = os.pathsep.join(
         # Append to PYTHONPATH
@@ -136,7 +165,7 @@ def _install(root=None):
             # The Launcher itself
             os.getenv("AVALON_LAUNCHER"),
             os.getenv("AVALON_CORE"),
-        ]
+        ] + add_to_pythonpath
     )
 
     # Override default configuration by setting this value.
