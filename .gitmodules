@@ -9,7 +9,7 @@
 [submodule "studio/studio-config"]
 	path = studio/studio-config
 	url = git@github.com:pypeclub/studio-config.git
-	branch = initialisation
+	branch = nuke-all-jakub
 [submodule "app/repos/avalon-launcher"]
 	path = app/repos/avalon-launcher
 	url = https://github.com/getavalon/launcher.git

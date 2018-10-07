@@ -1,7 +1,4 @@
-import os
-import sys
 import re
-import toml
 
 
 '''
@@ -13,7 +10,7 @@ TODO: cached versions of software tomls to ~/.pype/software
 '''
 
 
-class _dic_to_nested_obj(dict):
+class _Dict_to_obj_with_range(dict):
     """ Hiden class
 
     Converts `dict` dot string object with optional slicing metod
@@ -24,21 +21,21 @@ class _dic_to_nested_obj(dict):
 
     Arguments:
         dct (dictionary): nested dictionary
-        slicing_pairs (list): list of list pairs example:
+        range (list): list of list pairs example:
         (key, list of two int())
     """
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
-    def __init__(self, dct, slicing_pairs):
+    def __init__(self, dct, range):
         for key, value in dct.items():
             if isinstance(value, dict):
-                value = _dic_to_nested_obj(value, slicing_pairs)
+                value = _Dict_to_obj_with_range(value, range)
 
             try:
                 cut_from, cut_to = [found[1]
-                                    for found in slicing_pairs
+                                    for found in range
                                     if key in found[0]][0]
                 self[key] = value[cut_from:cut_to]
             except Exception:
@@ -108,7 +105,7 @@ def _slicing(template):
     return template, pairs
 
 
-def convert_template(template, data):
+def pype_format(template, data):
     """ Public metod
 
     Converts `template` string and returns corected string
@@ -117,10 +114,10 @@ def convert_template(template, data):
         template (string): value from toml templates
         data (directory): containing keys to be filled into template
     """
-    template, slicing_pairs = _slicing(template)
+    template, range = _slicing(template)
     converted = _solve_optional(
         template,
-        _dic_to_nested_obj(data, slicing_pairs)
+        _Dict_to_obj_with_range(data, range)
     )
 
     return converted

@@ -44,6 +44,16 @@ import platform
 import contextlib
 import subprocess
 
+from lib import (
+    template_convert,
+    studio_depandecies,
+    get_config_repos,
+    forward,
+    git_update,
+    git_checkout
+)
+
+print(get_config_repos())
 # Having avalon.py in the current working directory
 # exposes it to Python's import mechanism which conflicts
 # with the actual avalon Python package.
@@ -53,8 +63,8 @@ if os.path.basename(__file__) in os.listdir(os.getcwd()):
     sys.exit(1)
 
 
-REPO_DIR = os.path.dirname(os.path.abspath(__file__))
-AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
+PYPE_APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 
 init = """\
 from avalon import api, shell
@@ -81,30 +91,6 @@ def install():
         shutil.rmtree(tempdir)
 
 
-def _studio_depandecies():
-    # Studio repositories
-    add_to_path = []
-    add_to_pythonpath = []
-    for studio_env, name, directory, where in (
-        ("PYPE_STUDIO_CONFIG", "studio-config", "config", "pythonpath"),
-        ("PYPE_STUDIO_TEMPLATES", "studio-templates", "templates", "path"),
-        ("PYPE_STUDIO_PROJECTS", "studio-projects", "projects", "path"),
-    ):
-        if studio_env not in os.environ:
-            path = os.path.join(
-                os.path.dirname(REPO_DIR),
-                "studio",
-                name
-            )
-            if "path" in where:
-                path = os.path.join(path, directory)
-                add_to_path.append(path)
-            else:
-                add_to_pythonpath.append(path)
-            os.environ[studio_env] = path
-    return add_to_path, add_to_pythonpath
-
-
 def _install(root=None):
     missing_dependencies = list()
     for dependency in ("PyQt5",):
@@ -128,34 +114,15 @@ def _install(root=None):
                              ("AVALON_LAUNCHER", "avalon-launcher"),
                              ("AVALON_EXAMPLES", "avalon-examples")):
         if dependency not in os.environ:
-            os.environ[dependency] = os.path.join(REPO_DIR, "repos", name)
-
-    add_to_path, add_to_pythonpath = _studio_depandecies()
-
-    software = os.path.join(REPO_DIR, "templates",
-                            "software")  # if not os.environ["PYPE_STUDIO_TEMPLATES"] else ""
-
-    templates = os.path.join(REPO_DIR,
-                             "templates")  # if not os.environ["PYPE_STUDIO_TEMPLATES"] else ""
-
-    os.environ["PATH"] = os.pathsep.join([
-        # Expose "avalon", overriding existing
-        os.path.join(REPO_DIR),
-
-        os.environ["PATH"],
-
-        # Add generic binaries
-        templates, software,
-
-        # Add OS-level dependencies
-        os.path.join(REPO_DIR, "bin", platform.system().lower()),
-    ] + add_to_path)
+            os.environ[dependency] = os.path.join(PYPE_APP_ROOT, "repos", name)
 
     os.environ["PYTHONPATH"] = os.pathsep.join(
         # Append to PYTHONPATH
         os.getenv("PYTHONPATH", "").split(os.pathsep) + [
             # Third-party dependencies for Avalon
-            os.path.join(REPO_DIR, "vendor"),
+            os.path.normpath(
+                os.path.join(PYPE_APP_ROOT, "vendor")
+            ),
 
             # Default config and dependency
             os.getenv("PYBLISH_BASE"),
@@ -165,14 +132,33 @@ def _install(root=None):
             # The Launcher itself
             os.getenv("AVALON_LAUNCHER"),
             os.getenv("AVALON_CORE"),
-        ] + add_to_pythonpath
+        ]
     )
+
+    # get studio depandencies into PATH and PYTHONPATH
+    studio_depandecies()
+
+    os.environ["PATH"] = os.pathsep.join([
+        # Expose "avalon", overriding existing
+        os.path.normpath(PYPE_APP_ROOT),
+
+        os.environ["PATH"],
+
+        # Add OS-level dependencies - absolete!
+        # TODO: remove this feature after templates work
+        os.path.join(
+            os.environ["PYPE_STUDIO_TEMPLATES"],
+            "templates",
+            "bin",
+            platform.system().lower()
+        )
+    ])
 
     # Override default configuration by setting this value.
     if "AVALON_CONFIG" not in os.environ:
         os.environ["AVALON_CONFIG"] = "polly"
         os.environ["PYTHONPATH"] += os.pathsep + os.path.join(
-            REPO_DIR, "git", "mindbender-config")
+            PYPE_APP_ROOT, "repos", "mindbender-config")
 
     if root is not None:
         os.environ["AVALON_PROJECTS"] = root
@@ -192,69 +178,6 @@ def _install(root=None):
     if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
         print("ERROR: config not found, check your PYTHONPATH.")
         sys.exit(1)
-
-
-def forward(args, silent=False, cwd=None):
-    """Pass `args` to the Avalon CLI, within the Avalon Setup environment
-
-    Arguments:
-        args (list): Command-line arguments to run
-            within the active environment
-
-    """
-
-    if AVALON_DEBUG:
-        print("avalon.py: Forwarding '%s'.." % " ".join(args))
-
-    popen = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-        bufsize=1,
-        cwd=cwd
-    )
-
-    # Blocks until finished
-    while True:
-        line = popen.stdout.readline()
-        if line != '':
-            if not silent or AVALON_DEBUG:
-                sys.stdout.write(line)
-        else:
-            break
-
-    if AVALON_DEBUG:
-        print("avalon.py: Finishing up..")
-
-    popen.wait()
-    return popen.returncode
-
-
-def update(cd):
-    """Update Avalon to the latest version"""
-
-    script = (
-        # Discard any ad-hoc changes
-        ("Resetting..", ["git", "reset", "--hard"]),
-        ("Downloading..", ["git", "pull", "origin", "master"]),
-
-        # In case there are new submodules since last pull
-        ("Looking for submodules..", ["git", "submodule", "init"]),
-
-        ("Updating submodules..",
-            ["git", "submodule", "update", "--recursive"]),
-    )
-
-    for message, args in script:
-        print(message)
-        returncode = forward(args, silent=True, cwd=cd)
-        if returncode != 0:
-            sys.stderr.write("Could not update, try running "
-                             "it again with AVALON_DEBUG=True\n")
-            return returncode
-
-    print("All done")
 
 
 def main():
@@ -287,9 +210,15 @@ def main():
 
     _install(root=kwargs.root)
 
-    cd = os.path.dirname(os.path.abspath(__file__))
+    cd = os.path.normpath(os.environ["PYPE_SETUP_ROOT"])
     examplesdir = os.getenv("AVALON_EXAMPLES",
-                            os.path.join(cd, "repos", "avalon-examples"))
+                            os.path.join(
+                                cd,
+                                "app",
+                                "repos",
+                                "avalon-examples"
+                            )
+                            )
 
     if kwargs.import_:
         fname = os.path.join(examplesdir, "import.py")
@@ -322,7 +251,7 @@ def main():
             "avalon.inventory", "--save"])
 
     elif kwargs.update:
-        returncode = update(cd)
+        returncode = git_update(cd)
 
     elif kwargs.forward:
         returncode = forward(kwargs.forward.split())
