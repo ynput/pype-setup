@@ -4,20 +4,23 @@ import subprocess
 import toml
 
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
-CONFIG_REPOS_FILE = os.path.normpath(
+TEMPLATES_REPOS_FILE = os.path.normpath(
     os.path.join(
         os.environ['PYPE_SETUP_ROOT'],
-        "config_repos.toml"
+        "config_repos..default.toml"
     )
 )
 
 
 def get_config_repos():
-    return toml.load(CONFIG_REPOS_FILE)
+    print(TEMPLATES_REPOS_FILE)
+    return toml.load(TEMPLATES_REPOS_FILE)
 
 # TODO: updating repositories into defined branches from .gitmodules
-# TODO: write our own gitmodules and ensure it will install all submodules at first run in case the .gitmodules got lostself.
-# TODO: checking out into defined branches in case branch is different from the one in .gitmodules and activated
+# TODO: write our own gitmodules and ensure it will install all
+# submodules at first run in case the .gitmodules got lostself.
+# TODO: checking out into defined branches in case branch is
+# different from the one in .gitmodules and activated
 
 
 def forward(args, silent=False, cwd=None):

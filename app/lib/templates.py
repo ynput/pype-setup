@@ -1,51 +1,104 @@
 import os
 import logging
+
+from .studio import (studio_depandecies)
+from .formating import format
+
 log = logging.getLogger(__name__)
 
+MAIN = {
+    "preset_split": "..",
+    "file_start": "pype-config.toml"
+}
+TEMPLATES = {
+    "anatomy": dict(),
+    "softwares": dict(),
+    "system": dict(),
+    "colorspace": dict(),
+    "dataflow": dict(),
+    "metadata": dict(),
+    "preset": str()
+}
 
-class Templates(object):
+
+class Dict_to_obj(dict):
+    """ Hiden class
+
+    Converts `dict` dot string object with optional slicing metod
+
+    Output:
+        nested dotstring object for example: root.item.subitem.subitem_item
+        also nested dict() for example: root["item"].subitem["subitem_item"]
+
+    """
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+    def __init__(self,  *args, **kwargs):
+        print("init_parent")
+        if kwargs:
+            self._to_obj(kwargs)
+        else:
+            self._to_obj(args)
+
+    def _to_obj(self, args):
+        if isinstance(args, tuple):
+            for arg in args:
+                self._obj(arg)
+
+        if isinstance(args, dict):
+            self._obj(args)
+
+    def _obj(self, args):
+        for key, value in args.items():
+            if isinstance(value, dict):
+                value = Dict_to_obj(value)
+            self[key] = value
+
+
+class Templates(Dict_to_obj):
 
     def __init__(self, *args, **kwargs):
-        self.data = dict(*args)
+        super(Templates, self).__init__(*args, **kwargs)
+        print("init_child")
 
-    def update_data(self, args):
-        if isinstance(args, dict):
-            for k, v in args.items():
-                print(k, v)
-                self.data[k] = v
-                print("added to self.data")
+    def format(self, template="{template_string}", data=dict()):
+        return format(template, data)
 
+    def update(self,  *args, **kwargs):
+        '''Adding content to object
 
-template = Templates({"context": "string"})
+        Examples:
+            - simple way by adding one arg: dict()
+                ```python
+                self.update({'one': 'one_string', 'two': 'two_string'})```
 
-print(template.data)
+            - simple way by adding args: arg="string"
+                ```python
+                self.update(one='one_string', two='two_string')```
 
-template.update_data({"next": "string"})
+            - combined way of adding content: kwards
+                ```python
+                self.update(
+                    one="one_string",
+                    two="two_string",
+                    three={
+                        'one_in_three': 'one_in_three_string',
+                        'two_in_three': 'two_in_three_string'
+                    )```
+        '''
+        if kwargs:
+            self._to_obj(kwargs)
+        else:
+            self._to_obj(args)
 
-print(template.data)
+    def _get_templates(self):
+        ''' Populates all available configs from templates
 
-
-def get_configs():
-    ''' Populates all available configs from templates
-
-    Returns:
-        configs (obj): dot operator
-    '''
-    main = {
-        "preset_split": "..",
-        "file_start": "pype-config.toml"
-    }
-    templates = {
-        "anatomy": dict(),
-        "softwares": dict(),
-        "system": dict(),
-        "colorspace": dict(),
-        "dataflow": dict(),
-        "metadata": dict(),
-        "preset": str()
-    }
-
-# example: templates.anatomy.data.
+        Returns:
+            configs (obj): dot operator
+        '''
 
 
 def get_conf_file(

@@ -105,7 +105,7 @@ def _slicing(template):
     return template, pairs
 
 
-def pype_format(template, data):
+def format(template="{template_string}", data=dict()):
     """ Public metod
 
     Converts `template` string and returns corected string

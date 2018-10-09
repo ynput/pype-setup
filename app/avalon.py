@@ -44,16 +44,21 @@ import platform
 import contextlib
 import subprocess
 
-from lib import (
-    template_convert,
+from app.api import (
+    Templates,
+    Loaded_templates,
+
     studio_depandecies,
     get_config_repos,
+
     forward,
     git_update,
     git_checkout
 )
 
 print(get_config_repos())
+
+
 # Having avalon.py in the current working directory
 # exposes it to Python's import mechanism which conflicts
 # with the actual avalon Python package.
