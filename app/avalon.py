@@ -33,7 +33,6 @@ overrides:
 
     # Enable additional output
     - AVALON_DEBUG=True
-
 """
 
 import os
@@ -42,7 +41,7 @@ import shutil
 import tempfile
 import platform
 import contextlib
-import subprocess
+
 
 from app.api import (
     # Templates,
@@ -116,9 +115,6 @@ def _install(root=None):
         ]
     )
 
-    # get studio depandencies into PATH and PYTHONPATH
-    # studio_depandecies()
-
     os.environ["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
         os.path.normpath(PYPE_APP_ROOT),
@@ -137,7 +133,7 @@ def _install(root=None):
             "bin"
         )
     ])
-    print(os.environ["PATH"])
+
     if root is not None:
         os.environ["AVALON_PROJECTS"] = root
     else:

@@ -47,7 +47,7 @@ class Dict_to_obj(dict):
             self._obj(args)
 
     def _obj(self, args):
-        assert isinstance(args, dict), "filter must be <dict>"
+        assert isinstance(args, dict), "`args` must be <dict>"
 
         for key, value in args.items():
             if isinstance(value, dict):

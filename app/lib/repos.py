@@ -172,18 +172,6 @@ def git_checkout(repository=dict()):
     print("All done")
 
 
-''' projects:
-        - AVALON_PROJECTS var pointing to PYPE_STUDIO_PROJECTS/projects,
-          here we are storing only metadata and config for each shot
-          in hiearchical order
-        - PYPE_STUDIO_PROJECTS_RAW = comming from anatomy set in locations
-        - PYPE_STUDIO_PROJECTS_PLATES =
-        - PYPE_STUDIO_PROJECTS_WORK =
-        - PYPE_STUDIO_PROJECTS_RENDER =
-        - PYPE_STUDIO_PROJECTS_PUBLISH =
-'''
-
-
 def _add_config(dir_name):
     '''adding config name of module'''
     # print("adding AVALON_CONFIG: '{}'".format(dir_name))
@@ -218,35 +206,12 @@ def _add_to_pythonpath(add_to_pythonpath):
 
 
 def _setup_environment(repos=None):
-    # Studio repositories
-    # TODO: connect repos.py for getting studio repositories
-    if not repos:
-        repos = {
-            "PYPE_STUDIO_CONFIG": {
-                "name": "studio-config",
-                "subdir": "pype",
-                "env": "pythonpath",
-                "git": "git@github.com:pypeclub/studio-config.git",
-                "branch": "master",
-                "submodule_root": "studio"
-            },
-            "PYPE_STUDIO_TEMPLATES": {
-                "name": "studio-templates",
-                "subdir": "templates",
-                "env": "path",
-                "git": "git@github.com:pypeclub/studio-templates.git",
-                "branch": "master",
-                "submodule_root": "studio"
-            },
-            "PYPE_STUDIO_PROJECTS": {
-                "name": "studio-projects",
-                "subdir": "projects",
-                "env": "path",
-                "git": "git@github.com:pypeclub/studio-projects.git",
-                "branch": "master",
-                "submodule_root": "studio"
-            }
-        }
+    '''Sets all environment variables regarding attributes found
+    pype-setup/config-repos.toml
+
+    '''
+    assert isinstance(repos, dict), "`repos` must be <dict>"
+
     testing_list = list()
     for key, value in repos.items():
 
