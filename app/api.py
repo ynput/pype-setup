@@ -1,18 +1,14 @@
 from lib.formating import format
-from lib.templates import (
-    Templates,
-    get_conf_file
-)
-from lib.studio import (
-    studio_depandecies
-)
 from lib.repos import (
-    get_config_repos,
+    get_conf_file,
+    solve_dependecies,
     forward,
     git_update,
     git_checkout
 )
-
+from lib.templates import (
+    Templates
+)
 from . import Loaded_templates
 
 __all__ = [
@@ -22,9 +18,9 @@ __all__ = [
     "get_conf_file",
     "Loaded_templates",
 
-    "studio_depandecies",
+    # "studio_depandecies",
 
-    "get_config_repos",
+    "solve_dependecies",
     "forward",
     "git_update",
     "git_checkout"

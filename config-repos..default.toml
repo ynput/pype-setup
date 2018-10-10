@@ -1,11 +1,7 @@
-# PYPE Setup
-[PYPE_SETUP]
-    branch = "pyblish-lite-conf"
-
 # core repos
 [AVALON_CORE]
     name = "avalon-core"
-    subdir = "core"
+    subdir = "avalon"
     git = "git@github.com:pypeclub/avalon-core.git"
     branch = "pypeclub-nuke-workflow-jezschaj"
     submodule_root = "app/repos"

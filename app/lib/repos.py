@@ -2,25 +2,77 @@ import sys
 import os
 import subprocess
 import toml
+import logging
+
+# TODO: setup for projects os.environ["AVALON_PROJECTS"]
+log = logging.getLogger(__name__)
 
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
-TEMPLATES_REPOS_FILE = os.path.normpath(
-    os.path.join(
-        os.environ['PYPE_SETUP_ROOT'],
-        "config_repos..default.toml"
-    )
-)
-
-
-def get_config_repos():
-    print(TEMPLATES_REPOS_FILE)
-    return toml.load(TEMPLATES_REPOS_FILE)
 
 # TODO: updating repositories into defined branches from .gitmodules
 # TODO: write our own gitmodules and ensure it will install all
 # submodules at first run in case the .gitmodules got lostself.
 # TODO: checking out into defined branches in case branch is
 # different from the one in .gitmodules and activated
+
+
+def get_conf_file(
+    dir,
+    root_file_name,
+    default_preset_name=None,
+    split_pattern=None,
+    representation=None
+):
+    '''Gets any available `config template` file from given
+    **path** and **name**
+
+    Attributes:
+        dir (str): path to root directory where files could be searched
+        root_file_name (str): root part of name it is searching for
+        default_preset_name (str): default preset name
+        split_pattern (str): default pattern for spliting name and preset
+        representation (str): extention of file used for config files
+                              can be ".toml" but also ".conf"
+
+    Returns:
+        file_name (str): if matching name found or None
+    '''
+
+    if not default_preset_name:
+        default_preset_name = "default"
+    if not split_pattern:
+        split_pattern = ".."
+    if not representation:
+        representation = ".toml"
+
+    conf_file = root_file_name + representation
+    # print(dir, root_file_name, default_preset_name,
+    # split_pattern, representation)
+    try:
+        preset = os.environ["PYPE_TEMPLATES_PRESET"]
+    except KeyError:
+        preset = default_preset_name
+
+    test_files = [
+        f for f in os.listdir(dir)
+        if split_pattern in f
+    ]
+
+    try:
+        conf_file = [
+            f for f in test_files
+            if preset in os.path.splitext(f)[0].split(split_pattern)[1]
+            if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
+        ][0]
+    except IndexError as error:
+        if AVALON_DEBUG:
+            log.warning("File is missing '{}' will be"
+                        "used basic config file: {}".format(
+                            error, conf_file
+                        ))
+        pass
+
+    return conf_file if os.path.exists(os.path.join(dir, conf_file)) else None
 
 
 def forward(args, silent=False, cwd=None):
@@ -118,3 +170,133 @@ def git_checkout(repository=dict()):
             return returncode
 
     print("All done")
+
+
+''' projects:
+        - AVALON_PROJECTS var pointing to PYPE_STUDIO_PROJECTS/projects,
+          here we are storing only metadata and config for each shot
+          in hiearchical order
+        - PYPE_STUDIO_PROJECTS_RAW = comming from anatomy set in locations
+        - PYPE_STUDIO_PROJECTS_PLATES =
+        - PYPE_STUDIO_PROJECTS_WORK =
+        - PYPE_STUDIO_PROJECTS_RENDER =
+        - PYPE_STUDIO_PROJECTS_PUBLISH =
+'''
+
+
+def _add_config(dir_name):
+    '''adding config name of module'''
+    # print("adding AVALON_CONFIG: '{}'".format(dir_name))
+    os.environ['AVALON_CONFIG'] = dir_name
+
+
+def _test_module_import(module_path, module_name):
+    ''' test import module see if all is set correctly'''
+    if subprocess.call([
+        sys.executable, "-c",
+        "import {}".format(module_name)
+    ]) != 0:
+        print("ERROR: '{}' not found, check your "
+              "PYTHONPATH for '{}'.".format(module_name, module_path))
+        sys.exit(1)
+
+
+def _add_to_path(add_to_path):
+    # Append to PATH
+    os.environ["PATH"] = os.pathsep.join(
+        [add_to_path] +
+        os.getenv("PATH", "").split(os.pathsep)
+    )
+
+
+def _add_to_pythonpath(add_to_pythonpath):
+    # Append to PYTHONPATH
+    os.environ["PYTHONPATH"] = os.pathsep.join(
+        [add_to_pythonpath] +
+        os.getenv("PYTHONPATH", "").split(os.pathsep)
+    )
+
+
+def _setup_environment(repos=None):
+    # Studio repositories
+    # TODO: connect repos.py for getting studio repositories
+    if not repos:
+        repos = {
+            "PYPE_STUDIO_CONFIG": {
+                "name": "studio-config",
+                "subdir": "pype",
+                "env": "pythonpath",
+                "git": "git@github.com:pypeclub/studio-config.git",
+                "branch": "master",
+                "submodule_root": "studio"
+            },
+            "PYPE_STUDIO_TEMPLATES": {
+                "name": "studio-templates",
+                "subdir": "templates",
+                "env": "path",
+                "git": "git@github.com:pypeclub/studio-templates.git",
+                "branch": "master",
+                "submodule_root": "studio"
+            },
+            "PYPE_STUDIO_PROJECTS": {
+                "name": "studio-projects",
+                "subdir": "projects",
+                "env": "path",
+                "git": "git@github.com:pypeclub/studio-projects.git",
+                "branch": "master",
+                "submodule_root": "studio"
+            }
+        }
+    testing_list = list()
+    for key, value in repos.items():
+
+        if key not in os.environ:
+            # print("Checking '{}'...".format(key))
+            path = os.path.normpath(
+                os.path.join(
+                    os.environ['PYPE_SETUP_ROOT'],
+                    value['submodule_root'],
+                    value['name']
+                )
+            )
+            # print("Checking path '{}'...".format(path))
+            if value['env'] in "path":
+                path = os.path.normpath(
+                    os.path.join(path, value['subdir'])
+                )
+                _add_to_path(path)
+            else:
+                # for PYTHONPATH
+                if "config" in value['name']:
+                    _add_config(value['subdir'])
+                    # print("Config added...")
+                _add_to_pythonpath(path)
+                # add to list for testing
+                testing_list.append(
+                    {
+                        "path": path,
+                        "subdir": value['subdir']
+                    }
+                )
+            os.environ[key] = path
+
+    if testing_list:
+        for m in testing_list:
+            _test_module_import(m["path"], m["subdir"])
+
+
+def solve_dependecies():
+
+    ROOT = os.environ["PYPE_SETUP_ROOT"]
+
+    REPOS_CONFIG_FILE = get_conf_file(ROOT, "config-repos")
+
+    config_content = toml.load(
+        os.path.join(
+            ROOT,
+            REPOS_CONFIG_FILE
+        )
+    )
+    # adding stuff to environment variables
+    _setup_environment(config_content)
+    print("All pype, avalon, pyblish environment variables are set")

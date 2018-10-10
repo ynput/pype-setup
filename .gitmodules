@@ -6,7 +6,7 @@
 	path = studio/studio-projects
 	url = git@github.com:pypeclub/studio-projects.git
 	branch = master
-[submodule "studio/studio-config"]
+[submodule "studio/studio-config"]x
 	path = studio/studio-config
 	url = git@github.com:pypeclub/studio-config.git
 	branch = nuke-all-jakub

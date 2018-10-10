@@ -45,20 +45,15 @@ import contextlib
 import subprocess
 
 from app.api import (
-    Templates,
+    # Templates,
     Loaded_templates,
-
-    studio_depandecies,
-    get_config_repos,
-
+    solve_dependecies,
     forward,
     git_update,
     git_checkout
 )
 
-print(get_config_repos())
-
-
+solve_dependecies()
 # Having avalon.py in the current working directory
 # exposes it to Python's import mechanism which conflicts
 # with the actual avalon Python package.
@@ -111,16 +106,6 @@ def _install(root=None):
               "for more details.")
         sys.exit(1)
 
-    # Enable overriding from local environment
-    for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
-                             ("PYBLISH_QML", "pyblish-qml"),
-                             ("PYBLISH_LITE", "pyblish-lite"),
-                             ("AVALON_CORE", "avalon-core"),
-                             ("AVALON_LAUNCHER", "avalon-launcher"),
-                             ("AVALON_EXAMPLES", "avalon-examples")):
-        if dependency not in os.environ:
-            os.environ[dependency] = os.path.join(PYPE_APP_ROOT, "repos", name)
-
     os.environ["PYTHONPATH"] = os.pathsep.join(
         # Append to PYTHONPATH
         os.getenv("PYTHONPATH", "").split(os.pathsep) + [
@@ -128,20 +113,11 @@ def _install(root=None):
             os.path.normpath(
                 os.path.join(PYPE_APP_ROOT, "vendor")
             ),
-
-            # Default config and dependency
-            os.getenv("PYBLISH_BASE"),
-            os.getenv("PYBLISH_QML"),
-            os.getenv("PYBLISH_LITE"),
-
-            # The Launcher itself
-            os.getenv("AVALON_LAUNCHER"),
-            os.getenv("AVALON_CORE"),
         ]
     )
 
     # get studio depandencies into PATH and PYTHONPATH
-    studio_depandecies()
+    # studio_depandecies()
 
     os.environ["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
@@ -153,18 +129,15 @@ def _install(root=None):
         # TODO: remove this feature after templates work
         os.path.join(
             os.environ["PYPE_STUDIO_TEMPLATES"],
-            "templates",
             "bin",
             platform.system().lower()
+        ),
+        os.path.join(
+            os.environ["PYPE_STUDIO_TEMPLATES"],
+            "bin"
         )
     ])
-
-    # Override default configuration by setting this value.
-    if "AVALON_CONFIG" not in os.environ:
-        os.environ["AVALON_CONFIG"] = "polly"
-        os.environ["PYTHONPATH"] += os.pathsep + os.path.join(
-            PYPE_APP_ROOT, "repos", "mindbender-config")
-
+    print(os.environ["PATH"])
     if root is not None:
         os.environ["AVALON_PROJECTS"] = root
     else:
@@ -173,16 +146,6 @@ def _install(root=None):
         except KeyError:
             root = os.path.join(os.environ["AVALON_EXAMPLES"], "projects")
             os.environ["AVALON_PROJECTS"] = root
-
-    try:
-        config = os.environ["AVALON_CONFIG"]
-    except KeyError:
-        config = "polly"
-        os.environ["AVALON_CONFIG"] = config
-
-    if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
-        print("ERROR: config not found, check your PYTHONPATH.")
-        sys.exit(1)
 
 
 def main():

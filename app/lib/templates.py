@@ -1,23 +1,20 @@
 import os
 import logging
+import toml
 
-from .studio import (studio_depandecies)
+# from .studio import (studio_depandecies)
 from .formating import format
+from .repos import get_conf_file
+
+AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
 
 log = logging.getLogger(__name__)
 
+
 MAIN = {
     "preset_split": "..",
-    "file_start": "pype-config.toml"
-}
-TEMPLATES = {
-    "anatomy": dict(),
-    "softwares": dict(),
-    "system": dict(),
-    "colorspace": dict(),
-    "dataflow": dict(),
-    "metadata": dict(),
-    "preset": str()
+    "file_start": "pype-config",
+    "representation": ".toml"
 }
 
 
@@ -35,7 +32,7 @@ class Dict_to_obj(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
-    def __init__(self,  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         print("init_parent")
         if kwargs:
             self._to_obj(kwargs)
@@ -46,11 +43,12 @@ class Dict_to_obj(dict):
         if isinstance(args, tuple):
             for arg in args:
                 self._obj(arg)
-
-        if isinstance(args, dict):
+        else:
             self._obj(args)
 
     def _obj(self, args):
+        assert isinstance(args, dict), "filter must be <dict>"
+
         for key, value in args.items():
             if isinstance(value, dict):
                 value = Dict_to_obj(value)
@@ -61,9 +59,21 @@ class Templates(Dict_to_obj):
 
     def __init__(self, *args, **kwargs):
         super(Templates, self).__init__(*args, **kwargs)
-        print("init_child")
+        try:
+            self.templates_root = os.environ["PYPE_STUDIO_TEMPLATES"]
+        except KeyError:
+            self.templates_root = os.path.join(
+                os.environ["PYPE_SETUP_ROOT"],
+                "studio",
+                "studio-templates",
+                "templates"
+            )
+        # get all toml templates in order
+        self._get_template_files()
+        self._get_templates_to_args()
 
     def format(self, template="{template_string}", data=dict()):
+        # from formating.format()
         return format(template, data)
 
     def update(self,  *args, **kwargs):
@@ -93,56 +103,104 @@ class Templates(Dict_to_obj):
         else:
             self._to_obj(args)
 
-    def _get_templates(self):
+    def _get_templates_to_args(self):
         ''' Populates all available configs from templates
 
         Returns:
             configs (obj): dot operator
         '''
+        for i in self._process_order:
+            print("---", i)
 
+    def _create_templ_item(self,
+                           t_name=None,
+                           t_type=None,
+                           t_department=None
+                           ):
+        ''' Populates all available configs from templates
 
-def get_conf_file(
-    dir,
-    root_file_name,
-    default_preset_name="default",
-    split_pattern="..",
-    representation=".toml"
-):
-    '''Gets any available `config template` file from given
-    **path** and **name**
+        Returns:
+            configs (obj): dot operator
+        '''
+        t_root = os.path.join(self.templates_root, t_department)
+        list_items = list()
+        if not t_name:
+            content = [f for f in os.listdir(t_root)
+                       if not f.startswith(".")
+                       if not os.path.isdir(
+                       os.path.join(t_root, f)
+                       )]
+            for t in content:
+                list_items.append(
+                    self._create_templ_item(
+                        t.replace(MAIN["representation"], ""),
+                        t_type,
+                        t_department
+                    )
+                )
 
-    Attributes:
-        dir (str): path to root directory where files could be searched
-        root_file_name (str): root part of name it is searching for
-        default_preset_name (str): default preset name
-        split_pattern (str): default pattern for spliting name and preset
-        representation (str): extention of file used for config files
-                              can be ".toml" but also ".conf"
+        if list_items:
+            return list_items
+        else:
+            t_file = get_conf_file(
+                dir=t_root,
+                root_file_name=t_name
+            )
+            return {
+                "path": os.path.join(t_root, t_file),
+                "department": t_department,
+                "type": t_type
+            }
 
-    Returns:
-        file_name (str): if matching name found or None
-    '''
-    conf_file = root_file_name + representation
+    def _get_template_files(self):
+        '''Gets all available templates from studio-templates
 
-    try:
-        preset = os.environ["PYPE_TEMPLATES_PRESET"]
-    except KeyError:
-        preset = default_preset_name
+        Returns:
+            self._process_order (list): ordered list of file paths
+                                       and department and type
+        '''
+        file = get_conf_file(
+            dir=self.templates_root,
+            root_file_name=MAIN["file_start"]
+        )
 
-    test_files = [
-        f for f in os.listdir(dir)
-        if split_pattern in f
-    ]
+        self._process_order = list()
+        for t in self.toml_load(
+                os.path.join(
+                    self.templates_root, file
+                ))['templates']:
 
-    try:
-        conf_file = [
-            f for f in test_files
-            if preset in os.path.splitext(f)[0].split(split_pattern)[1]
-            if root_name in os.path.splitext(f)[0].split(split_pattern)[0]
-        ][0]
-    except IndexError as error:
-        log.warning("File is missing '{}' will be"
-                    "used basic config file: {}".format(error, conf_file))
-        pass
+            # print("template: ", t)
+            if "base" in t['type']:
+                try:
+                    if t['order']:
+                        for item in t['order']:
+                            self._process_order.append(
+                                self._create_templ_item(
+                                    item,
+                                    t['type'],
+                                    t['dir']
+                                )
+                            )
+                except KeyError as error:
+                    # print("// error: {}".format(error))
+                    self._process_order.extend(
+                        self._create_templ_item(
+                            None,
+                            t['type'],
+                            t['dir']
+                        )
+                    )
+                    pass
+            else:
+                self._process_order.append(
+                    self._create_templ_item(
+                        t['file'],
+                        t['type'],
+                        t['dir']
+                    )
+                )
+        self._process_order
 
-    return conf_file if os.path.exists(os.path.join(dir, conf_file)) else None
+    def toml_load(self, path):
+        return toml.load(path)
