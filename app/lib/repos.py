@@ -19,7 +19,7 @@ AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
 def get_conf_file(
     dir,
     root_file_name,
-    default_preset_name=None,
+    preset_name=None,
     split_pattern=None,
     representation=None
 ):
@@ -29,7 +29,7 @@ def get_conf_file(
     Attributes:
         dir (str): path to root directory where files could be searched
         root_file_name (str): root part of name it is searching for
-        default_preset_name (str): default preset name
+        preset_name (str): default preset name
         split_pattern (str): default pattern for spliting name and preset
         representation (str): extention of file used for config files
                               can be ".toml" but also ".conf"
@@ -38,20 +38,20 @@ def get_conf_file(
         file_name (str): if matching name found or None
     '''
 
-    if not default_preset_name:
-        default_preset_name = "default"
+    if not preset_name:
+        preset_name = "default"
     if not split_pattern:
         split_pattern = ".."
     if not representation:
         representation = ".toml"
 
     conf_file = root_file_name + representation
-    # print(dir, root_file_name, default_preset_name,
+    # print(dir, root_file_name, preset_name,
     # split_pattern, representation)
     try:
         preset = os.environ["PYPE_TEMPLATES_PRESET"]
     except KeyError:
-        preset = default_preset_name
+        preset = preset_name
 
     test_files = [
         f for f in os.listdir(dir)

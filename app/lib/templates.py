@@ -1,7 +1,7 @@
 import os
 import logging
 import toml
-
+import platform
 # from .studio import (studio_depandecies)
 from .formating import format
 from .repos import get_conf_file
@@ -32,8 +32,10 @@ class Dict_to_obj(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
+    platform = platform.system().lower()
+
     def __init__(self, *args, **kwargs):
-        print("init_parent")
+
         if kwargs:
             self._to_obj(kwargs)
         else:
@@ -51,8 +53,15 @@ class Dict_to_obj(dict):
 
         for key, value in args.items():
             if isinstance(value, dict):
-                value = Dict_to_obj(value)
-            self[key] = value
+                if key not in "path":
+                    value = Dict_to_obj(value)
+                else:
+                    value = value[self.platform]
+
+            if key.isupper():
+                os.environ[key] = str(value)
+            else:
+                self[key] = value
 
 
 class Templates(Dict_to_obj):
@@ -109,13 +118,40 @@ class Templates(Dict_to_obj):
         Returns:
             configs (obj): dot operator
         '''
-        for i in self._process_order:
-            print("---", i)
+        base_list = [t for t in self._process_order
+                     if t['type'] in "base"]
+        context_list = [t for t in self._process_order
+                        if t['type'] in "context"]
+        data = dict()
+        for t in base_list:
+            content = self.toml_load(t['path'])
+            try:
+                data[t["department"]].update(content)
+            except KeyError:
+                data[t["department"]] = content
+        self.update(data)
+
+        data = dict()
+        for t in context_list:
+            content = self.toml_load(t['path'])
+            try:
+                data[t["department"]].update(content)
+            except KeyError:
+                data[t["department"]] = content
+        self.update(data)
+
+        # run trough environ and format values
+        # with environ and self also os.path.normpath
+
+        # treat software separatly from system as NUKE_PATH
+        # if PYTHONPATH then os.pathsep
+        # if PATH then os.pathsep
 
     def _create_templ_item(self,
                            t_name=None,
                            t_type=None,
-                           t_department=None
+                           t_department=None,
+                           t_preset=None
                            ):
         ''' Populates all available configs from templates
 
@@ -144,7 +180,8 @@ class Templates(Dict_to_obj):
         else:
             t_file = get_conf_file(
                 dir=t_root,
-                root_file_name=t_name
+                root_file_name=t_name,
+                preset_name=t_preset
             )
             return {
                 "path": os.path.join(t_root, t_file),
@@ -179,7 +216,8 @@ class Templates(Dict_to_obj):
                                 self._create_templ_item(
                                     item,
                                     t['type'],
-                                    t['dir']
+                                    t['dir'],
+                                    t['preset']
                                 )
                             )
                 except KeyError as error:
@@ -188,7 +226,8 @@ class Templates(Dict_to_obj):
                         self._create_templ_item(
                             None,
                             t['type'],
-                            t['dir']
+                            t['dir'],
+                            t['preset']
                         )
                     )
                     pass
@@ -197,7 +236,8 @@ class Templates(Dict_to_obj):
                     self._create_templ_item(
                         t['file'],
                         t['type'],
-                        t['dir']
+                        t['dir'],
+                        t['preset']
                     )
                 )
         self._process_order
