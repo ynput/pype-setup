@@ -1,6 +1,6 @@
 import re
-
-
+import os
+import platform
 '''
 TODO: function for reading from toml
 TODO: function for writing to toml
@@ -8,6 +8,7 @@ TODO: check if shema validate can be used
 TODO: check if precaching function can be used
 TODO: cached versions of software tomls to ~/.pype/software
 '''
+platform = platform.system().lower()
 
 
 class _Dict_to_obj_with_range(dict):
@@ -28,7 +29,7 @@ class _Dict_to_obj_with_range(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
-    def __init__(self, dct, range):
+    def __init__(self, dct, range=None):
         for key, value in dct.items():
             if isinstance(value, dict):
                 value = _Dict_to_obj_with_range(value, range)
@@ -63,13 +64,18 @@ def _solve_optional(template, data):
     for group in invalid_optionals:
         template = template.replace(group, "")
 
-    solved = template.format(**data)
+    try:
+        solved = template.format(platform=platform, **data)
 
-    # Remove optional symbols
-    solved = solved.replace("<", "")
-    solved = solved.replace(">", "")
+        # Remove optional symbols
+        solved = solved.replace("<", "")
+        solved = solved.replace(">", "")
 
-    return solved
+        return solved
+    except KeyError:
+        print("--locals: ", platform)
+        print("--template:", template)
+        return template
 
 
 def _slicing(template):
@@ -91,17 +97,19 @@ def _slicing(template):
     find_sliced = sliced_key.findall(template)
     for i, sliced in enumerate(find_sliced):
         slicing = slice_only.findall(sliced)
-        numbers_get = [
-            int(n) for n in slicing[i].replace(
-                "[", ""
-            ).replace(
-                "]", ""
-            ).split(":")
-        ]
-        clean_key = sliced.replace(slicing[i], "")
-        template = template.replace(slicing[i], "")
-        pairs.append((clean_key, numbers_get))
-
+        try:
+            numbers_get = [
+                int(n) for n in slicing[i].replace(
+                    "[", ""
+                ).replace(
+                    "]", ""
+                ).split(":")
+            ]
+            clean_key = sliced.replace(slicing[i], "")
+            template = template.replace(slicing[i], "")
+            pairs.append((clean_key, numbers_get))
+        except ValueError:
+            pairs.append(None)
     return template, pairs
 
 
@@ -117,7 +125,10 @@ def format(template="{template_string}", data=dict()):
     template, range = _slicing(template)
     converted = _solve_optional(
         template,
-        _Dict_to_obj_with_range(data, range)
+        _Dict_to_obj_with_range(
+            dict(data, **os.environ),
+            range
+        )
     )
 
     return converted

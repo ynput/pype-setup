@@ -50,7 +50,6 @@ class Dict_to_obj(dict):
 
     def _obj(self, args):
         assert isinstance(args, dict), "`args` must be <dict>"
-
         for key, value in args.items():
             if isinstance(value, dict):
                 if key not in "path":
@@ -140,11 +139,36 @@ class Templates(Dict_to_obj):
         data = dict()
         for t in template_list:
             content = self.toml_load(t['path'])
+            file_name = os.path.split(t['path'])[1].split(".")[0]
+
             try:
-                data[t["department"]].update(content)
+                if "__storage__" in t['path']:
+                    data["locations"].update(content)
+                elif t['type'] in "context":
+                    data[t["department"]].update(content)
+                else:
+                    data[t["department"]][file_name].update(content)
             except KeyError:
-                data[t["department"]] = content
+                if "__storage__" in t['path']:
+                    data["locations"] = content
+                elif t['type'] in "context":
+                    data[t["department"]] = content
+                else:
+                    try:
+                        data[t["department"]][file_name] = content
+                    except KeyError:
+                        data[t["department"]] = dict()
+                        data[t["department"]][file_name] = content
         self.update(data)
+        self._format_env_vars()
+
+    def _format_env_vars(self):
+        for k, v in os.environ.items():
+            for i in ("PYPE", "AVALON", "PATH", "PYTHONPATH"):
+                if i in k:
+                    os.environ[k] = os.path.normpath(
+                        self.format(v, self)
+                    )
 
     def _create_templ_item(self,
                            t_name=None,
@@ -163,8 +187,8 @@ class Templates(Dict_to_obj):
             content = [f for f in os.listdir(t_root)
                        if not f.startswith(".")
                        if not os.path.isdir(
-                       os.path.join(t_root, f)
-                       )]
+                os.path.join(t_root, f)
+            )]
             for t in content:
                 list_items.append(
                     self._create_templ_item(
@@ -205,7 +229,6 @@ class Templates(Dict_to_obj):
                 os.path.join(
                     self.templates_root, file
                 ))['templates']:
-            print(t)
             # print("template: ", t)
             if t['type'] in ["base", "main"]:
                 try:

@@ -86,13 +86,6 @@ def register(session, **kw):
     action_handler = SyncToAvalon(session)
     action_handler.register()
 
-    session.event_hub.subscribe(
-        'topic=ftrack.action.discover and source.user.username={0}'.format(
-            getpass.getuser()
-        ),
-        action_handler.register
-    )
-
 
 def main(arguments=None):
     '''Set up logging and register action.'''
