@@ -118,33 +118,17 @@ class Templates(Dict_to_obj):
         Returns:
             configs (obj): dot operator
         '''
-        base_list = [t for t in self._process_order
+        main_list = [t for t in self._process_order
                      if t['type'] in "main"]
+        self._distribute(main_list)
 
         base_list = [t for t in self._process_order
                      if t['type'] in "base"]
+        self._distribute(base_list)
 
         context_list = [t for t in self._process_order
                         if t['type'] in "context"]
-
-        self._distribute()
-        data = dict()
-        for t in base_list:
-            content = self.toml_load(t['path'])
-            try:
-                data[t["department"]].update(content)
-            except KeyError:
-                data[t["department"]] = content
-        self.update(data)
-
-        data = dict()
-        for t in context_list:
-            content = self.toml_load(t['path'])
-            try:
-                data[t["department"]].update(content)
-            except KeyError:
-                data[t["department"]] = content
-        self.update(data)
+        self._distribute(context_list)
 
         # run trough environ and format values
         # with environ and self also os.path.normpath
@@ -152,6 +136,15 @@ class Templates(Dict_to_obj):
         # treat software separatly from system as NUKE_PATH
         # if PYTHONPATH then os.pathsep
         # if PATH then os.pathsep
+    def _distribute(self, template_list):
+        data = dict()
+        for t in template_list:
+            content = self.toml_load(t['path'])
+            try:
+                data[t["department"]].update(content)
+            except KeyError:
+                data[t["department"]] = content
+        self.update(data)
 
     def _create_templ_item(self,
                            t_name=None,
@@ -212,9 +205,9 @@ class Templates(Dict_to_obj):
                 os.path.join(
                     self.templates_root, file
                 ))['templates']:
-
+            print(t)
             # print("template: ", t)
-            if "base" in t['type']:
+            if t['type'] in ["base", "main"]:
                 try:
                     if t['order']:
                         for item in t['order']:
