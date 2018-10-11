@@ -73,7 +73,6 @@ def _solve_optional(template, data):
 
         return solved
     except KeyError:
-        print("--locals: ", platform)
         print("--template:", template)
         return template
 

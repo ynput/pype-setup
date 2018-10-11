@@ -57,10 +57,24 @@ class Dict_to_obj(dict):
                 else:
                     value = value[self.platform]
 
+            if not key.isupper():
+                self[key] = value
+
+    def _to_env(self, args):
+        if isinstance(args, tuple):
+            for arg in args:
+                self._env(arg)
+        else:
+            self._env(args)
+
+    def _env(self, args):
+        assert isinstance(args, dict), "`args` must be <dict>"
+        for key, value in args.items():
+            if isinstance(value, dict):
+                value = self._to_env(value)
+
             if key.isupper():
                 os.environ[key] = str(value)
-            else:
-                self[key] = value
 
 
 class Templates(Dict_to_obj):
@@ -125,6 +139,10 @@ class Templates(Dict_to_obj):
                      if t['type'] in "base"]
         self._distribute(base_list)
 
+        apps_list = [t for t in self._process_order
+                     if t['type'] in "apps"]
+        self._distribute(apps_list)
+
         context_list = [t for t in self._process_order
                         if t['type'] in "context"]
         self._distribute(context_list)
@@ -159,16 +177,29 @@ class Templates(Dict_to_obj):
                     except KeyError:
                         data[t["department"]] = dict()
                         data[t["department"]][file_name] = content
-        self.update(data)
-        self._format_env_vars()
+
+        if t['type'] in ["main", "base"]:
+            self.update(data)
+            self._to_env(data)
+            self._format_env_vars()
+
+        elif t['type'] in ["apps"]:
+            self.update(data)
+
+        elif t['type'] in ["context"]:
+            self.update(data)
 
     def _format_env_vars(self):
         for k, v in os.environ.items():
             for i in ("PYPE", "AVALON", "PATH", "PYTHONPATH"):
                 if i in k:
-                    os.environ[k] = os.path.normpath(
-                        self.format(v, self)
-                    )
+                    # print("--len of split", len(v.split(":")), v)
+                    if not len(v.split(":")) >= 2:
+                        os.environ[k] = os.path.normpath(
+                            self.format(v, self)
+                        )
+                    else:
+                        os.environ[k] = self.format(v, self)
 
     def _create_templ_item(self,
                            t_name=None,
@@ -230,7 +261,7 @@ class Templates(Dict_to_obj):
                     self.templates_root, file
                 ))['templates']:
             # print("template: ", t)
-            if t['type'] in ["base", "main"]:
+            if t['type'] in ["base", "main", "apps"]:
                 try:
                     if t['order']:
                         for item in t['order']:
