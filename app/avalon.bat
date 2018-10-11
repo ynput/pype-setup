@@ -1,2 +1,2 @@
 @echo off
-python %~dp0avalon.py %*
+python %~dp0pype_avalon.py %*

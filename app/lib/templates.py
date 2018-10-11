@@ -119,9 +119,15 @@ class Templates(Dict_to_obj):
             configs (obj): dot operator
         '''
         base_list = [t for t in self._process_order
+                     if t['type'] in "main"]
+
+        base_list = [t for t in self._process_order
                      if t['type'] in "base"]
+
         context_list = [t for t in self._process_order
                         if t['type'] in "context"]
+
+        self._distribute()
         data = dict()
         for t in base_list:
             content = self.toml_load(t['path'])
