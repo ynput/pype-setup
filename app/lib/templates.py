@@ -81,6 +81,7 @@ class Templates(Dict_to_obj):
 
     def __init__(self, *args, **kwargs):
         super(Templates, self).__init__(*args, **kwargs)
+
         try:
             self.templates_root = os.environ["PYPE_STUDIO_TEMPLATES"]
         except KeyError:
@@ -131,19 +132,19 @@ class Templates(Dict_to_obj):
         Returns:
             configs (obj): dot operator
         '''
-        main_list = [t for t in self._process_order
+        main_list = [t for t in self._templates
                      if t['type'] in "main"]
         self._distribute(main_list)
 
-        base_list = [t for t in self._process_order
+        base_list = [t for t in self._templates
                      if t['type'] in "base"]
         self._distribute(base_list)
 
-        apps_list = [t for t in self._process_order
+        apps_list = [t for t in self._templates
                      if t['type'] in "apps"]
         self._distribute(apps_list)
 
-        context_list = [t for t in self._process_order
+        context_list = [t for t in self._templates
                         if t['type'] in "context"]
         self._distribute(context_list)
 
@@ -195,9 +196,11 @@ class Templates(Dict_to_obj):
                 if i in k:
                     # print("--len of split", len(v.split(":")), v)
                     if not len(v.split(":")) >= 2:
+                        print("--path before", v)
                         os.environ[k] = os.path.normpath(
                             self.format(v, self)
                         )
+                        print("--path after", os.environ[k])
                     else:
                         os.environ[k] = self.format(v, self)
 
@@ -247,7 +250,7 @@ class Templates(Dict_to_obj):
         '''Gets all available templates from studio-templates
 
         Returns:
-            self._process_order (list): ordered list of file paths
+            self._templates (list): ordered list of file paths
                                        and department and type
         '''
         file = get_conf_file(
@@ -255,7 +258,7 @@ class Templates(Dict_to_obj):
             root_file_name=MAIN["file_start"]
         )
 
-        self._process_order = list()
+        self._templates = list()
         for t in self.toml_load(
                 os.path.join(
                     self.templates_root, file
@@ -265,7 +268,7 @@ class Templates(Dict_to_obj):
                 try:
                     if t['order']:
                         for item in t['order']:
-                            self._process_order.append(
+                            self._templates.append(
                                 self._create_templ_item(
                                     item,
                                     t['type'],
@@ -275,7 +278,7 @@ class Templates(Dict_to_obj):
                             )
                 except KeyError as error:
                     # print("// error: {}".format(error))
-                    self._process_order.extend(
+                    self._templates.extend(
                         self._create_templ_item(
                             None,
                             t['type'],
@@ -285,7 +288,7 @@ class Templates(Dict_to_obj):
                     )
                     pass
             else:
-                self._process_order.append(
+                self._templates.append(
                     self._create_templ_item(
                         t['file'],
                         t['type'],
@@ -293,7 +296,7 @@ class Templates(Dict_to_obj):
                         t['preset']
                     )
                 )
-        self._process_order
+        self._templates
 
     def toml_load(self, path):
         return toml.load(path)

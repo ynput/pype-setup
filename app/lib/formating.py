@@ -72,8 +72,8 @@ def _solve_optional(template, data):
         solved = solved.replace(">", "")
 
         return solved
-    except KeyError:
-        print("--template:", template)
+    except KeyError as error:
+        print("!! formating._solve_optional> {}".format(error))
         return template
 
 

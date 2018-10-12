@@ -8,6 +8,8 @@ from app.api import (
 solve_dependecies()
 t = Templates()
 
+print("\n", t, "\n")
+
 for k, v in t.items():
     print(k, v)
 
