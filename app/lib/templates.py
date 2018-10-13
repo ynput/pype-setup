@@ -1,3 +1,10 @@
+'''
+TODO: check if shema validate can be used
+TODO: check if precaching function can be used
+TODO: cached versions of software tomls to ~/.pype/software
+
+
+'''
 import os
 import logging
 import toml
@@ -68,12 +75,25 @@ class Dict_to_obj(dict):
             self._env(args)
 
     def _env(self, args):
+        '''
+        TODO:   read from root config info environment.including
+                and implement here
+        TODO:
+        '''
         assert isinstance(args, dict), "`args` must be <dict>"
         for key, value in args.items():
             if isinstance(value, dict):
                 value = self._to_env(value)
 
-            if key.isupper():
+            # adding to env vars
+            if key in self.including:
+                print("== paths: ", key, os.environ[key])
+                os.environ[key] = os.pathsep.join(
+                    value.split(os.pathsep) +
+                    os.environ[key].split(os.pathsep)
+                )
+            # replacing env vars
+            elif key.isupper() and not key in self.including:
                 os.environ[key] = str(value)
 
 
@@ -180,8 +200,11 @@ class Templates(Dict_to_obj):
                         data[t["department"]][file_name] = content
 
         if t['type'] in ["main", "base"]:
+            # adds to object as attribute
             self.update(data)
+            # adds to environment variables
             self._to_env(data)
+            # format environment variables
             self._format_env_vars()
 
         elif t['type'] in ["apps"]:
@@ -191,18 +214,20 @@ class Templates(Dict_to_obj):
             self.update(data)
 
     def _format_env_vars(self):
-        for k, v in os.environ.items():
-            for i in ("PYPE", "AVALON", "PATH", "PYTHONPATH"):
-                if i in k:
-                    # print("--len of split", len(v.split(":")), v)
-                    if not len(v.split(":")) >= 2:
-                        print("--path before", v)
-                        os.environ[k] = os.path.normpath(
-                            self.format(v, self)
-                        )
-                        print("--path after", os.environ[k])
-                    else:
-                        os.environ[k] = self.format(v, self)
+        selected_keys = [k for k in list(os.environ.keys())
+                         for i in self.filtering
+                         if i in k]
+        env_to_change = {k: v for k, v in os.environ.items()
+                         if k in selected_keys}
+
+        for k, v in env_to_change.items():
+            if not len(v.split(":")) >= 2:
+                os.environ[k] = os.path.normpath(
+                    self.format(v, self)
+                )
+                # print("--path after", os.environ[k])
+            else:
+                os.environ[k] = self.format(v, self)
 
     def _create_templ_item(self,
                            t_name=None,
@@ -298,5 +323,17 @@ class Templates(Dict_to_obj):
                 )
         self._templates
 
+        # insert environment setings into object root
+        for k, v in self.toml_load(
+                os.path.join(
+                    self.templates_root, file
+                ))['environment'].items():
+            self[k] = v
+
     def toml_load(self, path):
         return toml.load(path)
+
+    def toml_dump(self, path, data):
+        with open(path, "w+") as file:
+            file.write(toml.dumps(data))
+        return True

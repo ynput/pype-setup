@@ -1,13 +1,7 @@
 import re
 import os
 import platform
-'''
-TODO: function for reading from toml
-TODO: function for writing to toml
-TODO: check if shema validate can be used
-TODO: check if precaching function can be used
-TODO: cached versions of software tomls to ~/.pype/software
-'''
+
 platform = platform.system().lower()
 
 
