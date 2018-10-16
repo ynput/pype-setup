@@ -1,6 +1,6 @@
 @echo off
-PYPE_SETUP_GIT_URL=git@github.com:pypeclub/pype-setup.git
-PYPE_SETUP_GIT_BRANCH=app-lib-all-jakub
+set PYPE_SETUP_GIT_URL=git@github.com:pypeclub/pype-setup.git
+set PYPE_SETUP_GIT_BRANCH=app-lib-all-jakub
 
 set PYPE_SETUP_ROOT=%~dp0
 
