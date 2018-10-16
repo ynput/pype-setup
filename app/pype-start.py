@@ -77,9 +77,9 @@ for k, v in os.environ.items():
     log.debug("os.environ.item: `{}`,`{}`".format(k, v))
 print(100*"_")
 
-if "localhost" in os.environ["AVALON_MONGO"]:
-    # start server
-    local_mongo_server.main()
+# if "localhost" in os.environ["AVALON_MONGO"]:
+#     # start server
+#     local_mongo_server.main()
 
 # TODO: checking if project paths locations are available, if not it will set local locations
 # TODO: software launchers
