@@ -1,12 +1,12 @@
 import logging
-
+import os
 logger_file_path = os.path.join(
     os.path.dirname(__name__),
     'example.log'
 )
-
+os.remove(logger_file_path)
 Logger = logging.basicConfig(
-    filename=,
+    filename=logger_file_path,
     level=logging.DEBUG
 )
 
