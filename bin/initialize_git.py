@@ -7,8 +7,8 @@ import sys
 IS_WIN32 = sys.platform == "win32"
 
 repository_path = os.environ["PYPE_SETUP_ROOT"]
-REP_GIT_URL = os.environ["PYPE_REP_GIT_URL"]
-REP_GIT_BRANCH = os.environ["PYPE_REP_GIT_BRANCH"]
+REP_GIT_URL = os.environ["PYPE_SETUP_GIT_URL"]
+REP_GIT_BRANCH = os.environ["PYPE_SETUP_GIT_BRANCH"]
 
 print("\n\n______")
 print(repository_path)
