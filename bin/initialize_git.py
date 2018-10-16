@@ -6,11 +6,16 @@ import sys
 
 IS_WIN32 = sys.platform == "win32"
 
-if __name__ == "__main__":
+repository_path = os.environ["PYPE_SETUP_ROOT"]
+REP_GIT_URL = os.environ["PYPE_REP_GIT_URL"]
+REP_GIT_BRANCH = os.environ["PYPE_REP_GIT_BRANCH"]
 
-    repository_path = os.getcwd()
-    branch = 'dir-rework'
-    repository_url = "git@github.com:pypeclub/pype-setup.git"
+print("\n\n______")
+print(repository_path)
+print(REP_GIT_URL)
+print(REP_GIT_BRANCH)
+
+if __name__ == "__main__":
 
     print("Making \"{0}\" into git repository.".format(repository_path))
 
@@ -24,24 +29,23 @@ if __name__ == "__main__":
             if os.getenv(key)
         }
     else:
-    # OSX and Linux users are left to fend for themselves.
+        # OSX and Linux users are left to fend for themselves.
         _env = os.environ.copy()
-
 
     for key in _env.items():
         print(key)
-        if key in ("PATH","PYTHONPATH"):
+        if key in ("PATH", "PYTHONPATH"):
             print(key, value)
 
     # Copy .git directory from cloned repository
     tempdir = tempfile.mkdtemp()
-    subprocess.call(["git", "clone", repository_url], cwd=tempdir, shell=True)
-    src = os.path.join(tempdir, "avalon-environment", ".git")
+    subprocess.call(["git", "clone", REP_GIT_URL], cwd=tempdir, shell=True)
+    src = os.path.join(tempdir, "pype-setup", ".git")
     dst = os.path.join(repository_path, ".git")
     if not os.path.exists(dst):
         shutil.copytree(src, dst)
 
     # Initialising git repository
     subprocess.Popen(["git", "init"], shell=True)
-    subprocess.Popen(["git", "checkout", branch], shell=True)
+    subprocess.Popen(["git", "checkout", REP_GIT_BRANCH], shell=True)
     subprocess.call(["git", "add", "."], shell=True)

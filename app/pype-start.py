@@ -56,7 +56,8 @@ from app import (
     Templates,
     _repos_installed,
     _templates_loaded,
-    local_mongo_server
+    local_mongo_server,
+    Logger
 )
 
 # solve_dependecies()
@@ -66,23 +67,15 @@ if not _templates_loaded:
     _templates_loaded = True
 
 
-logging.basicConfig(
-    filename=os.path.join(
-        os.path.dirname(__name__),
-        'example.log'
-    ),
-    level=logging.DEBUG
-)
-
-log = logging.getLogger(__name__)
+log = Logger.getLogger(__name__)
 
 print(100*"_")
 for k, v in Templates.items():
-    log.debug(k)
+    log.debug("templates.item: `{}`,`{}`".format(k, v))
 print(100*"_")
 
 for k, v in os.environ.items():
-    log.debug(k)
+    log.debug("os.environ.item: `{}`,`{}`".format(k, v))
 print(100*"_")
 
 if "localhost" in os.environ["AVALON_MONGO"]:
