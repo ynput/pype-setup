@@ -10,11 +10,6 @@ repository_path = os.environ["PYPE_SETUP_ROOT"]
 REP_GIT_URL = os.environ["PYPE_SETUP_GIT_URL"]
 REP_GIT_BRANCH = os.environ["PYPE_SETUP_GIT_BRANCH"]
 
-print("\n\n______")
-print(repository_path)
-print(REP_GIT_URL)
-print(REP_GIT_BRANCH)
-
 if __name__ == "__main__":
 
     print("Making \"{0}\" into git repository.".format(repository_path))
