@@ -41,28 +41,68 @@ import shutil
 import tempfile
 import platform
 import contextlib
-
+import logging
 
 from app.api import (
-    # Templates,
-    Loaded_templates,
-    solve_dependecies,
+    Templates as templates,
+    # solve_dependecies,
     forward,
     git_update,
     git_checkout
 )
 
-solve_dependecies()
-# Having avalon.py in the current working directory
-# exposes it to Python's import mechanism which conflicts
-# with the actual avalon Python package.
+
+from app import (
+    Templates,
+    _repos_installed,
+    _templates_loaded,
+    local_mongo_server
+)
+
+# solve_dependecies()
+
+if not _templates_loaded:
+    Templates = templates()
+    _templates_loaded = True
+
+
+logging.basicConfig(
+    filename=os.path.join(
+        os.path.dirname(__name__),
+        'example.log'
+    ),
+    level=logging.DEBUG
+)
+
+log = logging.getLogger(__name__)
+
+print(100*"_")
+for k, v in Templates.items():
+    log.debug(k)
+print(100*"_")
+
+for k, v in os.environ.items():
+    log.debug(k)
+print(100*"_")
+
+if "localhost" in os.environ["AVALON_MONGO"]:
+    # start server
+    local_mongo_server.main()
+
+# TODO: checking if project paths locations are available, if not it will set local locations
+# TODO: software launchers
+
+PYPE_APP_ROOT = os.environ["PYPE_APP_ROOT"]
+
 if os.path.basename(__file__) in os.listdir(os.getcwd()):
+    '''
+    Having avalon.py in the current working directory
+    exposes it to Python's import mechanism which conflicts
+    with the actual avalon Python package.
+    '''
     sys.stderr.write("Error: Please change your current "
                      "working directory\n%s\n" % os.getcwd())
     sys.exit(1)
-
-
-PYPE_APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 init = """\

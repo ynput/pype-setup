@@ -47,6 +47,7 @@ def _solve_optional(template, data):
         template (string): value from toml templates
         data (obj): containing keys to be filled into template
     """
+    # print(template)
     # Remove optional missing keys
     pattern = re.compile(r"<.*?>")
     invalid_optionals = []

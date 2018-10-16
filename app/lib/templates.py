@@ -6,14 +6,17 @@ TODO: cached versions of software tomls to ~/.pype/software
 
 '''
 import os
+import sys
 import logging
 import toml
 import platform
-# from .studio import (studio_depandecies)
-from .formating import format
-from .repos import get_conf_file
 
-AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
+from .formating import format
+from .repos import (solve_dependecies, get_conf_file)
+
+solve_dependecies()
+
+PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
 log = logging.getLogger(__name__)
 
@@ -82,18 +85,51 @@ class Dict_to_obj(dict):
         '''
         assert isinstance(args, dict), "`args` must be <dict>"
         for key, value in args.items():
+            # print("=# _env1: ", key, value)
+            if not value:
+                continue
+            # print("=# _env2: ", key, value)
             if isinstance(value, dict):
                 value = self._to_env(value)
 
             # adding to env vars
             if key in self.including:
-                print("== paths: ", key, os.environ[key])
-                os.environ[key] = os.pathsep.join(
-                    value.split(os.pathsep) +
-                    os.environ[key].split(os.pathsep)
-                )
-            # replacing env vars
-            elif key.isupper() and not key in self.including:
+                if key in "PYTHONPATH":
+                    # print("== paths: ", key, os.environ[key])
+                    if not isinstance(value, list):
+                        paths = os.pathsep.join(
+                            os.environ[key].split(os.pathsep)
+                            + value.split(os.pathsep)
+                        )
+                        os.environ[key] = paths
+                        # print("---1", paths)
+                        [sys.path.append(p) for p in paths.split(os.pathsep)]
+                    else:
+                        paths = os.pathsep.join(
+                            os.environ[key].split(os.pathsep)
+                            + [os.path.normpath(self.format(p, self))
+                               for p in value]
+                        )
+                        # print("-----2", paths)
+                        os.environ[key] = paths
+                        [sys.path.append(p) for p in paths.split(os.pathsep)]
+                        # replacing env vars
+                else:
+                    if not isinstance(value, list):
+                        os.environ[key] = os.pathsep.join(
+                            value.split(os.pathsep) +
+                            os.environ[key].split(os.pathsep)
+                        )
+                        # print("-----3", os.environ[key])
+                    else:
+                        os.environ[key] = os.pathsep.join(
+                            [os.path.normpath(self.format(p, self))
+                             for p in value]
+                            + os.environ[key].split(os.pathsep)
+                        )
+                        # print("-----4", os.environ[key])
+                        # replacing env vars
+            elif key.isupper() and key not in self.including:
                 os.environ[key] = str(value)
 
 
@@ -204,6 +240,7 @@ class Templates(Dict_to_obj):
             self.update(data)
             # adds to environment variables
             self._to_env(data)
+
             # format environment variables
             self._format_env_vars()
 
@@ -228,6 +265,16 @@ class Templates(Dict_to_obj):
                 # print("--path after", os.environ[k])
             else:
                 os.environ[k] = self.format(v, self)
+
+        # fix sys.path
+        sys_paths = sys.path
+        new_sys_paths = [os.path.normpath(self.format(p, self))
+                         for p in sys_paths]
+        sys.path = []
+        [sys.path.append(p)
+         for p in new_sys_paths
+         if p not in sys.path
+         if p is not '.']
 
     def _create_templ_item(self,
                            t_name=None,
@@ -265,6 +312,12 @@ class Templates(Dict_to_obj):
                 root_file_name=t_name,
                 preset_name=t_preset
             )
+            if PYPE_DEBUG:
+                log.info("_create_templ_item.t_root:"
+                         " {} ".format(t_root))
+                log.info("_create_templ_item.t_file:"
+                         " {} ".format(t_file))
+
             return {
                 "path": os.path.join(t_root, t_file),
                 "department": t_department,

@@ -191,6 +191,7 @@ def _test_module_import(module_path, module_name):
 
 def _add_to_path(add_to_path):
     # Append to PATH
+    # print("---------1", os.environ["PATH"])
     os.environ["PATH"] = os.pathsep.join(
         [add_to_path] +
         os.getenv("PATH", "").split(os.pathsep)
@@ -199,6 +200,7 @@ def _add_to_path(add_to_path):
 
 def _add_to_pythonpath(add_to_pythonpath):
     # Append to PYTHONPATH
+    # print("---------2", os.environ["PYTHONPATH"])
     os.environ["PYTHONPATH"] = os.pathsep.join(
         [add_to_pythonpath] +
         os.getenv("PYTHONPATH", "").split(os.pathsep)
@@ -216,7 +218,7 @@ def _setup_environment(repos=None):
     for key, value in repos.items():
 
         if key not in list(os.environ.keys()):
-            print("Checking '{}'...".format(key))
+            # print("Checking '{}'...".format(key))
             path = os.path.normpath(
                 os.path.join(
                     os.environ['PYPE_SETUP_ROOT'],
@@ -236,7 +238,7 @@ def _setup_environment(repos=None):
                     _add_config(value['subdir'])
                     # print("Config added...")
                 _add_to_pythonpath(path)
-                print("/// added to pythonpath")
+                # print("/// added to pythonpath")
                 # add to list for testing
                 testing_list.append(
                     {
