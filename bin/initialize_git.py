@@ -42,6 +42,8 @@ if __name__ == "__main__":
     subprocess.call(["git", "clone", REP_GIT_URL], cwd=tempdir, shell=True)
     src = os.path.join(tempdir, "pype-setup", ".git")
     dst = os.path.join(repository_path, ".git")
+
+    shutil.rmtree(dst, ignore_errors=False, onerror=None)
     if not os.path.exists(dst):
         shutil.copytree(src, dst)
 
