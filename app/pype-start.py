@@ -41,7 +41,6 @@ import shutil
 import tempfile
 import platform
 import contextlib
-import logging
 
 from app.api import (
     Templates as templates,
