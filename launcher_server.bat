@@ -6,7 +6,7 @@ set PYPE_SETUP_ROOT=%~dp0
 
 :: maintain python environment
 set SYNC_ENV=0 :: will synchronize remote with local
-set REMOTE_ENV_ON=1 :: will switch to remote
+set REMOTE_ENV_ON=0 :: will switch to remote
 call %PYPE_SETUP_ROOT%bin\launch_conda.bat
 
 :: set pythonpath for adding app into python context

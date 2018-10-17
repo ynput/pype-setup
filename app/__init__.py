@@ -1,12 +1,22 @@
 import logging
 import os
+import datetime
+import time
 
-logger_file_path = os.path.join(
+ts = time.time()
+log_name = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S')
+
+logger_file_root = os.path.join(
     os.path.expanduser("~"),
-    'pype-setup.log'
+    ".pype-setup"
 )
-if os.path.exists(logger_file_path):
-    os.remove(logger_file_path)
+logger_file_path = os.path.join(
+    logger_file_root,
+    (log_name + '.log')
+)
+
+if not os.path.exists(logger_file_root):
+    os.mkdir(logger_file_root)
 
 logging.basicConfig(
     filename=logger_file_path,
