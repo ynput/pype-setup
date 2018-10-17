@@ -1,9 +1,11 @@
 from .lib.formating import format
 
-from .lib.repos import (
-    get_conf_file,
-    solve_dependecies,
+from .lib.utils import (
     forward,
+    get_conf_file
+)
+from .lib.repos import (
+    solve_dependecies,
     git_update,
     git_checkout
 )
@@ -12,6 +14,7 @@ from .lib.templates import (
     Templates
 )
 
+from . import Logger
 
 __all__ = [
     "format",
@@ -22,6 +25,9 @@ __all__ = [
     "solve_dependecies",
 
     "forward",
+
     "git_update",
-    "git_checkout"
+    "git_checkout",
+
+    "Logger"
 ]

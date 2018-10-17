@@ -2,114 +2,20 @@ import sys
 import os
 import subprocess
 import toml
-import logging
 
-# TODO: setup for projects os.environ["AVALON_PROJECTS"]
-log = logging.getLogger(__name__)
 
-AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
+from .utils import (forward, get_conf_file)
+from .. import logger
+
+Logger = logger()
+log = Logger.getLogger(__name__)
+PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
 # TODO: updating repositories into defined branches from .gitmodules
 # TODO: write our own gitmodules and ensure it will install all
 # submodules at first run in case the .gitmodules got lostself.
 # TODO: checking out into defined branches in case branch is
 # different from the one in .gitmodules and activated
-
-
-def get_conf_file(
-    dir,
-    root_file_name,
-    preset_name=None,
-    split_pattern=None,
-    representation=None
-):
-    '''Gets any available `config template` file from given
-    **path** and **name**
-
-    Attributes:
-        dir (str): path to root directory where files could be searched
-        root_file_name (str): root part of name it is searching for
-        preset_name (str): default preset name
-        split_pattern (str): default pattern for spliting name and preset
-        representation (str): extention of file used for config files
-                              can be ".toml" but also ".conf"
-
-    Returns:
-        file_name (str): if matching name found or None
-    '''
-
-    if not preset_name:
-        preset_name = "default"
-    if not split_pattern:
-        split_pattern = ".."
-    if not representation:
-        representation = ".toml"
-
-    conf_file = root_file_name + representation
-    # print(dir, root_file_name, preset_name,
-    # split_pattern, representation)
-    try:
-        preset = os.environ["PYPE_TEMPLATES_PRESET"]
-    except KeyError:
-        preset = preset_name
-
-    test_files = [
-        f for f in os.listdir(dir)
-        if split_pattern in f
-    ]
-
-    try:
-        conf_file = [
-            f for f in test_files
-            if preset in os.path.splitext(f)[0].split(split_pattern)[1]
-            if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
-        ][0]
-    except IndexError as error:
-        if AVALON_DEBUG:
-            log.warning("File is missing '{}' will be"
-                        "used basic config file: {}".format(
-                            error, conf_file
-                        ))
-        pass
-
-    return conf_file if os.path.exists(os.path.join(dir, conf_file)) else None
-
-
-def forward(args, silent=False, cwd=None):
-    """Pass `args` to the Avalon CLI, within the Avalon Setup environment
-
-    Arguments:
-        args (list): Command-line arguments to run
-            within the active environment
-
-    """
-
-    if AVALON_DEBUG:
-        print("avalon.py: Forwarding '%s'.." % " ".join(args))
-
-    popen = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-        bufsize=1,
-        cwd=cwd
-    )
-
-    # Blocks until finished
-    while True:
-        line = popen.stdout.readline()
-        if line != '':
-            if not silent or AVALON_DEBUG:
-                sys.stdout.write(line)
-        else:
-            break
-
-    if AVALON_DEBUG:
-        print("avalon.py: Finishing up..")
-
-    popen.wait()
-    return popen.returncode
 
 
 def git_update(cd, branch="master"):
@@ -132,7 +38,7 @@ def git_update(cd, branch="master"):
         returncode = forward(args, silent=True, cwd=cd)
         if returncode != 0:
             sys.stderr.write("Could not update, try running "
-                             "it again with AVALON_DEBUG=True\n")
+                             "it again with PYPE_DEBUG=True\n")
             return returncode
 
     print("All done")
@@ -166,7 +72,7 @@ def git_checkout(repository=dict()):
         if returncode != 0:
             sys.stderr.write("Could not checkout, check if you've\n"
                              "commited before any previous changes and try\n"
-                             "it again with AVALON_DEBUG=True\n")
+                             "it again with PYPE_DEBUG=True\n")
             return returncode
 
     print("All done")
@@ -255,9 +161,9 @@ def _setup_environment(repos=None):
 
 def solve_dependecies():
 
-    ROOT = os.environ["PYPE_SETUP_ROOT"]
+    ROOT = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "install")
 
-    REPOS_CONFIG_FILE = get_conf_file(ROOT, "config-repos")
+    REPOS_CONFIG_FILE = get_conf_file(ROOT, "pype-repos")
 
     config_content = toml.load(
         os.path.join(

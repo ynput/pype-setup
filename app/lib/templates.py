@@ -7,18 +7,23 @@ TODO: cached versions of software tomls to ~/.pype/software
 '''
 import os
 import sys
-import logging
 import toml
 import platform
 
 from .formating import format
-from .repos import (solve_dependecies, get_conf_file)
+
+from .utils import (get_conf_file)
+from .repos import (solve_dependecies)
+from .. import logger
+
+Logger = logger()
+
 
 solve_dependecies()
 
 PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
-log = logging.getLogger(__name__)
+log = Logger.getLogger(__name__)
 
 
 MAIN = {
@@ -139,7 +144,10 @@ class Templates(Dict_to_obj):
         super(Templates, self).__init__(*args, **kwargs)
 
         try:
-            self.templates_root = os.environ["PYPE_STUDIO_TEMPLATES"]
+            self.templates_root = os.path.join(
+                os.environ["PYPE_STUDIO_TEMPLATES"],
+                "templates"
+            )
         except KeyError:
             self.templates_root = os.path.join(
                 os.environ["PYPE_SETUP_ROOT"],
@@ -331,15 +339,20 @@ class Templates(Dict_to_obj):
             self._templates (list): ordered list of file paths
                                        and department and type
         '''
+        self.install_root = os.path.join(
+            os.environ["PYPE_STUDIO_TEMPLATES"],
+            "install"
+        )
         file = get_conf_file(
-            dir=self.templates_root,
+            dir=self.install_root,
             root_file_name=MAIN["file_start"]
         )
-
+        print(self.install_root)
+        print(file)
         self._templates = list()
         for t in self.toml_load(
                 os.path.join(
-                    self.templates_root, file
+                    self.install_root, file
                 ))['templates']:
             # print("template: ", t)
             if t['type'] in ["base", "main", "apps"]:
@@ -379,7 +392,7 @@ class Templates(Dict_to_obj):
         # insert environment setings into object root
         for k, v in self.toml_load(
                 os.path.join(
-                    self.templates_root, file
+                    self.install_root, file
                 ))['environment'].items():
             self[k] = v
 

@@ -55,11 +55,8 @@ from app import (
     Templates,
     _repos_installed,
     _templates_loaded,
-    local_mongo_server,
     Logger
 )
-
-# solve_dependecies()
 
 if not _templates_loaded:
     Templates = templates()
@@ -67,19 +64,19 @@ if not _templates_loaded:
 
 
 log = Logger.getLogger(__name__)
+PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
-print(100*"_")
-for k, v in Templates.items():
-    log.debug("templates.item: `{}`,`{}`".format(k, v))
-print(100*"_")
+if PYPE_DEBUG:
+    for k, v in Templates.items():
+        log.debug(100*"_")
+        log.debug("templates.item: `{}`,`{}`".format(k, v))
+        log.debug(100*"_")
 
-for k, v in os.environ.items():
-    log.debug("os.environ.item: `{}`,`{}`".format(k, v))
-print(100*"_")
+    for k, v in os.environ.items():
+        log.debug(100*"_")
+        log.debug("os.environ.item: `{}`,`{}`".format(k, v))
+        log.debug(100*"_")
 
-# if "localhost" in os.environ["AVALON_MONGO"]:
-#     # start server
-#     local_mongo_server.main()
 
 # TODO: checking if project paths locations are available, if not it will set local locations
 # TODO: software launchers
