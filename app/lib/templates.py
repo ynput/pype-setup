@@ -18,10 +18,9 @@ from .. import logger
 
 Logger = logger()
 
-
 solve_dependecies()
 
-PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
+PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 log = Logger.getLogger(__name__)
 
@@ -50,11 +49,27 @@ class Dict_to_obj(dict):
     platform = platform.system().lower()
 
     def __init__(self, *args, **kwargs):
+        self._to_obj(args or kwargs)
 
-        if kwargs:
-            self._to_obj(kwargs)
-        else:
-            self._to_obj(args)
+    # def format(self, *args, **kwargs):
+    def format(self, template="{template_string}", data=dict()):
+
+        return format(template, data)
+
+    def _format(self, *args, **kwargs):
+        args = args or kwargs
+        print(args)
+        if args and isinstance(args, tuple):
+            data = dict()
+            [data.update(d) for d in args]
+        elif args:
+            data = args
+
+        if data:
+            print(data)
+        print("___________")
+        print(self)
+        print("___________")
 
     def _to_obj(self, args):
         if isinstance(args, tuple):
@@ -74,8 +89,10 @@ class Dict_to_obj(dict):
 
             if not key.isupper():
                 self[key] = value
+                self._format
 
-    def _to_env(self, args):
+    def add_to_env_var(self, *args, **kwargs):
+
         if isinstance(args, tuple):
             for arg in args:
                 self._env(arg)
@@ -95,7 +112,7 @@ class Dict_to_obj(dict):
                 continue
             # print("=# _env2: ", key, value)
             if isinstance(value, dict):
-                value = self._to_env(value)
+                value = self.add_to_env_var(value)
 
             # adding to env vars
             if key in self.including:
@@ -104,38 +121,53 @@ class Dict_to_obj(dict):
                     if not isinstance(value, list):
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
-                            + value.split(os.pathsep)
+                            + str(value).split(os.pathsep)
                         )
                         os.environ[key] = paths
-                        # print("---1", paths)
                         [sys.path.append(p) for p in paths.split(os.pathsep)]
                     else:
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
-                            + [os.path.normpath(self.format(p, self))
+                            + [os.path.normpath(self.format(str(p), self))
                                for p in value]
                         )
-                        # print("-----2", paths)
                         os.environ[key] = paths
                         [sys.path.append(p) for p in paths.split(os.pathsep)]
                         # replacing env vars
                 else:
                     if not isinstance(value, list):
                         os.environ[key] = os.pathsep.join(
-                            value.split(os.pathsep) +
+                            str(value).split(os.pathsep) +
                             os.environ[key].split(os.pathsep)
                         )
-                        # print("-----3", os.environ[key])
                     else:
                         os.environ[key] = os.pathsep.join(
-                            [os.path.normpath(self.format(p, self))
+                            [os.path.normpath(self.format(str(p), self))
                              for p in value]
                             + os.environ[key].split(os.pathsep)
                         )
-                        # print("-----4", os.environ[key])
                         # replacing env vars
             elif key.isupper() and key not in self.including:
-                os.environ[key] = str(value)
+                if isinstance(value, list):
+                    try:
+                        paths = os.pathsep.join(
+                            os.environ[key].split(os.pathsep)
+                            + [os.path.normpath(self.format(str(p), self))
+                               for p in value]
+                        )
+                    except KeyError:
+                        paths = os.pathsep.join(
+                            [os.path.normpath(self.format(str(p), self))
+                             for p in value]
+                        )
+                    os.environ[key] = paths
+                else:
+                    if not len(str(value).split(":")) >= 2:
+                        os.environ[key] = os.path.normpath(
+                            self.format(str(value), self)
+                        )
+                    else:
+                        os.environ[key] = self.format(str(value), self)
 
 
 class Templates(Dict_to_obj):
@@ -159,10 +191,6 @@ class Templates(Dict_to_obj):
         self._get_template_files()
         self._get_templates_to_args()
 
-    def format(self, template="{template_string}", data=dict()):
-        # from formating.format()
-        return format(template, data)
-
     def update(self,  *args, **kwargs):
         '''Adding content to object
 
@@ -185,10 +213,7 @@ class Templates(Dict_to_obj):
                         'two_in_three': 'two_in_three_string'
                     )```
         '''
-        if kwargs:
-            self._to_obj(kwargs)
-        else:
-            self._to_obj(args)
+        self._to_obj(kwargs or args)
 
     def _get_templates_to_args(self):
         ''' Populates all available configs from templates
@@ -247,7 +272,7 @@ class Templates(Dict_to_obj):
             # adds to object as attribute
             self.update(data)
             # adds to environment variables
-            self._to_env(data)
+            self.add_to_env_var(data)
 
             # format environment variables
             self._format_env_vars()
