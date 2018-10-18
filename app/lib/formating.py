@@ -49,7 +49,7 @@ def _solve_optional(template, data):
     """
     # print(template)
     # Remove optional missing keys
-    pattern = re.compile(r"<.*?>")
+    pattern = re.compile(r"<.*?[^0-9]>")
     invalid_optionals = []
     for group in pattern.findall(template):
         try:

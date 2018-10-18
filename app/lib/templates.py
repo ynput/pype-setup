@@ -52,24 +52,33 @@ class Dict_to_obj(dict):
         self._to_obj(args or kwargs)
 
     # def format(self, *args, **kwargs):
-    def format(self, template="{template_string}", data=dict()):
-
+    def _format(self, template="{template_string}", data=dict()):
         return format(template, data)
 
-    def _format(self, *args, **kwargs):
+    def format(self, *args, **kwargs):
         args = args or kwargs
-        print(args)
+        data = dict()
         if args and isinstance(args, tuple):
-            data = dict()
             [data.update(d) for d in args]
         elif args:
             data = args
+        else:
+            data = None
 
         if data:
-            print(data)
-        print("___________")
-        print(self)
-        print("___________")
+            self.update(data)
+
+        temp_dict = self.copy()
+
+        def iter_dict(data):
+            for k, v in data.items():
+                if isinstance(v, dict):
+                    iter_dict(v)
+                else:
+                    data[k] = self._format(str(v), temp_dict)
+            return data
+
+        return self._obj(iter_dict(temp_dict))
 
     def _to_obj(self, args):
         if isinstance(args, tuple):
@@ -89,7 +98,7 @@ class Dict_to_obj(dict):
 
             if not key.isupper():
                 self[key] = value
-                self._format
+                self.format
 
     def add_to_env_var(self, *args, **kwargs):
 
@@ -128,7 +137,7 @@ class Dict_to_obj(dict):
                     else:
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
-                            + [os.path.normpath(self.format(str(p), self))
+                            + [os.path.normpath(self._format(str(p), self))
                                for p in value]
                         )
                         os.environ[key] = paths
@@ -142,7 +151,7 @@ class Dict_to_obj(dict):
                         )
                     else:
                         os.environ[key] = os.pathsep.join(
-                            [os.path.normpath(self.format(str(p), self))
+                            [os.path.normpath(self._format(str(p), self))
                              for p in value]
                             + os.environ[key].split(os.pathsep)
                         )
@@ -152,22 +161,22 @@ class Dict_to_obj(dict):
                     try:
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
-                            + [os.path.normpath(self.format(str(p), self))
+                            + [os.path.normpath(self._format(str(p), self))
                                for p in value]
                         )
                     except KeyError:
                         paths = os.pathsep.join(
-                            [os.path.normpath(self.format(str(p), self))
+                            [os.path.normpath(self._format(str(p), self))
                              for p in value]
                         )
                     os.environ[key] = paths
                 else:
                     if not len(str(value).split(":")) >= 2:
                         os.environ[key] = os.path.normpath(
-                            self.format(str(value), self)
+                            self._format(str(value), self)
                         )
                     else:
-                        os.environ[key] = self.format(str(value), self)
+                        os.environ[key] = self._format(str(value), self)
 
 
 class Templates(Dict_to_obj):
@@ -293,15 +302,15 @@ class Templates(Dict_to_obj):
         for k, v in env_to_change.items():
             if not len(v.split(":")) >= 2:
                 os.environ[k] = os.path.normpath(
-                    self.format(v, self)
+                    self._format(v, self)
                 )
                 # print("--path after", os.environ[k])
             else:
-                os.environ[k] = self.format(v, self)
+                os.environ[k] = self._format(v, self)
 
         # fix sys.path
         sys_paths = sys.path
-        new_sys_paths = [os.path.normpath(self.format(p, self))
+        new_sys_paths = [os.path.normpath(self._format(p, self))
                          for p in sys_paths]
         sys.path = []
         [sys.path.append(p)
@@ -372,8 +381,7 @@ class Templates(Dict_to_obj):
             dir=self.install_root,
             root_file_name=MAIN["file_start"]
         )
-        print(self.install_root)
-        print(file)
+
         self._templates = list()
         for t in self.toml_load(
                 os.path.join(
