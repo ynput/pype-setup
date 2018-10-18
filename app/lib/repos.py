@@ -9,7 +9,7 @@ from .. import logger
 
 Logger = logger()
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
+PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 # TODO: updating repositories into defined branches from .gitmodules
 # TODO: write our own gitmodules and ensure it will install all

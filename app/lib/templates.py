@@ -18,10 +18,9 @@ from .. import logger
 
 Logger = logger()
 
-
 solve_dependecies()
 
-PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
+PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 log = Logger.getLogger(__name__)
 
@@ -104,7 +103,7 @@ class Dict_to_obj(dict):
                     if not isinstance(value, list):
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
-                            + value.split(os.pathsep)
+                            + str(value).split(os.pathsep)
                         )
                         os.environ[key] = paths
                         # print("---1", paths)
@@ -112,7 +111,7 @@ class Dict_to_obj(dict):
                     else:
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
-                            + [os.path.normpath(self.format(p, self))
+                            + [os.path.normpath(self.format(str(p), self))
                                for p in value]
                         )
                         # print("-----2", paths)
@@ -122,13 +121,13 @@ class Dict_to_obj(dict):
                 else:
                     if not isinstance(value, list):
                         os.environ[key] = os.pathsep.join(
-                            value.split(os.pathsep) +
+                            str(value).split(os.pathsep) +
                             os.environ[key].split(os.pathsep)
                         )
                         # print("-----3", os.environ[key])
                     else:
                         os.environ[key] = os.pathsep.join(
-                            [os.path.normpath(self.format(p, self))
+                            [os.path.normpath(self.format(str(p), self))
                              for p in value]
                             + os.environ[key].split(os.pathsep)
                         )
@@ -139,17 +138,22 @@ class Dict_to_obj(dict):
                     try:
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
-                            + [os.path.normpath(self.format(p, self))
+                            + [os.path.normpath(self.format(str(p), self))
                                for p in value]
                         )
                     except KeyError:
                         paths = os.pathsep.join(
-                            [os.path.normpath(self.format(p, self))
+                            [os.path.normpath(self.format(str(p), self))
                              for p in value]
                         )
                     os.environ[key] = paths
                 else:
-                    os.environ[key] = os.path.normpath(self.format(str(value), self))
+                    if not len(str(value).split(":")) >= 2:
+                        os.environ[key] = os.path.normpath(
+                            self.format(str(value), self)
+                        )
+                    else:
+                        os.environ[key] = self.format(str(value), self)
 
 
 class Templates(Dict_to_obj):
