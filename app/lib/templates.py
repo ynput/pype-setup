@@ -135,7 +135,21 @@ class Dict_to_obj(dict):
                         # print("-----4", os.environ[key])
                         # replacing env vars
             elif key.isupper() and key not in self.including:
-                os.environ[key] = str(value)
+                if isinstance(value, list):
+                    try:
+                        paths = os.pathsep.join(
+                            os.environ[key].split(os.pathsep)
+                            + [os.path.normpath(self.format(p, self))
+                               for p in value]
+                        )
+                    except KeyError:
+                        paths = os.pathsep.join(
+                            [os.path.normpath(self.format(p, self))
+                             for p in value]
+                        )
+                    os.environ[key] = paths
+                else:
+                    os.environ[key] = os.path.normpath(self.format(str(value), self))
 
 
 class Templates(Dict_to_obj):

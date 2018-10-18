@@ -121,11 +121,11 @@ if "%SYNC_ENV%"=="1" (
 )
 
 if "%REMOTE_ENV_ON%"=="1" (
-    set PATH="%REMOTE_ENV_DIR%";"%REMOTE_ENV_DIR%\Scripts";"%REMOTE_ENV_DIR%\Library";"%REMOTE_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"C:\Users\jezsc\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
+    set PATH="%REMOTE_ENV_DIR%";"%REMOTE_ENV_DIR%\Scripts";"%REMOTE_ENV_DIR%\Library";"%REMOTE_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"%systemdrive%%homepath%\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
     set PYTHON_ENV=%REMOTE_ENV_DIR%
     echo [92m^>^>^>[0m Running env from: [ [96m"%REMOTE_ENV_DIR%"[0m ]
 ) else (
-    set PATH="%LOCAL_ENV_DIR%";"%LOCAL_ENV_DIR%\Scripts";"%LOCAL_ENV_DIR%\Library";"%LOCAL_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"C:\Users\jezsc\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
+    set PATH="%LOCAL_ENV_DIR%";"%LOCAL_ENV_DIR%\Scripts";"%LOCAL_ENV_DIR%\Library";"%LOCAL_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"%systemdrive%%homepath%\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
     set PYTHON_ENV=%LOCAL_ENV_DIR%
     echo [92m^>^>^>[0m Running env from: [ [96m"%LOCAL_ENV_DIR%"[0m ]
 )
