@@ -4,8 +4,6 @@ from app.api import (
     Templates
 )
 
-print(100*"_")
-
 t = Templates()
 
 # print(100*"_")
@@ -17,12 +15,23 @@ t = Templates()
 #         print(k, v)
 # print(100*"_")
 anatomy = t.anatomy
-anatomy.format({"project": {"code": "tr"},
-                "representation": "exr",
-                "VERSION": 3,
-                "SUBVERSION": 10,
-                "shot": "sh001",
-                "sequence": "sq090"})
 
-print(anatomy.workfiles)
+anatomy = anatomy.format({"project": {"code": "tr"},
+                          "representation": "exr",
+                          "VERSION": 3,
+                          "SUBVERSION": 10,
+                          "shot": "sh001",
+                          "sequence": "sq090"})
+
+file = anatomy.workfiles.file
+
 print(anatomy.workfiles.file)
+
+anatomy2.format({"project": {"code": "tr"},
+                 "representation": "exr",
+                 "VERSION": 1,
+                 "SUBVERSION": 10,
+                 "shot": "sh020",
+                 "sequence": "sq010"})
+
+print(anatomy2.workfiles.file)

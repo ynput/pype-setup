@@ -78,7 +78,9 @@ class Dict_to_obj(dict):
                     data[k] = self._format(str(v), temp_dict)
             return data
 
-        return self._obj(iter_dict(temp_dict))
+        return self._obj(
+            iter_dict(temp_dict)
+        )
 
     def _to_obj(self, args):
         if isinstance(args, tuple):
