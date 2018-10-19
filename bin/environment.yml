@@ -7,3 +7,8 @@ dependencies:
     - pyqt5==5.7.1
     - checksumdir
     - toml
+    - autopep8
+    - pep8
+    - jedi
+    - flake8
+    - psutil

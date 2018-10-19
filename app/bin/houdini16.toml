@@ -1,4 +1,0 @@
-executable = "houdini"
-schema = "avalon-core:application-1.0"
-application_dir = "houdini"
-label = "SideFX Houdini 16.0"
