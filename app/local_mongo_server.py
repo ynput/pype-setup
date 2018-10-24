@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import platform
 
 
 def main():
@@ -18,10 +19,19 @@ def main():
         os.makedirs(location)
 
     # Start server.
-    subprocess.Popen(
-        ["start", "Avalon MongoDB", "mongod", "--dbpath", location],
-        shell=True
-    )
+
+    if platform.system() == "Linux":
+        subprocess.Popen(
+            ["exec", "mongod", "--dbpath", location],
+            shell=True
+        )
+    elif platform.system() == "Windows":
+
+        subprocess.Popen(
+            ["start", "Avalon MongoDB", "mongod", "--dbpath",
+                location, "--port", os.environ["AVALON_MONGO_PORT"]],
+            shell=True
+        )
 
 
 if __name__ == "__main__":

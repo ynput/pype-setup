@@ -9,14 +9,16 @@ import os
 import sys
 import toml
 import platform
-
+from copy import deepcopy
 from .formating import format
 
 from .utils import (get_conf_file)
 from .repos import (solve_dependecies)
-from .. import logger
 
-Logger = logger()
+from .logging import (
+    Logger
+)
+
 
 solve_dependecies()
 
@@ -27,7 +29,7 @@ log = Logger.getLogger(__name__)
 
 MAIN = {
     "preset_split": "..",
-    "file_start": "pype-config",
+    "main_templates": ["pype-repos", "pype-config"],
     "representation": ".toml"
 }
 
@@ -51,36 +53,16 @@ class Dict_to_obj(dict):
     def __init__(self, *args, **kwargs):
         self._to_obj(args or kwargs)
 
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
     # def format(self, *args, **kwargs):
+
     def _format(self, template="{template_string}", data=dict()):
         return format(template, data)
-
-    def format(self, *args, **kwargs):
-        args = args or kwargs
-        data = dict()
-        if args and isinstance(args, tuple):
-            [data.update(d) for d in args]
-        elif args:
-            data = args
-        else:
-            data = None
-
-        if data:
-            self.update(data)
-
-        temp_dict = self.copy()
-
-        def iter_dict(data):
-            for k, v in data.items():
-                if isinstance(v, dict):
-                    iter_dict(v)
-                else:
-                    data[k] = self._format(str(v), temp_dict)
-            return data
-
-        return self._obj(
-            iter_dict(temp_dict)
-        )
 
     def _to_obj(self, args):
         if isinstance(args, tuple):
@@ -173,58 +155,13 @@ class Dict_to_obj(dict):
                         )
                     os.environ[key] = paths
                 else:
-                    if not len(str(value).split(":")) >= 2:
+                    if not "://" in str(value):
                         os.environ[key] = os.path.normpath(
                             self._format(str(value), self)
                         )
                     else:
+                        # print(key, value)
                         os.environ[key] = self._format(str(value), self)
-
-
-class Templates(Dict_to_obj):
-
-    def __init__(self, *args, **kwargs):
-        super(Templates, self).__init__(*args, **kwargs)
-
-        try:
-            self.templates_root = os.path.join(
-                os.environ["PYPE_STUDIO_TEMPLATES"],
-                "templates"
-            )
-        except KeyError:
-            self.templates_root = os.path.join(
-                os.environ["PYPE_SETUP_ROOT"],
-                "studio",
-                "studio-templates",
-                "templates"
-            )
-        # get all toml templates in order
-        self._get_template_files()
-        self._get_templates_to_args()
-
-    def update(self,  *args, **kwargs):
-        '''Adding content to object
-
-        Examples:
-            - simple way by adding one arg: dict()
-                ```python
-                self.update({'one': 'one_string', 'two': 'two_string'})```
-
-            - simple way by adding args: arg="string"
-                ```python
-                self.update(one='one_string', two='two_string')```
-
-            - combined way of adding content: kwards
-                ```python
-                self.update(
-                    one="one_string",
-                    two="two_string",
-                    three={
-                        'one_in_three': 'one_in_three_string',
-                        'two_in_three': 'two_in_three_string'
-                    )```
-        '''
-        self._to_obj(kwargs or args)
 
     def _get_templates_to_args(self):
         ''' Populates all available configs from templates
@@ -257,7 +194,7 @@ class Templates(Dict_to_obj):
     def _distribute(self, template_list):
         data = dict()
         for t in template_list:
-            content = self.toml_load(t['path'])
+            content = self._toml_load(t['path'])
             file_name = os.path.split(t['path'])[1].split(".")[0]
 
             try:
@@ -379,16 +316,20 @@ class Templates(Dict_to_obj):
             os.environ["PYPE_STUDIO_TEMPLATES"],
             "install"
         )
-        file = get_conf_file(
-            dir=self.install_root,
-            root_file_name=MAIN["file_start"]
-        )
 
-        self._templates = list()
-        for t in self.toml_load(
+        for template in MAIN["main_templates"]:
+            file = get_conf_file(
+                dir=self.install_root,
+                root_file_name=template
+            )
+            template_name = template.split("-")[1]
+            self[template_name] = self._toml_load(
                 os.path.join(
                     self.install_root, file
-                ))['templates']:
+                ))
+
+        self._templates = list()
+        for t in self.config['templates']:
             # print("template: ", t)
             if t['type'] in ["base", "main", "apps"]:
                 try:
@@ -425,16 +366,84 @@ class Templates(Dict_to_obj):
         self._templates
 
         # insert environment setings into object root
-        for k, v in self.toml_load(
-                os.path.join(
-                    self.install_root, file
-                ))['environment'].items():
+        for k, v in self.config['environment'].items():
             self[k] = v
 
-    def toml_load(self, path):
+    def _toml_load(self, path):
         return toml.load(path)
 
-    def toml_dump(self, path, data):
+    def _toml_dump(self, path, data):
         with open(path, "w+") as file:
             file.write(toml.dumps(data))
         return True
+
+    def format(self, *args, **kwargs):
+        args = args or kwargs
+        data = dict()
+        if args and isinstance(args, tuple):
+            [data.update(d) for d in args]
+        elif args:
+            data = args
+        else:
+            data = None
+
+        if data:
+            self.update(data)
+
+        copy_dict = deepcopy(dict(**self).copy())
+
+        def iter_dict(data):
+            for k, v in data.items():
+                if isinstance(v, dict):
+                    iter_dict(v)
+                else:
+                    data[k] = self._format(str(v), copy_dict)
+            return data
+
+        return Dict_to_obj(iter_dict(copy_dict))
+
+
+class Templates(Dict_to_obj):
+
+    def __init__(self, *args, **kwargs):
+        super(Templates, self).__init__(*args, **kwargs)
+
+        try:
+            self.templates_root = os.path.join(
+                os.environ["PYPE_STUDIO_TEMPLATES"],
+                "templates"
+            )
+        except KeyError:
+            self.templates_root = os.path.join(
+                os.environ["PYPE_SETUP_ROOT"],
+                "studio",
+                "studio-templates",
+                "templates"
+            )
+        # get all toml templates in order
+        self._get_template_files()
+        self._get_templates_to_args()
+
+    def update(self,  *args, **kwargs):
+        '''Adding content to object
+
+        Examples:
+            - simple way by adding one arg: dict()
+                ```python
+                self.update({'one': 'one_string', 'two': 'two_string'})```
+
+            - simple way by adding args: arg="string"
+                ```python
+                self.update(one='one_string', two='two_string')```
+
+            - combined way of adding content: kwards
+                ```python
+                self.update(
+                    one="one_string",
+                    two="two_string",
+                    three={
+                        'one_in_three': 'one_in_three_string',
+                        'two_in_three': 'two_in_three_string'
+                    )```
+        '''
+        self._to_obj(kwargs or args)

@@ -12,3 +12,4 @@ dependencies:
     - jedi
     - flake8
     - psutil
+    - gitpython
