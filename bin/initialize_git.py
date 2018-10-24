@@ -11,14 +11,31 @@ from app.lib.repos import (
 IS_WIN32 = sys.platform == "win32"
 
 repository_path = os.environ["PYPE_SETUP_ROOT"]
-rep_git_url = "git@github.com:pypeclub/pype-setup.git" or os.environ["PYPE_SETUP_GIT_URL"]
-rep_git_branch = "master" or os.environ["PYPE_SETUP_GIT_BRANCH"]
-
+rep_git_url = os.getenv(
+    "PYPE_SETUP_GIT_URL",
+    "git@github.com:pypeclub/pype-setup.git"
+)
+rep_git_branch = os.getenv(
+    "PYPE_SETUP_GIT_BRANCH",
+    "master"
+)
 # studio templates repository setting
-studio_templates_name = "studio-templates" or os.environ["PYPE_STUDIO_TEMPLATES_NAME"]
-studio_templates_url = "git@github.com:pypeclub/studio-templates.git" or os.environ["PYPE_STUDIO_TEMPLATES_URL"]
-studio_templates_submodule_root = "studio" or os.environ["PYPE_STUDIO_TEMPLATES_SUBM_PATH"]
-studio_templates_branch = "master" or os.environ["PYPE_STUDIO_TEMPLATES_BRANCH"]
+studio_templates_name = os.getenv(
+    "PYPE_STUDIO_TEMPLATES_NAME",
+    "studio-templates"
+)
+studio_templates_url = os.getenv(
+    "PYPE_STUDIO_TEMPLATES_URL",
+    "git@github.com:pypeclub/studio-templates.git"
+)
+studio_templates_submodule_root = os.getenv(
+    "PYPE_STUDIO_TEMPLATES_SUBM_PATH",
+    "studio"
+)
+studio_templates_branch = os.getenv(
+    "PYPE_STUDIO_TEMPLATES_BRANCH",
+    "master"
+)
 
 if __name__ == "__main__":
 
@@ -44,7 +61,7 @@ if __name__ == "__main__":
 
     # Copy .git directory from cloned repository
     tempdir = tempfile.mkdtemp()
-    subprocess.call(["git", "clone", rep_git_url], cwd=tempdir, shell=True)
+    subprocess.call(["git", "clone", "-b", rep_git_branch, rep_git_url], cwd=tempdir, shell=True)
     src = os.path.join(tempdir, "pype-setup", ".git")
     dst = os.path.join(repository_path, ".git")
 
@@ -57,8 +74,8 @@ if __name__ == "__main__":
 
     # Initialising git repository
     subprocess.Popen(["git", "init"], shell=True)
-    subprocess.Popen(["git", "checkout", rep_git_branch], shell=True)
-    subprocess.call(["git", "add", "."], shell=True)
+    # subprocess.Popen(["git", "fetch"], shell=True)
+    # subprocess.Popen(["git", "checkout", rep_git_branch], shell=True)
 
     repos_data = {
         "name": studio_templates_name,
@@ -73,3 +90,5 @@ if __name__ == "__main__":
     # install rest of dependent repositories from
     # /studio/<studio>-templates/install/pype-repos.toml
     git_make_repository()
+
+    subprocess.call(["git", "add", "."], shell=True)
