@@ -3,8 +3,8 @@ import os
 import datetime
 import time
 
+
 PYPE_DEBUG_STDOUT = os.getenv("PYPE_DEBUG_STDOUT") is "1"
-print(PYPE_DEBUG_STDOUT)
 
 
 def logger():
@@ -34,3 +34,6 @@ def logger():
         logging.getLogger().addHandler(logging.StreamHandler())
 
     return logging
+
+
+Logger = logger()

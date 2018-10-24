@@ -6,15 +6,18 @@ from .lib.utils import (
 )
 from .lib.repos import (
     solve_dependecies,
-    git_update,
-    git_checkout
+    git_make_repository,
+    git_set_repository
 )
 
 from .lib.templates import (
     Templates
 )
 
-from . import Logger
+from .lib.logging import (
+    Logger,
+    logger
+)
 
 __all__ = [
     "format",
@@ -23,11 +26,11 @@ __all__ = [
     "get_conf_file",
 
     "solve_dependecies",
+    "git_make_repository",
+    "git_set_repository",
 
     "forward",
 
-    "git_update",
-    "git_checkout",
-
-    "Logger"
+    "Logger",
+    "logger"
 ]

@@ -2,12 +2,17 @@ import sys
 import os
 import subprocess
 import toml
+import git
 
+from .utils import (
+    forward,
+    get_conf_file
+)
 
-from .utils import (forward, get_conf_file)
-from .. import logger
+from .logging import (
+    Logger
+)
 
-Logger = logger()
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
@@ -18,64 +23,99 @@ PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 # different from the one in .gitmodules and activated
 
 
-def git_update(cd, branch="master"):
-    """Update Pype-setup to the latest version"""
+def git_make_repository():
+    repos = get_pype_repos_file_content()
 
-    script = (
-        # Discard any ad-hoc changes
-        ("Resetting..", ["git", "reset", "--hard"]),
-        ("Downloading..", ["git", "pull", "origin", branch]),
+    project_root = os.environ["PYPE_SETUP_ROOT"]
+    for repo, conf in repos.items():
+        log.debug("\n\n`{}`: processing...".format(conf["name"]))
+        git_set_repository(project_root, conf)
 
-        # In case there are new submodules since last pull
-        ("Looking for submodules..", ["git", "submodule", "init"]),
 
-        ("Updating submodules..",
-            ["git", "submodule", "update", "--recursive"]),
+def git_set_repository(cd=None, rep_dict=None):
+    assert cd or rep_dict, "Need to input [cd] and [rep_dict]"
+    assert isinstance(rep_dict, dict), "[rep_dict] must be dictionary "
+    "with repository data"
+    assert "@" in rep_dict['url'], "[rep_dict['url']] must be ssh url "
+    "path (make sure your rsa key is installed in .ssh and related public "
+    "key in github)"
+
+    repo_path = os.path.normpath(
+        os.path.join(
+            cd,
+            rep_dict['submodule_root'],
+            rep_dict['name']
+        )
     )
 
-    for message, args in script:
-        print(message)
-        returncode = forward(args, silent=True, cwd=cd)
-        if returncode != 0:
-            sys.stderr.write("Could not update, try running "
-                             "it again with PYPE_DEBUG=True\n")
-            return returncode
+    try:
+        # perhaps the repository not cloned yet
+        repo = git.Repo.clone_from(
+            rep_dict['url'],
+            repo_path,
+            branch=rep_dict['branch'])
+        log.info("[git] rep' `{}` cloned to `{}`".format(
+            rep_dict['name'], repo_path)
+        )
+    except Exception:
+        repo = git.Repo(
+            repo_path,
+            # branch=repo['branch']
+        )
+        log.debug("[git] getting into `{}` in `{}`".format(
+            rep_dict['name'], repo_path)
+        )
 
-    print("All done")
+    try:
+        origin = repo.create_remote('origin', repo.remotes.origin.url)
+    except Exception:
+        origin = repo.remotes['origin']
+    assert origin.exists(), "[git] origin doesn't exists"
+    assert origin == repo.remotes.origin == repo.remotes['origin']
 
+    if rep_dict['branch'] not in [head.name for head in repo.heads]:
 
-def git_checkout(repository=dict()):
-    """checkout all to defined branches"""
+        origin.fetch()
 
-    if not repository:
-        print("To checkout properly you need to give"
-              "repository dictionary")
-        return
+        if "origin/{}".format(rep_dict['branch']) in [head.name for head in origin.refs]:
+            try:
+                checkout = repo.create_head(
+                    rep_dict['branch'],
+                    origin.refs[rep_dict['branch']]
+                ).set_tracking_branch(
+                    origin.refs[rep_dict['branch']]
+                ).checkout()
 
-    script = (
-        # Discard any ad-hoc changes
-        ("Checkingout to defined branch..",
-         ["git", "checkout", repository["branch"]]),
-        ("Updating the branch..",
-         ["git", "pull", "origin", repository["branch"]])
-    )
+                log.info("[git] rep' `{}` checkout to `{}`".format(rep_dict['name'], checkout))
 
-    cd = os.path.join(
-        os.environ["PYPE_SETUP_ROOT"],
-        repository["submodule_root"],
-        repository["name"]
-    )
+            except Exception:
 
-    for message, args in script:
-        print(message)
-        returncode = forward(args, silent=True, cwd=cd)
-        if returncode != 0:
-            sys.stderr.write("Could not checkout, check if you've\n"
-                             "commited before any previous changes and try\n"
-                             "it again with PYPE_DEBUG=True\n")
-            return returncode
+                log.debug("[git] rep' `{}` already in `{}`".format(
+                    rep_dict['name'], rep_dict['branch']))
+            origin.pull()
+        else:
+            log.debug("[git] available remote branches: {}".format(
+                [head.name.split("/")[1] for head in origin.refs
+                 if 'HEAD' not in head.name]
+            ))
+            log.debug("[git] remote branches for `{}` not having defined branch `{}`".format(
+                rep_dict['name'], rep_dict['branch']))
+    else:
+        try:
+            checkout = repo.create_head(
+                rep_dict['branch'],
+                origin.refs[rep_dict['branch']]
+            ).set_tracking_branch(
+                origin.refs[rep_dict['branch']]
+            ).checkout()
 
-    print("All done")
+            log.info("[git] rep' `{}` checkout to `{}`".format(rep_dict['name'], checkout))
+
+        except Exception:
+            log.debug("[git] rep' `{}` already in `{}`".format(
+                rep_dict['name'], rep_dict['branch']))
+            pass
+        origin.pull()
 
 
 def _add_config(dir_name):
@@ -90,8 +130,8 @@ def _test_module_import(module_path, module_name):
         sys.executable, "-c",
         "import {}".format(module_name)
     ]) != 0:
-        print("ERROR: '{}' not found, check your "
-              "PYTHONPATH for '{}'.".format(module_name, module_path))
+        log.critical("ERROR: '{}' not found, check your "
+                     "PYTHONPATH for '{}'.".format(module_name, module_path))
         sys.exit(1)
 
 
@@ -159,18 +199,24 @@ def _setup_environment(repos=None):
             _test_module_import(m["path"], m["subdir"])
 
 
-def solve_dependecies():
+def get_pype_repos_file_content():
+    assert os.environ["PYPE_STUDIO_TEMPLATES"], "set PYPE_STUDIO_TEMPLATES before this script is executed"
 
-    ROOT = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "install")
-
-    REPOS_CONFIG_FILE = get_conf_file(ROOT, "pype-repos")
+    install_dir = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "install")
+    repos_config_file = get_conf_file(install_dir, "pype-repos")
 
     config_content = toml.load(
         os.path.join(
-            ROOT,
-            REPOS_CONFIG_FILE
+            install_dir,
+            repos_config_file
         )
     )
+    return config_content
+
+
+def solve_dependecies():
+    # getting content of pype-repo toml config
+    config_content = get_pype_repos_file_content()
     # adding stuff to environment variables
     _setup_environment(config_content)
     print("All pype, avalon, pyblish environment variables are set")
