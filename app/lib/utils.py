@@ -2,9 +2,10 @@ import os
 import sys
 import subprocess
 
-from .. import logger
+from .logging import (
+    Logger
+)
 
-Logger = logger()
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
@@ -52,12 +53,20 @@ def get_conf_file(
     ]
 
     try:
-        conf_file = [
-            f for f in test_files
-            if preset in os.path.splitext(f)[0].split(split_pattern)[1]
-            if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
-        ][0]
+        try:
+            conf_file = [
+                f for f in test_files
+                if preset in os.path.splitext(f)[0].split(split_pattern)[1]
+                if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
+            ][0]
+        except IndexError:
+            conf_file = [
+                f for f in test_files
+                if preset_name in os.path.splitext(f)[0].split(split_pattern)[1]
+                if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
+            ][0]
     except IndexError as error:
+
         if PYPE_DEBUG:
             log.warning("File is missing '{}' will be"
                         "used basic config file: {}".format(

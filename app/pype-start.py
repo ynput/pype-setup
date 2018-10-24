@@ -44,38 +44,35 @@ import contextlib
 
 from app.api import (
     Templates as templates,
-    # solve_dependecies,
     forward,
-    git_update,
-    git_checkout
+    git_make_repository,
+    Logger,
+    logger
 )
-
 
 from app import (
     Templates,
     _repos_installed,
     _templates_loaded,
-    Logger
 )
 
 if not _templates_loaded:
     Templates = templates()
     _templates_loaded = True
 
+print("Logger from pype-start: ", Logger)
 
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
 if PYPE_DEBUG:
     for k, v in Templates.items():
-        log.debug(100*"_")
         log.debug("templates.item: `{}`,`{}`".format(k, v))
-        log.debug(100*"_")
+    log.debug("\n")
 
     for k, v in os.environ.items():
-        log.debug(100*"_")
         log.debug("os.environ.item: `{}`,`{}`".format(k, v))
-        log.debug(100*"_")
+    log.debug("\n")
 
 
 # TODO: checking if project paths locations are available, if not it will set local locations
@@ -184,8 +181,10 @@ def main():
                         help="Export a project from the database")
     parser.add_argument("--build", action="store_true",
                         help="Build one of the bundled example projects")
-    parser.add_argument("--update", action="store_true",
-                        help="Update Avalon Setup to the latest version")
+    parser.add_argument("--make", action="store_true",
+                        help="Install dependent repositories from "
+                        "templates/install/pype_repos.toml, also checkout"
+                        "to defined branches")
     parser.add_argument("--init", action="store_true",
                         help="Establish a new project in the "
                              "current working directory")
@@ -243,8 +242,8 @@ def main():
             sys.executable, "-u", "-m",
             "avalon.inventory", "--save"])
 
-    elif kwargs.update:
-        returncode = git_update(cd)
+    elif kwargs.make:
+        returncode = git_make_repository()
 
     elif kwargs.forward:
         returncode = forward(kwargs.forward.split())

@@ -122,22 +122,28 @@ if "%SYNC_ENV%"=="1" (
 
 if "%REMOTE_ENV_ON%"=="1" (
     set PATH="%REMOTE_ENV_DIR%";"%REMOTE_ENV_DIR%\Scripts";"%REMOTE_ENV_DIR%\Library";"%REMOTE_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"%systemdrive%%homepath%\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
-    set PYTHON_ENV=%REMOTE_ENV_DIR%
+    set PYTHONPATH="%PYTHONPATH%";"%REMOTE_ENV_DIR%\Lib\site-packages"
+    set PYTHON_ENV="%REMOTE_ENV_DIR%"
+    set GIT_PYTHON_GIT_EXECUTABLE=%REMOTE_ENV_DIR%\Library\bin\git.exe
     echo [92m^>^>^>[0m Running env from: [ [96m"%REMOTE_ENV_DIR%"[0m ]
 ) else (
     set PATH="%LOCAL_ENV_DIR%";"%LOCAL_ENV_DIR%\Scripts";"%LOCAL_ENV_DIR%\Library";"%LOCAL_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"%systemdrive%%homepath%\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
-    set PYTHON_ENV=%LOCAL_ENV_DIR%
+    set PYTHONPATH="%PYTHONPATH%";"%LOCAL_ENV_DIR%\Lib\site-packages"
+    set PYTHON_ENV="%LOCAL_ENV_DIR%"
+    set GIT_PYTHON_GIT_EXECUTABLE=%LOCAL_ENV_DIR%\Library\bin\git.exe
     echo [92m^>^>^>[0m Running env from: [ [96m"%LOCAL_ENV_DIR%"[0m ]
 )
 
 :: get all submodules and update them if they are not
 IF EXIST %~dp0..\app\repos\avalon-core\avalon GOTO SUBMODULES_EXISTS
-echo [92m^>^>^>[0m Git submodules in [ [96m%~dp0avalon-setup[0m ] missing ...
+echo [92m^>^>^>[0m Git submodules in [ [96m%~dp0..\app\repos\avalon-core\avalon[0m ] missing ...
 
 :: Initialize submodules
+set PYTHONPATH=%PYTHONPATH%;%PYPE_SETUP_ROOT%
+echo %GIT_PYTHON_GIT_EXECUTABLE%
 python %~dp0initialize_git.py
-git submodule update --init --recursive
-git submodule foreach --recursive git pull origin master
+REM git submodule update --init --recursive
+REM git submodule foreach --recursive git pull origin master
 echo [92m^>^>^>[0m Git submodules created and updated
 
 :SUBMODULES_EXISTS
