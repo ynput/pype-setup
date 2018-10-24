@@ -28,7 +28,8 @@ def main():
     elif platform.system() == "Windows":
 
         subprocess.Popen(
-            ["start", "Avalon MongoDB", "mongod", "--dbpath", location],
+            ["start", "Avalon MongoDB", "mongod", "--dbpath",
+                location, "--port", os.environ["AVALON_MONGO_PORT"]],
             shell=True
         )
 
