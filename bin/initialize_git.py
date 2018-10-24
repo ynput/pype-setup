@@ -11,14 +11,14 @@ from app.lib.repos import (
 IS_WIN32 = sys.platform == "win32"
 
 repository_path = os.environ["PYPE_SETUP_ROOT"]
-REP_GIT_URL = os.environ["PYPE_SETUP_GIT_URL"]
-REP_GIT_BRANCH = os.environ["PYPE_SETUP_GIT_BRANCH"]
+rep_git_url = "git@github.com:pypeclub/pype-setup.git" or os.environ["PYPE_SETUP_GIT_URL"]
+rep_git_branch = "master" or os.environ["PYPE_SETUP_GIT_BRANCH"]
 
 # studio templates repository setting
-studio_templates_name = os.environ["PYPE_STUDIO_TEMPLATES_NAME"]
-studio_templates_url = os.environ["PYPE_STUDIO_TEMPLATES_URL"]
-studio_templates_submodule_root = os.environ["PYPE_STUDIO_TEMPLATES_SUBM_PATH"]
-studio_templates_branch = os.environ["PYPE_STUDIO_TEMPLATES_BRANCH"]
+studio_templates_name = "studio-templates" or os.environ["PYPE_STUDIO_TEMPLATES_NAME"]
+studio_templates_url = "git@github.com:pypeclub/studio-templates.git" or os.environ["PYPE_STUDIO_TEMPLATES_URL"]
+studio_templates_submodule_root = "studio" or os.environ["PYPE_STUDIO_TEMPLATES_SUBM_PATH"]
+studio_templates_branch = "master" or os.environ["PYPE_STUDIO_TEMPLATES_BRANCH"]
 
 if __name__ == "__main__":
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     # Copy .git directory from cloned repository
     tempdir = tempfile.mkdtemp()
-    subprocess.call(["git", "clone", REP_GIT_URL], cwd=tempdir, shell=True)
+    subprocess.call(["git", "clone", rep_git_url], cwd=tempdir, shell=True)
     src = os.path.join(tempdir, "pype-setup", ".git")
     dst = os.path.join(repository_path, ".git")
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     # Initialising git repository
     subprocess.Popen(["git", "init"], shell=True)
-    subprocess.Popen(["git", "checkout", REP_GIT_BRANCH], shell=True)
+    subprocess.Popen(["git", "checkout", rep_git_branch], shell=True)
     subprocess.call(["git", "add", "."], shell=True)
 
     repos_data = {
