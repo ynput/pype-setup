@@ -12,7 +12,7 @@ DIR=`dirname "${THIS}"`
 print_dependency_help () {
   at <<-EOF
     Successfull installation of Pype needs few system tools already installed.
-    We need wget, git and rsync. Please refer to your system's user guide how
+    We need wget, git, gcc and rsync. Please refer to your system's user guide how
     to install them.
 EOF
 }
@@ -53,6 +53,10 @@ echo -e "${BIGreen}OK${RST}"
 echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ rsync ]${RST} ... \c"
 command -v wget >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; exit 1; }
 echo -e "${BIGreen}OK${RST}"
+echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ gcc ]${RST} ... \c"
+command -v gcc >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; exit 1; }
+echo -e "${BIGreen}OK${RST}"
+
 
 echo -e "${IGreen}>>>${RST} launching Conda ..."
 
