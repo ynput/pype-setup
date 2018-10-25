@@ -7,6 +7,9 @@ from app.lib.repos import (
     git_set_repository,
     git_make_repository
 )
+from app.lib import terminal
+
+c_print = terminal.c_echo
 
 IS_WIN32 = sys.platform == "win32"
 
@@ -39,41 +42,44 @@ studio_templates_branch = os.getenv(
 
 if __name__ == "__main__":
 
-    print("Making \"{0}\" into git repository.".format(repository_path))
+    if not os.path.exists(os.path.join(repository_path, ".git")):
+        c_print(">>> Making [ \"{0}\" ] into git repository.".format(repository_path))
 
-    if IS_WIN32:
-        _env = {
-            key: os.getenv(key)
-            for key in ("USERNAME",
-                        "SYSTEMROOT",
-                        "PYTHONPATH",
-                        "PATH")
-            if os.getenv(key)
-        }
-    else:
-        # OSX and Linux users are left to fend for themselves.
-        _env = os.environ.copy()
+        if IS_WIN32:
+            _env = {
+                key: os.getenv(key)
+                for key in ("USERNAME",
+                            "SYSTEMROOT",
+                            "PYTHONPATH",
+                            "PATH")
+                if os.getenv(key)
+            }
+        else:
+            # OSX and Linux users are left to fend for themselves.
+            _env = os.environ.copy()
 
-    for key, value in _env.items():
-        print(key)
-        if key in ("PATH", "PYTHONPATH"):
-            print(key, value)
+        for key, value in _env.items():
+            print(key)
+            if key in ("PATH", "PYTHONPATH"):
+                print(key, value)
 
-    # Copy .git directory from cloned repository
-    tempdir = tempfile.mkdtemp()
-    subprocess.call(["git", "clone", "-b", rep_git_branch, rep_git_url], cwd=tempdir, shell=True)
-    src = os.path.join(tempdir, "pype-setup", ".git")
-    dst = os.path.join(repository_path, ".git")
+        # Copy .git directory from cloned repository
+        tempdir = tempfile.mkdtemp()
+        c_print(">>> Cloning repository ...")
+        subprocess.call(["git", "clone", "-b", rep_git_branch, rep_git_url], cwd=tempdir, shell=True)
+        src = os.path.join(tempdir, "pype-setup", ".git")
+        dst = os.path.join(repository_path, ".git")
 
-    if not os.path.exists(dst):
-        os.makedirs(dst)
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+        c_print(">>> Shuffling [ .git ] ...")
+        shutil.rmtree(dst, ignore_errors=False, onerror=None)
+        if not os.path.exists(dst):
+            shutil.copytree(src, dst)
 
-    shutil.rmtree(dst, ignore_errors=False, onerror=None)
-    if not os.path.exists(dst):
-        shutil.copytree(src, dst)
-
-    # Initialising git repository
-    subprocess.Popen(["git", "init"], shell=True)
+        # Initialising git repository
+        c_print(">>> Initialising repository ...")
+        subprocess.Popen(["git", "init"], shell=True)
     # subprocess.Popen(["git", "fetch"], shell=True)
     # subprocess.Popen(["git", "checkout", rep_git_branch], shell=True)
 
@@ -85,10 +91,12 @@ if __name__ == "__main__":
     }
 
     # install studio-templates repository
+    c_print(">>> Installing [ studio/studio-templates ] ...")
     git_set_repository(repository_path, repos_data)
 
     # install rest of dependent repositories from
     # /studio/<studio>-templates/install/pype-repos.toml
+    c_print(">>> Installing all depending repositories ...")
     git_make_repository()
 
-    subprocess.call(["git", "add", "."], shell=True)
+    # subprocess.call(["git", "add", "."], shell=True)

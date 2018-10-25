@@ -56,11 +56,13 @@ from app import (
     _templates_loaded,
 )
 
+from app.lib import terminal
+
 if not _templates_loaded:
     Templates = templates()
     _templates_loaded = True
 
-print("Logger from pype-start: ", Logger)
+terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(Logger))
 
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
