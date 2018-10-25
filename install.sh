@@ -10,7 +10,7 @@ THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
 DIR=`dirname "${THIS}"`
 
 print_dependency_help () {
-  at <<-EOF
+  cat <<-EOF
     Successfull installation of Pype needs few system tools already installed.
     We need wget, git, gcc and rsync. Please refer to your system's user guide how
     to install them.
