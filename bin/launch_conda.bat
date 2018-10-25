@@ -134,12 +134,11 @@ if "%REMOTE_ENV_ON%"=="1" (
     echo [92m^>^>^>[0m Running env from: [ [96m"%LOCAL_ENV_DIR%"[0m ]
 )
 
+
 :: get all submodules and update them if they are not
 IF EXIST %~dp0..\app\repos\avalon-core\avalon GOTO SUBMODULES_EXISTS
 echo [92m^>^>^>[0m Git submodules in [ [96m%~dp0..\app\repos\avalon-core\avalon[0m ] missing ...
 
-:: Initialize submodules
-set PYTHONPATH=%PYTHONPATH%;%PYPE_SETUP_ROOT%
 
 python %~dp0initialize_git.py
 REM git submodule update --init --recursive
@@ -147,4 +146,7 @@ REM git submodule foreach --recursive git pull origin master
 echo [92m^>^>^>[0m Git submodules created and updated
 
 :SUBMODULES_EXISTS
+
+:: Initialize submodules
+set PYTHONPATH=%PYTHONPATH%;%PYPE_SETUP_ROOT%
 echo [92m^>^>^>[0m All setup and goot to go!
