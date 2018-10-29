@@ -13,3 +13,4 @@ dependencies:
     - flake8
     - psutil
     - gitpython
+    - colorama
