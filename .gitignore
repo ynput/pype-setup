@@ -4,5 +4,4 @@
 __pycache__/
 *.py[cod]
 bin/python
-app/repos
-studio
+repos/
