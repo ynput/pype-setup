@@ -2,7 +2,7 @@
 :: set basic environments
 cd %~dp0
 set PYPE_SETUP_ROOT=%cd%
-set PYPE_STUDIO_TEMPLATES=%PYPE_SETUP_ROOT%\studio\studio-templates
+set PYPE_STUDIO_TEMPLATES=%PYPE_SETUP_ROOT%\repos\studio-templates
 
 :: set main repository
 set PYPE_SETUP_GIT_URL=git@github.com:pypeclub/pype-setup.git
@@ -11,7 +11,7 @@ set PYPE_SETUP_GIT_BRANCH=master
 :: set studio-templates repository
 set PYPE_STUDIO_TEMPLATES_NAME=studio-templates
 set PYPE_STUDIO_TEMPLATES_URL=git@github.com:pypeclub/studio-templates.git
-set PYPE_STUDIO_TEMPLATES_SUBM_PATH=studio
+set PYPE_STUDIO_TEMPLATES_SUBM_PATH=repos
 set PYPE_STUDIO_TEMPLATES_BRANCH=master
 
 
