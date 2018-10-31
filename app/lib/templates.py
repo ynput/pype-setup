@@ -20,8 +20,6 @@ from .pype_logging import (
 )
 
 
-solve_dependecies()
-
 PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 log = Logger.getLogger(__name__)
@@ -51,6 +49,12 @@ class Dict_to_obj(dict):
     platform = platform.system().lower()
 
     def __init__(self, *args, **kwargs):
+        if args:
+            if isinstance(args, tuple):
+                print("args: ", args)
+        else:
+            pass
+
         self._to_obj(args or kwargs)
 
     def __getattr__(self, name):
@@ -76,13 +80,32 @@ class Dict_to_obj(dict):
         for key, value in args.items():
             if isinstance(value, dict):
                 if key not in "path":
+                    value["obj_copy"] = args["obj_copy"]
                     value = Dict_to_obj(value)
                 else:
                     value = value[self.platform]
 
-            if not key.isupper():
-                self[key] = value
-                self.format
+            if key.isupper():
+                continue
+
+            if args["obj_copy"]:
+                if key.startswith("_"):
+                    if key[1:] in args.keys():
+                        # print("@@ exeption: ", key, value)
+                        self[key] = value
+                else:
+                    if key is not "obj_copy":
+                        self[key] = value
+                        self.format
+            else:
+                if "{" in str(value) \
+                        and not isinstance(value, dict) \
+                        and not isinstance(value, list):
+                    _key = "_{}".format(key)
+                    self[_key] = value
+                if key is not "obj_copy":
+                    self[key] = value
+                    self.format
 
     def add_to_env_var(self, *args, **kwargs):
 
@@ -103,6 +126,8 @@ class Dict_to_obj(dict):
             # print("=# _env1: ", key, value)
             if not value:
                 continue
+            # if key.startswith("_"):
+            #     continue
             # print("=# _env2: ", key, value)
             if isinstance(value, dict):
                 value = self.add_to_env_var(value)
@@ -155,7 +180,7 @@ class Dict_to_obj(dict):
                         )
                     os.environ[key] = paths
                 else:
-                    if not "://" in str(value):
+                    if "://" not in str(value):
                         os.environ[key] = os.path.normpath(
                             self._format(str(value), self)
                         )
@@ -192,7 +217,7 @@ class Dict_to_obj(dict):
         # if PYTHONPATH then os.pathsep
         # if PATH then os.pathsep
     def _distribute(self, template_list):
-        data = dict()
+        data = dict(obj_copy=False)
         for t in template_list:
             content = self._toml_load(t['path'])
             file_name = os.path.split(t['path'])[1].split(".")[0]
@@ -217,6 +242,7 @@ class Dict_to_obj(dict):
                         data[t["department"]][file_name] = content
 
         if t['type'] in ["main", "base"]:
+            print("data: ", data)
             # adds to object as attribute
             self.update(data)
             # adds to environment variables
@@ -239,7 +265,7 @@ class Dict_to_obj(dict):
                          if k in selected_keys}
 
         for k, v in env_to_change.items():
-            if not len(v.split(":")) >= 2:
+            if "://" not in str(v):
                 os.environ[k] = os.path.normpath(
                     self._format(v, self)
                 )
@@ -316,7 +342,7 @@ class Dict_to_obj(dict):
             os.environ["PYPE_STUDIO_TEMPLATES"],
             "install"
         )
-
+        print(self.install_root)
         for template in MAIN["main_templates"]:
             file = get_conf_file(
                 dir=self.install_root,
@@ -379,7 +405,10 @@ class Dict_to_obj(dict):
 
     def format(self, *args, **kwargs):
         args = args or kwargs
-        data = dict()
+        # `obj_copy` True will secure it will preserve
+        # original templates in `_key`
+        data = dict(obj_copy=True)
+
         if args and isinstance(args, tuple):
             [data.update(d) for d in args]
         elif args:
@@ -388,15 +417,19 @@ class Dict_to_obj(dict):
             data = None
 
         if data:
+            print(data)
             self.update(data)
 
         copy_dict = deepcopy(dict(**self).copy())
+        print(copy_dict)
 
         def iter_dict(data):
             for k, v in data.items():
                 if isinstance(v, dict):
                     iter_dict(v)
                 else:
+                    if k.startswith("_"):
+                        continue
                     data[k] = self._format(str(v), copy_dict)
             return data
 
@@ -414,10 +447,9 @@ class Templates(Dict_to_obj):
                 "templates"
             )
         except KeyError:
+            solve_dependecies()
             self.templates_root = os.path.join(
-                os.environ["PYPE_SETUP_ROOT"],
-                "studio",
-                "studio-templates",
+                os.environ["PYPE_STUDIO_TEMPLATES"],
                 "templates"
             )
         # get all toml templates in order
