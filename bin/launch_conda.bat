@@ -1,4 +1,4 @@
-@echo off
+
 title Avalon conda environment setup
 cls :: clear the screen command
 
@@ -52,6 +52,7 @@ echo [92m^>^>^>[0m Installing Conda root env.. Please wait! :)
 echo [92m^>^>^>[0m Conda created root env in [ [96m%INSTALLATION_DIRECTORY%[0m ]
 
 
+
 :INSTALLATION_EXISTS
 :: Ensure Remote Avalon environment is available for copying to local
 IF EXIST %REMOTE_ENV_DIR% GOTO REMOTE_ENV_EXISTS
@@ -93,7 +94,9 @@ mkdir %REMOTE_ENV_DIR%
 
 :: copy files into local folder for faster redistribution to other pc in network
 call xcopy /s %LOCAL_ENV_DIR% %REMOTE_ENV_DIR%
+
 echo [92m^>^>^>[0m Remote env created in [ [96m%REMOTE_ENV_DIR%[0m ]
+
 
 
 :REMOTE_ENV_EXISTS
@@ -136,8 +139,8 @@ if "%REMOTE_ENV_ON%"=="1" (
 
 
 :: get all submodules and update them if they are not
-IF EXIST %~dp0..\app\repos\avalon-core\avalon GOTO SUBMODULES_EXISTS
-echo [92m^>^>^>[0m Git submodules in [ [96m%~dp0..\app\repos\avalon-core\avalon[0m ] missing ...
+IF EXIST %~dp0..\repos\avalon-core\avalon GOTO SUBMODULES_EXISTS
+echo [92m^>^>^>[0m Git submodules in [ [96m%~dp0..\repos\avalon-core\avalon[0m ] missing ...
 
 
 python %~dp0initialize_git.py

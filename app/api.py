@@ -14,7 +14,7 @@ from .lib.templates import (
     Templates
 )
 
-from .lib.logging import (
+from .lib.pype_logging import (
     Logger,
     logger
 )

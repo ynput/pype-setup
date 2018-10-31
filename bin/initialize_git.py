@@ -33,7 +33,7 @@ studio_templates_url = os.getenv(
 )
 studio_templates_submodule_root = os.getenv(
     "PYPE_STUDIO_TEMPLATES_SUBM_PATH",
-    "studio"
+    "repos"
 )
 studio_templates_branch = os.getenv(
     "PYPE_STUDIO_TEMPLATES_BRANCH",
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     }
 
     # install studio-templates repository
-    c_print(">>> Installing [ studio/studio-templates ] ...")
+    c_print(">>> Installing [ studio-templates ] ...")
     git_set_repository(repository_path, repos_data)
 
     # install rest of dependent repositories from
