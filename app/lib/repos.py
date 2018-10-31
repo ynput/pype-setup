@@ -9,11 +9,9 @@ from .utils import (
     get_conf_file
 )
 
-from .logging import (
+from .pype_logging import (
     Logger
 )
-
-from . import terminal
 
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
@@ -221,4 +219,4 @@ def solve_dependecies():
     config_content = get_pype_repos_file_content()
     # adding stuff to environment variables
     _setup_environment(config_content)
-    terminal.c_echo(">>> All Pype, Avalon, Pyblish environment variables are set ...")
+    print("All pype, avalon, pyblish environment variables are set")

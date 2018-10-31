@@ -15,7 +15,7 @@ from .formating import format
 from .utils import (get_conf_file)
 from .repos import (solve_dependecies)
 
-from .logging import (
+from .pype_logging import (
     Logger
 )
 

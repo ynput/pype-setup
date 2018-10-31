@@ -56,13 +56,11 @@ from app import (
     _templates_loaded,
 )
 
-from app.lib import terminal
-
 if not _templates_loaded:
     Templates = templates()
     _templates_loaded = True
 
-terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(Logger))
+print("Logger from pype-start: ", Logger)
 
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
@@ -199,6 +197,8 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
+    parser.add_argument("--actionserver", action="store_true",
+                        help="launch action server for ftrack")
 
     kwargs, args = parser.parse_known_args()
 
@@ -257,6 +257,13 @@ def main():
             returncode = forward([
                 sys.executable, "-u", "-m", "pyblish", "gui"
             ] + args, silent=True)
+
+    elif kwargs.actionserver:
+        fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "actionServer.py")
+
+        returncode = forward([
+            sys.executable, "-u", fname
+        ] + args)
 
     else:
         root = os.environ["AVALON_PROJECTS"]

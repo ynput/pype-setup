@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 
-from .logging import (
+from .pype_logging import (
     Logger
 )
 
