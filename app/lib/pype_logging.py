@@ -28,14 +28,13 @@ def logger():
     log_file = open(logger_file_path, "w", encoding="utf-8")
 
     logging.basicConfig(
-        format=config.FORMAT,
         level=logging.DEBUG
     )
 
-    formatter = logging.Formatter('%(asctime)-15s: %(levelname)-7s - %(message)s')
-    ch = logging.StreamHandler(log_fh)
+    #formatter = logging.Formatter('%(asctime)-15s: %(levelname)-7s - %(message)s')
+    ch = logging.StreamHandler(log_file)
     ch.setLevel(logging.DEBUG)
-    ch.setFormatter(formatter)
+    #ch.setFormatter(formatter)
 
     if PYPE_DEBUG_STDOUT:
         logging.getLogger().addHandler(ch)
