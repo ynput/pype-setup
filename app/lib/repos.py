@@ -194,9 +194,9 @@ def _setup_environment(repos=None):
                 )
             os.environ[key] = path
 
-    if testing_list:
-        for m in testing_list:
-            _test_module_import(m["path"], m["subdir"])
+    # if testing_list:
+    #     for m in testing_list:
+    #         _test_module_import(m["path"], m["subdir"])
 
 
 def get_pype_repos_file_content():
@@ -204,6 +204,8 @@ def get_pype_repos_file_content():
 
     install_dir = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "install")
     repos_config_file = get_conf_file(install_dir, "pype-repos")
+
+    os.environ["TOOL_ENV"] = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "environments")
 
     config_content = toml.load(
         os.path.join(

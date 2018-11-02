@@ -4,7 +4,7 @@ cls :: clear the screen command
 
 :: Change the working directory to the conda-git-deployment directory.
 :: "pushd" is being used so any UNC paths get mapped until a restart happens.
-pushd %~dp0
+REM pushd %~dp0
 
 :: Make CWD root of avalon-environment repository.
 cd ..

@@ -89,6 +89,8 @@ def forward(args, silent=False, cwd=None):
     if PYPE_DEBUG:
         print("Forwarding '%s'.." % " ".join(args))
 
+    print(os.environ)
+
     popen = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,

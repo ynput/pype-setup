@@ -9,6 +9,7 @@ import os
 import sys
 import toml
 import platform
+import acre
 from copy import deepcopy
 from .formating import format
 
@@ -18,7 +19,6 @@ from .repos import (solve_dependecies)
 from .pype_logging import (
     Logger
 )
-
 
 solve_dependecies()
 
@@ -173,13 +173,19 @@ class Dict_to_obj(dict):
                      if t['type'] in "main"]
         self._distribute(main_list)
 
-        base_list = [t for t in self._templates
-                     if t['type'] in "base"]
-        self._distribute(base_list)
+        # base_list = [t for t in self._templates
+        #              if t['type'] in "base"]
 
-        apps_list = [t for t in self._templates
-                     if t['type'] in "apps"]
-        self._distribute(apps_list)
+        # self._distribute(base_list)
+
+        # apps_list = [t for t in self._templates
+        #              if t['type'] in "apps"]
+        # self._distribute(apps_list)
+
+        tools_env = acre.get_tools(self._tool_env)
+        env = acre.compute(tools_env)
+        os.environ = acre.merge(env, current_env=dict(os.environ))
+
 
         context_list = [t for t in self._templates
                         if t['type'] in "context"]
@@ -216,7 +222,7 @@ class Dict_to_obj(dict):
                         data[t["department"]] = dict()
                         data[t["department"]][file_name] = content
 
-        if t['type'] in ["main", "base"]:
+        if t['type'] in ["main"]:
             # adds to object as attribute
             self.update(data)
             # adds to environment variables
@@ -224,6 +230,7 @@ class Dict_to_obj(dict):
 
             # format environment variables
             self._format_env_vars()
+
 
         elif t['type'] in ["apps"]:
             self.update(data)
@@ -331,7 +338,7 @@ class Dict_to_obj(dict):
         self._templates = list()
         for t in self.config['templates']:
             # print("template: ", t)
-            if t['type'] in ["base", "main", "apps"]:
+            if t['type'] in ["main","apps"]:
                 try:
                     if t['order']:
                         for item in t['order']:
@@ -354,6 +361,9 @@ class Dict_to_obj(dict):
                         )
                     )
                     pass
+            elif t['type'] in ["base"]:
+                self._tool_env = t['order']
+                pass
             else:
                 self._templates.append(
                     self._create_templ_item(
