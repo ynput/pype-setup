@@ -211,6 +211,8 @@ def get_pype_repos_file_content():
     )
     print("Pype-repos path: {}".format(repos_config_path))
 
+    os.environ["TOOL_ENV"] = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "environments")
+
     config_content = toml.load(
         repos_config_path
     )

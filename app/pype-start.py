@@ -41,6 +41,7 @@ import shutil
 import tempfile
 import platform
 import contextlib
+from pprint import pprint
 
 from app.api import (
     Templates as templates,
@@ -130,16 +131,6 @@ def _install(root=None):
         print("See https://getavalon.github.io/2.0/howto/#install "
               "for more details.")
         sys.exit(1)
-
-    os.environ["PYTHONPATH"] = os.pathsep.join(
-        # Append to PYTHONPATH
-        os.getenv("PYTHONPATH", "").split(os.pathsep) + [
-            # Third-party dependencies for Avalon
-            os.path.normpath(
-                os.path.join(PYPE_APP_ROOT, "vendor")
-            ),
-        ]
-    )
 
     os.environ["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
@@ -266,6 +257,7 @@ def main():
         ] + args)
 
     else:
+        pprint(os.environ)
         root = os.environ["AVALON_PROJECTS"]
         returncode = forward([
             sys.executable, "-u", "-m", "launcher", "--root", root

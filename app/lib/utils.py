@@ -89,12 +89,7 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
     if PYPE_DEBUG:
         print("Forwarding '%s'.." % " ".join(args))
 
-    print(cwd)
-
-    # if env:
-    #     for k, v in env.items():
-    #         if "PYTHONPATH" in k:
-    #             pprint(env["PYTHONPATH"].split(os.pathsep))
+    print(os.environ)
 
     popen = subprocess.Popen(
         args,

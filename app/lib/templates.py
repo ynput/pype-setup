@@ -9,6 +9,7 @@ import os
 import sys
 import toml
 import platform
+import acre
 from copy import deepcopy
 from collections import OrderedDict
 from .formating import format
@@ -194,13 +195,18 @@ class Dict_to_obj(OrderedDict):
                      if t['type'] in "main"]
         self._distribute(main_list)
 
-        base_list = [t for t in self._templates
-                     if t['type'] in "base"]
-        self._distribute(base_list)
+        # base_list = [t for t in self._templates
+        #              if t['type'] in "base"]
 
-        apps_list = [t for t in self._templates
-                     if t['type'] in "apps"]
-        self._distribute(apps_list)
+        # self._distribute(base_list)
+
+        # apps_list = [t for t in self._templates
+        #              if t['type'] in "apps"]
+        # self._distribute(apps_list)
+
+        tools_env = acre.get_tools(self._tool_env)
+        env = acre.compute(tools_env)
+        os.environ = acre.merge(env, current_env=dict(os.environ))
 
         context_list = [t for t in self._templates
                         if t['type'] in "context"]
@@ -237,8 +243,7 @@ class Dict_to_obj(OrderedDict):
                         data[t["department"]] = dict()
                         data[t["department"]][file_name] = content
 
-        if t['type'] in ["main", "base"]:
-            print("data: ", data)
+        if t['type'] in ["main"]:
             # adds to object as attribute
             self.update(data)
             # adds to environment variables
@@ -354,7 +359,7 @@ class Dict_to_obj(OrderedDict):
         for t in self.config['templates']:
             # print("template: ", t)
             print(self.type, self.filled)
-            if t['type'] in ["base", "main", "apps"]:
+            if t['type'] in ["main", "apps"]:
                 try:
                     if t['order']:
                         for item in t['order']:
@@ -376,6 +381,9 @@ class Dict_to_obj(OrderedDict):
                         )
                     )
                     pass
+            elif t['type'] in ["base"]:
+                self._tool_env = t['order']
+                pass
             else:
                 self._templates.append(
                     self._create_templ_item(
