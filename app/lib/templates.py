@@ -10,6 +10,7 @@ import sys
 import toml
 import platform
 from copy import deepcopy
+from collections import OrderedDict
 from .formating import format
 
 from .utils import (get_conf_file)
@@ -32,7 +33,7 @@ MAIN = {
 }
 
 
-class Dict_to_obj(dict):
+class Dict_to_obj(OrderedDict):
     """ Hiden class
 
     Converts `dict` dot string object with optional slicing metod
@@ -49,12 +50,6 @@ class Dict_to_obj(dict):
     platform = platform.system().lower()
 
     def __init__(self, *args, **kwargs):
-        if args:
-            if isinstance(args, tuple):
-                print("args: ", args)
-        else:
-            pass
-
         self._to_obj(args or kwargs)
 
     def __getattr__(self, name):
@@ -89,7 +84,7 @@ class Dict_to_obj(dict):
                 continue
 
             if args["obj_copy"]:
-                if key.startswith("_"):
+                if key.startswith("_") and not key.startswith("__"):
                     if key[1:] in args.keys():
                         # print("@@ exeption: ", key, value)
                         self[key] = value
@@ -104,8 +99,9 @@ class Dict_to_obj(dict):
                     _key = "_{}".format(key)
                     self[_key] = value
                 if key is not "obj_copy":
-                    self[key] = value
-                    self.format
+                    if value:
+                        self[key] = value
+                        self.format
 
     def add_to_env_var(self, *args, **kwargs):
 
@@ -357,6 +353,7 @@ class Dict_to_obj(dict):
         self._templates = list()
         for t in self.config['templates']:
             # print("template: ", t)
+            print(self.type, self.filled)
             if t['type'] in ["base", "main", "apps"]:
                 try:
                     if t['order']:
@@ -369,8 +366,7 @@ class Dict_to_obj(dict):
                                     t['preset']
                                 )
                             )
-                except KeyError as error:
-                    # print("// error: {}".format(error))
+                except KeyError:
                     self._templates.extend(
                         self._create_templ_item(
                             None,
@@ -417,7 +413,6 @@ class Dict_to_obj(dict):
             data = None
 
         if data:
-            print(data)
             self.update(data)
 
         copy_dict = deepcopy(dict(**self).copy())
@@ -438,20 +433,39 @@ class Dict_to_obj(dict):
 
 class Templates(Dict_to_obj):
 
-    def __init__(self, *args, **kwargs):
-        super(Templates, self).__init__(*args, **kwargs)
+    def __init__(self, type=list(), filled=None, environmnet=list(), **kwargs):
+        self.type = type
+        self.filled = filled
+        self.environmnet = environmnet
+
+        super(Templates, self).__init__()
 
         try:
-            self.templates_root = os.path.join(
-                os.environ["PYPE_STUDIO_TEMPLATES"],
-                "templates"
-            )
+            environ = list(os.environ.keys())
+            environ_list = ['AVALON_CORE',
+                            'AVALON_LAUNCHER',
+                            'PYBLISH_BASE',
+                            'PYBLISH_QML',
+                            'PYBLISH_LITE',
+                            'AVALON_EXAMPLES',
+                            'PYPE_STUDIO_TEMPLATES',
+                            'PYPE_STUDIO_CONFIG',
+                            'PYPE_STUDIO_PROJECTS']
+
+            tested = [r for r in environ_list
+                      if r in environ]
+
+            if len(environ_list) is not len(tested):
+                raise KeyError('Missing env key')
+
         except KeyError:
             solve_dependecies()
-            self.templates_root = os.path.join(
-                os.environ["PYPE_STUDIO_TEMPLATES"],
-                "templates"
-            )
+
+        self.templates_root = os.path.join(
+            os.environ["PYPE_STUDIO_TEMPLATES"],
+            "templates"
+        )
+
         # get all toml templates in order
         self._get_template_files()
         self._get_templates_to_args()

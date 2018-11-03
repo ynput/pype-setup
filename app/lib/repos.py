@@ -155,7 +155,7 @@ def _add_to_pythonpath(add_to_pythonpath):
 
 def _setup_environment(repos=None):
     '''Sets all environment variables regarding attributes found
-    pype-setup/config-repos.toml
+    studio-templates/install/config-repos..default.toml
 
     '''
     assert isinstance(repos, dict), "`repos` must be <dict>"
@@ -164,7 +164,7 @@ def _setup_environment(repos=None):
     for key, value in repos.items():
 
         if key not in list(os.environ.keys()):
-            # print("Checking '{}'...".format(key))
+            print("Adding '{}'...".format(key))
             path = os.path.normpath(
                 os.path.join(
                     os.environ['PYPE_SETUP_ROOT'],
@@ -196,6 +196,7 @@ def _setup_environment(repos=None):
 
     if testing_list:
         for m in testing_list:
+            print("Testing module: {}".format(m["subdir"]))
             _test_module_import(m["path"], m["subdir"])
 
 
@@ -204,12 +205,14 @@ def get_pype_repos_file_content():
 
     install_dir = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "install")
     repos_config_file = get_conf_file(install_dir, "pype-repos")
+    repos_config_path = os.path.join(
+        install_dir,
+        repos_config_file
+    )
+    print("Pype-repos path: {}".format(repos_config_path))
 
     config_content = toml.load(
-        os.path.join(
-            install_dir,
-            repos_config_file
-        )
+        repos_config_path
     )
     return config_content
 
