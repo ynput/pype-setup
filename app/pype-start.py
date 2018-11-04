@@ -57,9 +57,9 @@ from app import (
     _templates_loaded,
 )
 
-if not _templates_loaded:
-    Templates = templates()
-    _templates_loaded = True
+self = sys.modules[__name__]
+self._templates_loaded = _templates_loaded
+
 
 print("Logger from pype-start: ", Logger)
 
@@ -118,6 +118,7 @@ def install():
 
 
 def _install(root=None):
+
     missing_dependencies = list()
     for dependency in ("PyQt5",):
         try:
@@ -164,6 +165,10 @@ def _install(root=None):
 def main():
     import argparse
 
+    if not self._templates_loaded:
+        Templates = templates()
+        self._templates_loaded = True
+
     parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument("--root", help="Projects directory")
     parser.add_argument("--import", dest="import_", action="store_true",
@@ -194,33 +199,33 @@ def main():
     kwargs, args = parser.parse_known_args()
 
     _install(root=kwargs.root)
+    #
+    # cd = os.path.normpath(os.environ["PYPE_SETUP_ROOT"])
+    # examplesdir = os.getenv("AVALON_EXAMPLES",
+    #                         os.path.join(
+    #                             cd,
+    #                             "app",
+    #                             "repos",
+    #                             "avalon-examples"
+    #                         )
+    #                         )
+    #
+    # if kwargs.import_:
+    #     fname = os.path.join(examplesdir, "import.py")
+    #     returncode = forward(
+    #         [sys.executable, "-u", fname] + args)
+    #
+    # elif kwargs.export:
+    #     fname = os.path.join(examplesdir, "export.py")
+    #     returncode = forward(
+    #         [sys.executable, "-u", fname] + args)
+    #
+    # elif kwargs.build:
+    #     fname = os.path.join(examplesdir, "build.py")
+    #     returncode = forward(
+    #         [sys.executable, "-u", fname] + args)
 
-    cd = os.path.normpath(os.environ["PYPE_SETUP_ROOT"])
-    examplesdir = os.getenv("AVALON_EXAMPLES",
-                            os.path.join(
-                                cd,
-                                "app",
-                                "repos",
-                                "avalon-examples"
-                            )
-                            )
-
-    if kwargs.import_:
-        fname = os.path.join(examplesdir, "import.py")
-        returncode = forward(
-            [sys.executable, "-u", fname] + args)
-
-    elif kwargs.export:
-        fname = os.path.join(examplesdir, "export.py")
-        returncode = forward(
-            [sys.executable, "-u", fname] + args)
-
-    elif kwargs.build:
-        fname = os.path.join(examplesdir, "build.py")
-        returncode = forward(
-            [sys.executable, "-u", fname] + args)
-
-    elif kwargs.init:
+    if kwargs.init:
         returncode = forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--init"])
@@ -236,20 +241,22 @@ def main():
             "avalon.inventory", "--save"])
 
     elif kwargs.make:
+        # TODO: fix loop with Templates adding into function called independetly on running this make procedure
         returncode = git_make_repository()
 
     elif kwargs.forward:
         returncode = forward(kwargs.forward.split())
 
-    elif kwargs.publish:
-        os.environ["PYBLISH_HOSTS"] = "shell"
-
-        with install():
-            returncode = forward([
-                sys.executable, "-u", "-m", "pyblish", "gui"
-            ] + args, silent=True)
+    # elif kwargs.publish:
+    #     os.environ["PYBLISH_HOSTS"] = "shell"
+    #
+    #     with install():
+    #         returncode = forward([
+    #             sys.executable, "-u", "-m", "pyblish", "gui"
+    #         ] + args, silent=True)
 
     elif kwargs.actionserver:
+
         fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "actionServer.py")
 
         returncode = forward([
@@ -257,6 +264,7 @@ def main():
         ] + args)
 
     else:
+
         pprint(os.environ)
         root = os.environ["AVALON_PROJECTS"]
         returncode = forward([

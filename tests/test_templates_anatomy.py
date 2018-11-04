@@ -16,14 +16,13 @@ t = Templates(
 
 print(100*"_")
 for k, v in t.items():
-    print(k)
-    print(v)
+    print(k, v)
 print(100*"_")
 
-for k, v in os.environ.items():
-    if "PYPE" in k or "AVALON" in k:
-        print(k, v)
-print(100*"_")
+# for k, v in os.environ.items():
+#     if "PYPE" in k or "AVALON" in k:
+#         print(k, v)
+# print(100*"_")
 
 # #
 # data = {"project": {"name": "D001_projectX",

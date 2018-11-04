@@ -126,13 +126,15 @@ def _add_config(dir_name):
 
 def _test_module_import(module_path, module_name):
     ''' test import module see if all is set correctly'''
-    if subprocess.call([
+    output = subprocess.call([
         sys.executable, "-c",
-        "import {}".format(module_name)
-    ]) != 0:
+        "import {}".format(module_name)])
+    if output:
         log.critical("ERROR: '{}' not found, check your "
                      "PYTHONPATH for '{}'.".format(module_name, module_path))
-        sys.exit(1)
+        # sys.exit(1)
+        print("Error with running module: {}".format(module_name))
+        git_make_repository()
 
 
 def _add_to_path(add_to_path):
@@ -197,6 +199,7 @@ def _setup_environment(repos=None):
     if testing_list:
         for m in testing_list:
             print("Testing module: {}".format(m["subdir"]))
+
             _test_module_import(m["path"], m["subdir"])
 
 
