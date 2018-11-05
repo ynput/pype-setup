@@ -12,7 +12,6 @@ import platform
 from pprint import pprint
 import acre
 from copy import deepcopy
-from collections import OrderedDict
 from .formating import format
 
 from .utils import (get_conf_file)
@@ -35,7 +34,7 @@ MAIN = {
 }
 
 
-class Dict_to_obj(OrderedDict):
+class Dict_to_obj(dict):
     """ Hiden class
 
     Converts `dict` dot string object with optional slicing metod
@@ -50,6 +49,7 @@ class Dict_to_obj(OrderedDict):
     __delattr__ = dict.__delitem__
 
     platform = platform.system().lower()
+    os.environ['platform'] = platform
 
     def __init__(self, *args, **kwargs):
         self._to_obj(args or kwargs)
