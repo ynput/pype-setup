@@ -418,6 +418,8 @@ class Dict_to_obj(dict):
                     )
             return data
 
+        copy_dict = iter_dict(copy_dict)
+
         return Dict_to_obj(iter_dict(copy_dict))
 
 
