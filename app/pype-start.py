@@ -70,8 +70,6 @@ PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 # TODO: checking if project paths locations are available, if not it will set local locations
 # TODO: software launchers
 
-PYPE_APP_ROOT = os.environ["PYPE_APP_ROOT"]
-
 if os.path.basename(__file__) in os.listdir(os.getcwd()):
     '''
     Having avalon.py in the current working directory

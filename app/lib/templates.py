@@ -9,6 +9,7 @@ import os
 import sys
 import toml
 import platform
+from pprint import pprint
 import acre
 from copy import deepcopy
 from collections import OrderedDict
@@ -87,7 +88,6 @@ class Dict_to_obj(OrderedDict):
             if args["obj_copy"]:
                 if key.startswith("_") and not key.startswith("__"):
                     if key[1:] in args.keys():
-                        # print("@@ exeption: ", key, value)
                         self[key] = value
                 else:
                     if key is not "obj_copy":
@@ -120,19 +120,16 @@ class Dict_to_obj(OrderedDict):
         '''
         assert isinstance(args, dict), "`args` must be <dict>"
         for key, value in args.items():
-            # print("=# _env1: ", key, value)
+
             if not value:
                 continue
-            # if key.startswith("_"):
-            #     continue
-            # print("=# _env2: ", key, value)
+
             if isinstance(value, dict):
                 value = self.add_to_env_var(value)
 
             # adding to env vars
             if key in self.including:
                 if key in "PYTHONPATH":
-                    # print("== paths: ", key, os.environ[key])
                     if not isinstance(value, list):
                         paths = os.pathsep.join(
                             os.environ[key].split(os.pathsep)
@@ -182,7 +179,6 @@ class Dict_to_obj(OrderedDict):
                             self._format(str(value), self)
                         )
                     else:
-                        # print(key, value)
                         os.environ[key] = self._format(str(value), self)
 
     def _distribute_args(self):
@@ -195,6 +191,11 @@ class Dict_to_obj(OrderedDict):
             [t for t in self._templates
              if t['type'] in self.type]
         )
+
+        if self.environment:
+            self.environment = self.global_env + self.environment
+        else:
+            self.environment = self.global_env
 
         tools_env = acre.get_tools(self.environment)
         env = acre.compute(tools_env)
@@ -211,26 +212,27 @@ class Dict_to_obj(OrderedDict):
             file_name = os.path.split(t['path'])[1].split(".")[0]
 
             try:
-                if "__storage__" in t['path']:
+                if "storage" in t['path']:
                     data["locations"].update(content)
-                elif t['type'] in "context":
-                    data[t["department"]].update(content)
+                elif t['type'] in self.type:
+                    data[t['type']].update(content)
                 else:
-                    data[t["department"]][file_name].update(content)
+                    data[t['type']][file_name].update(content)
             except KeyError:
-                if "__storage__" in t['path']:
+                if "storage" in t['path']:
                     data["locations"] = content
-                elif t['type'] in "context":
-                    data[t["department"]] = content
+                elif t['type'] in self.type:
+                    data[t['type']] = content
                 else:
                     try:
-                        data[t["department"]][file_name] = content
+                        data[t['type']][file_name] = content
                     except KeyError:
-                        data[t["department"]] = dict()
-                        data[t["department"]][file_name] = content
+                        data[t["type"]] = dict()
+                        data[t["type"]][file_name] = content
         if not t:
             pass
-        if t['type'] in ["main"]:
+
+        if t['type'] in ["system"]:
             # adds to object as attribute
             self.update(data)
             # adds to environment variables
@@ -253,7 +255,7 @@ class Dict_to_obj(OrderedDict):
                 os.environ[k] = os.path.normpath(
                     self._format(v, self)
                 )
-                # print("--path after", os.environ[k])
+
             else:
                 os.environ[k] = self._format(v, self)
 
@@ -270,7 +272,6 @@ class Dict_to_obj(OrderedDict):
     def _create_templ_item(self,
                            t_name=None,
                            t_type=None,
-                           t_department=None,
                            t_preset=None
                            ):
         ''' Populates all available configs from templates
@@ -278,7 +279,8 @@ class Dict_to_obj(OrderedDict):
         Returns:
             configs (obj): dot operator
         '''
-        t_root = os.path.join(self.templates_root, t_department)
+
+        t_root = os.path.join(self.templates_root, t_type)
         list_items = list()
         if not t_name:
             content = [f for f in os.listdir(t_root)
@@ -290,8 +292,7 @@ class Dict_to_obj(OrderedDict):
                 list_items.append(
                     self._create_templ_item(
                         t.replace(MAIN["representation"], ""),
-                        t_type,
-                        t_department
+                        t_type
                     )
                 )
 
@@ -311,7 +312,6 @@ class Dict_to_obj(OrderedDict):
 
             return {
                 "path": os.path.join(t_root, t_file),
-                "department": t_department,
                 "type": t_type
             }
 
@@ -339,8 +339,7 @@ class Dict_to_obj(OrderedDict):
 
         self._templates = list()
         for t in self.config['templates']:
-            # print("template: ", t)
-            if t['type'] in ["main", "hosts"]:
+            if t['type'] in ["system", "software"]:
                 if t['type'] not in self.type:
                     continue
                 try:
@@ -350,7 +349,6 @@ class Dict_to_obj(OrderedDict):
                                 self._create_templ_item(
                                     item,
                                     t['type'],
-                                    t['dir'],
                                     t['preset']
                                 )
                             )
@@ -361,7 +359,6 @@ class Dict_to_obj(OrderedDict):
                         self._create_templ_item(
                             None,
                             t['type'],
-                            t['dir'],
                             t['preset']
                         )
                     )
@@ -369,21 +366,20 @@ class Dict_to_obj(OrderedDict):
             else:
                 if t['type'] not in self.type:
                     continue
+
                 self._templates.append(
                     self._create_templ_item(
                         t['file'],
                         t['type'],
-                        t['dir'],
                         t['preset']
                     )
                 )
 
         self._templates
 
-        if "main" in self.type:
-            # insert environment setings into object root
-            for k, v in self.config['environment'].items():
-                self[k] = v
+        # insert environment setings into object root
+        for k, v in self.config['environment'].items():
+            self[k] = v
 
     def _toml_load(self, path):
         return toml.load(path)
@@ -434,17 +430,13 @@ class Templates(Dict_to_obj):
         assert isinstance(environment, list) \
             or environment is None, "`environment` must be <list>"
 
-        self.type = type or ["main"]
+        self.type = type or ["system"]
 
-        self.environment = environment or ["global", "pype", "avalon"]
-        if "global" not in self.environment:
-            self.environment = ["global", "pype", "avalon"] + self.environment
+        self.environment = environment
 
-        # print(self.type)
-        # print(self.environment)
         super(Templates, self).__init__()
 
-        if "main" in self.type:
+        if "system" in self.type:
             try:
                 environ = list(os.environ.keys())
                 environ_list = ['AVALON_CORE',

@@ -60,7 +60,7 @@ def _solve_optional(template, data):
         template = template.replace(group, "")
 
     try:
-        solved = template.format(platform=platform, **data)
+        solved = template.format(**data)
 
         # Remove optional symbols
         solved = solved.replace("<", "")

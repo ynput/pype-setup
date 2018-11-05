@@ -7,25 +7,22 @@ from app.api import (
 )
 
 
-# test = Templates(type=["context"], filled=None)
-# pprint(test)
-
 base = Templates()
-# print(100*"_")
-# for k, v in base.items():
-#     print(k, v)
-# print(100*"_")
+print(100*"_")
+for k, v in base.items():
+    print(k, v)
+print(100*"_")
 
 t = Templates(
-    type=["context"],
+    type=["anatomy"]
 )
-# print(100*"_")
-# for k, v in t.items():
-#     print(k, v)
-# print(100*"_")
+print(100*"_")
+for k, v in t.items():
+    print(k, v)
+print(100*"_")
 
 a = Templates(
-    type=["hosts"],
+    type=["software"],
     environment=["ftrack"]
 )
 print(100*"_")
