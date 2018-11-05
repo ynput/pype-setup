@@ -1,11 +1,11 @@
 import os
 import sys
 import subprocess
-
+from pprint import pprint
 from .pype_logging import (
     Logger
 )
-
+from pprint import pprint
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
@@ -77,7 +77,7 @@ def get_conf_file(
     return conf_file if os.path.exists(os.path.join(dir, conf_file)) else None
 
 
-def forward(args, silent=False, cwd=None):
+def forward(args, silent=False, cwd=None, env=None, executable=None):
     """Pass `args` to the Avalon CLI, within the Avalon Setup environment
 
     Arguments:
@@ -95,7 +95,9 @@ def forward(args, silent=False, cwd=None):
         stderr=subprocess.STDOUT,
         universal_newlines=True,
         bufsize=1,
-        cwd=cwd
+        cwd=cwd,
+        env=env or os.environ,
+        executable=executable or sys.executable
     )
 
     # Blocks until finished

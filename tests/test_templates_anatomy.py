@@ -1,61 +1,67 @@
+
 import os
+from pprint import pprint
+
 from app.api import (
-    Templates
+    Templates,
 )
 
-t = Templates()
 
+base = Templates()
+print(100*"_")
+for k, v in base.items():
+    print(k, v)
+print(100*"_")
+
+t = Templates(
+    type=["anatomy"]
+)
 print(100*"_")
 for k, v in t.items():
     print(k, v)
 print(100*"_")
+
+a = Templates(
+    type=["software"],
+    environment=["ftrack"]
+)
+print(100*"_")
+for k, v in a.items():
+    print(k, v)
+print(100*"_")
+
 for k, v in os.environ.items():
-    if "PYPE" in k or "AVALON" in k:
+    if "PYPE" in k or "AVALON" in k or "FTRACK" in k:
         print(k, v)
 print(100*"_")
-anatomy = t.anatomy
 
-anatomy = anatomy.format(
-    {"project": {"code": "tr"},
-     "representation": "exr",
-     "VERSION": 3,
-     "SUBVERSION": 10,
-     "shot": "sh001",
-     "sequence": "sq090"}
-)
 
-print(anatomy.workfiles.file)
+data = {"project": {"name": "D001_projectX",
+                    "code": "prjZ"},
+        "VERSION": 3,
+        "SUBVERSION": 10,
+        "task": "animation",
+        "asset": "sh010",
+        "hierarchy": "episodes/ep101",
+        "representation": "abc"}
 
 anatomy = t.anatomy
-anatomy = anatomy.format({"project": {"code": "frk"},
-                          "representation": "exr",
-                          "VERSION": 5,
-                          "SUBVERSION": 70,
-                          "shot": "sh101",
-                          "sequence": "sq490"})
+anatomy = anatomy.format(data)
 
-print(anatomy.workfiles.file)
+print('\nFORMATING WORK')
+print(anatomy.work.path)
 
-data = {"obj": anatomy}
-print(data)
-print(data['obj'].workfiles.file)
+data = {"project": {"name": "D001_projectX",
+                    "code": "prjX"},
+        "asset": 'sh020',
+        "family": 'model',
+        "subset": 'modelMain',
+        "VERSION": 5,
+        "subversion": 24,
+        "hierarchy": "episodes/ep201",
+        "representation": "exr"}
 
-anatomy = t.anatomy
-wf_file = anatomy.format({"project": {"code": "frk"},
-                          "representation": "exr",
-                          "VERSION": 5,
-                          "SUBVERSION": 70,
-                          "shot": "sh101",
-                          "sequence": "sq490"}).workfiles.file
-print(wf_file)
 
-print(anatomy)
-data = {
-    outer_k: {
-        inner_k: inner_v
-        for inner_k, inner_v in outer_v.items()
-    }
-    for outer_k, outer_v in anatomy.items()
-    if isinstance(outer_v, dict)
-}
-print(data)
+anatomy = anatomy.format(data)
+print('\nFORMATING PUBLISH')
+print(anatomy.publish.pathmaster)

@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
+
 import os
 import sys
 
-print(100*"_")
-print(sys.path)
-print(100*"_")
-
 from app.api import (
     Templates as templates,
+    forward
 )
 from app import (
     Templates,
@@ -26,8 +24,7 @@ for k, v in os.environ.items():
 print(100*"_")
 
 
-# ftrack_api = __import__("ftrack_api")
-import ftrack_api
+ftrack_api = __import__("ftrack_api")
 print(ftrack_api)
-
-print(ftrack_api.Session())
+session = ftrack_api.Session()
+print(session)

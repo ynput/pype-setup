@@ -126,13 +126,15 @@ def _add_config(dir_name):
 
 def _test_module_import(module_path, module_name):
     ''' test import module see if all is set correctly'''
-    if subprocess.call([
+    output = subprocess.call([
         sys.executable, "-c",
-        "import {}".format(module_name)
-    ]) != 0:
+        "import {}".format(module_name)])
+    if output:
         log.critical("ERROR: '{}' not found, check your "
                      "PYTHONPATH for '{}'.".format(module_name, module_path))
-        sys.exit(1)
+        # sys.exit(1)
+        print("Error with running module: {}".format(module_name))
+        git_make_repository()
 
 
 def _add_to_path(add_to_path):
@@ -155,16 +157,15 @@ def _add_to_pythonpath(add_to_pythonpath):
 
 def _setup_environment(repos=None):
     '''Sets all environment variables regarding attributes found
-    pype-setup/config-repos.toml
+    studio-templates/install/config-repos..default.toml
 
     '''
     assert isinstance(repos, dict), "`repos` must be <dict>"
 
-    testing_list = list()
     for key, value in repos.items():
 
         if key not in list(os.environ.keys()):
-            # print("Checking '{}'...".format(key))
+            print("Adding '{}'...".format(key))
             path = os.path.normpath(
                 os.path.join(
                     os.environ['PYPE_SETUP_ROOT'],
@@ -172,31 +173,7 @@ def _setup_environment(repos=None):
                     value['name']
                 )
             )
-            # print("Checking path '{}'...".format(path))
-            if value['env'] in "path":
-                path = os.path.normpath(
-                    os.path.join(path, value['subdir'])
-                )
-                _add_to_path(path)
-            else:
-                # for PYTHONPATH
-                if "config" in value['name']:
-                    _add_config(value['subdir'])
-                    # print("Config added...")
-                _add_to_pythonpath(path)
-                # print("/// added to pythonpath")
-                # add to list for testing
-                testing_list.append(
-                    {
-                        "path": path,
-                        "subdir": value['subdir']
-                    }
-                )
             os.environ[key] = path
-
-    if testing_list:
-        for m in testing_list:
-            _test_module_import(m["path"], m["subdir"])
 
 
 def get_pype_repos_file_content():
@@ -204,12 +181,16 @@ def get_pype_repos_file_content():
 
     install_dir = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "install")
     repos_config_file = get_conf_file(install_dir, "pype-repos")
+    repos_config_path = os.path.join(
+        install_dir,
+        repos_config_file
+    )
+    print("Pype-repos path: {}".format(repos_config_path))
+
+    os.environ["TOOL_ENV"] = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "environments")
 
     config_content = toml.load(
-        os.path.join(
-            install_dir,
-            repos_config_file
-        )
+        repos_config_path
     )
     return config_content
 

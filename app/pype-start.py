@@ -41,6 +41,7 @@ import shutil
 import tempfile
 import platform
 import contextlib
+from pprint import pprint
 
 from app.api import (
     Templates as templates,
@@ -56,29 +57,18 @@ from app import (
     _templates_loaded,
 )
 
-if not _templates_loaded:
-    Templates = templates()
-    _templates_loaded = True
+self = sys.modules[__name__]
+self._templates_loaded = _templates_loaded
+
 
 print("Logger from pype-start: ", Logger)
 
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
-if PYPE_DEBUG:
-    for k, v in Templates.items():
-        log.debug("templates.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
-
-    for k, v in os.environ.items():
-        log.debug("os.environ.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
-
 
 # TODO: checking if project paths locations are available, if not it will set local locations
 # TODO: software launchers
-
-PYPE_APP_ROOT = os.environ["PYPE_APP_ROOT"]
 
 if os.path.basename(__file__) in os.listdir(os.getcwd()):
     '''
@@ -117,6 +107,7 @@ def install():
 
 
 def _install(root=None):
+
     missing_dependencies = list()
     for dependency in ("PyQt5",):
         try:
@@ -131,35 +122,6 @@ def _install(root=None):
               "for more details.")
         sys.exit(1)
 
-    os.environ["PYTHONPATH"] = os.pathsep.join(
-        # Append to PYTHONPATH
-        os.getenv("PYTHONPATH", "").split(os.pathsep) + [
-            # Third-party dependencies for Avalon
-            os.path.normpath(
-                os.path.join(PYPE_APP_ROOT, "vendor")
-            ),
-        ]
-    )
-
-    os.environ["PATH"] = os.pathsep.join([
-        # Expose "avalon", overriding existing
-        os.path.normpath(PYPE_APP_ROOT),
-
-        os.environ["PATH"],
-
-        # Add OS-level dependencies - absolete!
-        # TODO: remove this feature after templates work
-        os.path.join(
-            os.environ["PYPE_STUDIO_TEMPLATES"],
-            "bin",
-            platform.system().lower()
-        ),
-        os.path.join(
-            os.environ["PYPE_STUDIO_TEMPLATES"],
-            "bin"
-        )
-    ])
-
     if root is not None:
         os.environ["AVALON_PROJECTS"] = root
     else:
@@ -172,6 +134,10 @@ def _install(root=None):
 
 def main():
     import argparse
+
+    if not self._templates_loaded:
+        Templates = templates()
+        self._templates_loaded = True
 
     parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument("--root", help="Projects directory")
@@ -204,32 +170,7 @@ def main():
 
     _install(root=kwargs.root)
 
-    cd = os.path.normpath(os.environ["PYPE_SETUP_ROOT"])
-    examplesdir = os.getenv("AVALON_EXAMPLES",
-                            os.path.join(
-                                cd,
-                                "app",
-                                "repos",
-                                "avalon-examples"
-                            )
-                            )
-
-    if kwargs.import_:
-        fname = os.path.join(examplesdir, "import.py")
-        returncode = forward(
-            [sys.executable, "-u", fname] + args)
-
-    elif kwargs.export:
-        fname = os.path.join(examplesdir, "export.py")
-        returncode = forward(
-            [sys.executable, "-u", fname] + args)
-
-    elif kwargs.build:
-        fname = os.path.join(examplesdir, "build.py")
-        returncode = forward(
-            [sys.executable, "-u", fname] + args)
-
-    elif kwargs.init:
+    if kwargs.init:
         returncode = forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--init"])
@@ -245,20 +186,22 @@ def main():
             "avalon.inventory", "--save"])
 
     elif kwargs.make:
+        # TODO: fix loop with Templates adding into function called independetly on running this make procedure
         returncode = git_make_repository()
 
     elif kwargs.forward:
         returncode = forward(kwargs.forward.split())
 
-    elif kwargs.publish:
-        os.environ["PYBLISH_HOSTS"] = "shell"
-
-        with install():
-            returncode = forward([
-                sys.executable, "-u", "-m", "pyblish", "gui"
-            ] + args, silent=True)
+    # elif kwargs.publish:
+    #     os.environ["PYBLISH_HOSTS"] = "shell"
+    #
+    #     with install():
+    #         returncode = forward([
+    #             sys.executable, "-u", "-m", "pyblish", "gui"
+    #         ] + args, silent=True)
 
     elif kwargs.actionserver:
+
         fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "actionServer.py")
 
         returncode = forward([
@@ -266,6 +209,8 @@ def main():
         ] + args)
 
     else:
+
+        pprint(os.environ)
         root = os.environ["AVALON_PROJECTS"]
         returncode = forward([
             sys.executable, "-u", "-m", "launcher", "--root", root
