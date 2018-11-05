@@ -162,7 +162,6 @@ def _setup_environment(repos=None):
     '''
     assert isinstance(repos, dict), "`repos` must be <dict>"
 
-    testing_list = list()
     for key, value in repos.items():
 
         if key not in list(os.environ.keys()):
@@ -174,33 +173,7 @@ def _setup_environment(repos=None):
                     value['name']
                 )
             )
-            # print("Checking path '{}'...".format(path))
-            if value['env'] in "path":
-                path = os.path.normpath(
-                    os.path.join(path, value['subdir'])
-                )
-                _add_to_path(path)
-            else:
-                # for PYTHONPATH
-                if "config" in value['name']:
-                    _add_config(value['subdir'])
-                    # print("Config added...")
-                _add_to_pythonpath(path)
-                # print("/// added to pythonpath")
-                # add to list for testing
-                testing_list.append(
-                    {
-                        "path": path,
-                        "subdir": value['subdir']
-                    }
-                )
             os.environ[key] = path
-
-    if testing_list:
-        for m in testing_list:
-            print("Testing module: {}".format(m["subdir"]))
-
-            _test_module_import(m["path"], m["subdir"])
 
 
 def get_pype_repos_file_content():

@@ -190,7 +190,7 @@ def get_tools(tools, platform_name=None):
             '"TOOL_ENV" environment variable not found. '
             'Please create it and point it to a folder with your .json '
             'config files.'
-         )
+        )
 
     # Collect the tool files to load
     tool_paths = []
@@ -245,6 +245,10 @@ def merge(env, current_env):
     result = current_env.copy()
     for key, value in env.items():
         value = lib.partial_format(value, data=current_env, missing="")
-        result[key] = value
+
+        if "://" not in value:
+            value = os.path.normpath(value)
+
+        lib.append_path(result, key, value)
 
     return result

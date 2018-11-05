@@ -66,15 +66,6 @@ print("Logger from pype-start: ", Logger)
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
-if PYPE_DEBUG:
-    for k, v in Templates.items():
-        log.debug("templates.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
-
-    for k, v in os.environ.items():
-        log.debug("os.environ.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
-
 
 # TODO: checking if project paths locations are available, if not it will set local locations
 # TODO: software launchers
@@ -133,25 +124,6 @@ def _install(root=None):
               "for more details.")
         sys.exit(1)
 
-    os.environ["PATH"] = os.pathsep.join([
-        # Expose "avalon", overriding existing
-        os.path.normpath(PYPE_APP_ROOT),
-
-        os.environ["PATH"],
-
-        # Add OS-level dependencies - absolete!
-        # TODO: remove this feature after templates work
-        os.path.join(
-            os.environ["PYPE_STUDIO_TEMPLATES"],
-            "bin",
-            platform.system().lower()
-        ),
-        os.path.join(
-            os.environ["PYPE_STUDIO_TEMPLATES"],
-            "bin"
-        )
-    ])
-
     if root is not None:
         os.environ["AVALON_PROJECTS"] = root
     else:
@@ -199,31 +171,6 @@ def main():
     kwargs, args = parser.parse_known_args()
 
     _install(root=kwargs.root)
-    #
-    # cd = os.path.normpath(os.environ["PYPE_SETUP_ROOT"])
-    # examplesdir = os.getenv("AVALON_EXAMPLES",
-    #                         os.path.join(
-    #                             cd,
-    #                             "app",
-    #                             "repos",
-    #                             "avalon-examples"
-    #                         )
-    #                         )
-    #
-    # if kwargs.import_:
-    #     fname = os.path.join(examplesdir, "import.py")
-    #     returncode = forward(
-    #         [sys.executable, "-u", fname] + args)
-    #
-    # elif kwargs.export:
-    #     fname = os.path.join(examplesdir, "export.py")
-    #     returncode = forward(
-    #         [sys.executable, "-u", fname] + args)
-    #
-    # elif kwargs.build:
-    #     fname = os.path.join(examplesdir, "build.py")
-    #     returncode = forward(
-    #         [sys.executable, "-u", fname] + args)
 
     if kwargs.init:
         returncode = forward([

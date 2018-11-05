@@ -185,40 +185,26 @@ class Dict_to_obj(OrderedDict):
                         # print(key, value)
                         os.environ[key] = self._format(str(value), self)
 
-    def _get_templates_to_args(self):
+    def _distribute_args(self):
         ''' Populates all available configs from templates
 
         Returns:
             configs (obj): dot operator
         '''
-        main_list = [t for t in self._templates
-                     if t['type'] in "main"]
-        self._distribute(main_list)
+        self._distribute(
+            [t for t in self._templates
+             if t['type'] in self.type]
+        )
 
-        # base_list = [t for t in self._templates
-        #              if t['type'] in "base"]
-
-        # self._distribute(base_list)
-
-        # apps_list = [t for t in self._templates
-        #              if t['type'] in "apps"]
-        # self._distribute(apps_list)
-
-        tools_env = acre.get_tools(self._tool_env)
+        tools_env = acre.get_tools(self.environment)
         env = acre.compute(tools_env)
-        os.environ = acre.merge(env, current_env=dict(os.environ))
+        os.environ = acre.merge(env, dict(os.environ))
 
-        context_list = [t for t in self._templates
-                        if t['type'] in "context"]
-        self._distribute(context_list)
-
-        # run trough environ and format values
-        # with environ and self also os.path.normpath
-
-        # treat software separatly from system as NUKE_PATH
-        # if PYTHONPATH then os.pathsep
-        # if PATH then os.pathsep
     def _distribute(self, template_list):
+
+        if not template_list:
+            return
+
         data = dict(obj_copy=False)
         for t in template_list:
             content = self._toml_load(t['path'])
@@ -242,7 +228,8 @@ class Dict_to_obj(OrderedDict):
                     except KeyError:
                         data[t["department"]] = dict()
                         data[t["department"]][file_name] = content
-
+        if not t:
+            pass
         if t['type'] in ["main"]:
             # adds to object as attribute
             self.update(data)
@@ -251,11 +238,7 @@ class Dict_to_obj(OrderedDict):
 
             # format environment variables
             self._format_env_vars()
-
-        elif t['type'] in ["apps"]:
-            self.update(data)
-
-        elif t['type'] in ["context"]:
+        else:
             self.update(data)
 
     def _format_env_vars(self):
@@ -343,7 +326,6 @@ class Dict_to_obj(OrderedDict):
             os.environ["PYPE_STUDIO_TEMPLATES"],
             "install"
         )
-        print(self.install_root)
         for template in MAIN["main_templates"]:
             file = get_conf_file(
                 dir=self.install_root,
@@ -358,8 +340,9 @@ class Dict_to_obj(OrderedDict):
         self._templates = list()
         for t in self.config['templates']:
             # print("template: ", t)
-            print(self.type, self.filled)
-            if t['type'] in ["main", "apps"]:
+            if t['type'] in ["main", "hosts"]:
+                if t['type'] not in self.type:
+                    continue
                 try:
                     if t['order']:
                         for item in t['order']:
@@ -372,6 +355,8 @@ class Dict_to_obj(OrderedDict):
                                 )
                             )
                 except KeyError:
+                    if t['type'] not in self.type:
+                        continue
                     self._templates.extend(
                         self._create_templ_item(
                             None,
@@ -381,10 +366,9 @@ class Dict_to_obj(OrderedDict):
                         )
                     )
                     pass
-            elif t['type'] in ["base"]:
-                self._tool_env = t['order']
-                pass
             else:
+                if t['type'] not in self.type:
+                    continue
                 self._templates.append(
                     self._create_templ_item(
                         t['file'],
@@ -393,11 +377,13 @@ class Dict_to_obj(OrderedDict):
                         t['preset']
                     )
                 )
+
         self._templates
 
-        # insert environment setings into object root
-        for k, v in self.config['environment'].items():
-            self[k] = v
+        if "main" in self.type:
+            # insert environment setings into object root
+            for k, v in self.config['environment'].items():
+                self[k] = v
 
     def _toml_load(self, path):
         return toml.load(path)
@@ -424,7 +410,6 @@ class Dict_to_obj(OrderedDict):
             self.update(data)
 
         copy_dict = deepcopy(dict(**self).copy())
-        print(copy_dict)
 
         def iter_dict(data):
             for k, v in data.items():
@@ -433,7 +418,9 @@ class Dict_to_obj(OrderedDict):
                 else:
                     if k.startswith("_"):
                         continue
-                    data[k] = self._format(str(v), copy_dict)
+                    data[k] = os.path.normpath(
+                        self._format(str(v), copy_dict)
+                    )
             return data
 
         return Dict_to_obj(iter_dict(copy_dict))
@@ -441,33 +428,43 @@ class Dict_to_obj(OrderedDict):
 
 class Templates(Dict_to_obj):
 
-    def __init__(self, type=list(), filled=None, environmnet=list(), **kwargs):
-        self.type = type
-        self.filled = filled
-        self.environmnet = environmnet
+    def __init__(self, type=None, environment=None, **kwargs):
+        assert isinstance(type, list) \
+            or type is None, "`type` must be <list>"
+        assert isinstance(environment, list) \
+            or environment is None, "`environment` must be <list>"
 
+        self.type = type or ["main"]
+
+        self.environment = environment or ["global", "pype", "avalon"]
+        if "global" not in self.environment:
+            self.environment = ["global", "pype", "avalon"] + self.environment
+
+        # print(self.type)
+        # print(self.environment)
         super(Templates, self).__init__()
 
-        try:
-            environ = list(os.environ.keys())
-            environ_list = ['AVALON_CORE',
-                            'AVALON_LAUNCHER',
-                            'PYBLISH_BASE',
-                            'PYBLISH_QML',
-                            'PYBLISH_LITE',
-                            'AVALON_EXAMPLES',
-                            'PYPE_STUDIO_TEMPLATES',
-                            'PYPE_STUDIO_CONFIG',
-                            'PYPE_STUDIO_PROJECTS']
+        if "main" in self.type:
+            try:
+                environ = list(os.environ.keys())
+                environ_list = ['AVALON_CORE',
+                                'AVALON_LAUNCHER',
+                                'PYBLISH_BASE',
+                                'PYBLISH_QML',
+                                'PYBLISH_LITE',
+                                'AVALON_EXAMPLES',
+                                'PYPE_STUDIO_TEMPLATES',
+                                'PYPE_STUDIO_CONFIG',
+                                'PYPE_STUDIO_PROJECTS']
 
-            tested = [r for r in environ_list
-                      if r in environ]
+                tested = [r for r in environ_list
+                          if r in environ]
 
-            if len(environ_list) is not len(tested):
-                raise KeyError('Missing env key')
+                if len(environ_list) is not len(tested):
+                    raise KeyError('Missing env key')
 
-        except KeyError:
-            solve_dependecies()
+            except KeyError:
+                solve_dependecies()
 
         self.templates_root = os.path.join(
             os.environ["PYPE_STUDIO_TEMPLATES"],
@@ -476,7 +473,7 @@ class Templates(Dict_to_obj):
 
         # get all toml templates in order
         self._get_template_files()
-        self._get_templates_to_args()
+        self._distribute_args()
 
     def update(self,  *args, **kwargs):
         '''Adding content to object

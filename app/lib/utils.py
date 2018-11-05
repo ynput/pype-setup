@@ -5,7 +5,7 @@ from pprint import pprint
 from .pype_logging import (
     Logger
 )
-
+from pprint import pprint
 log = Logger.getLogger(__name__)
 PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
@@ -89,8 +89,6 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
     if PYPE_DEBUG:
         print("Forwarding '%s'.." % " ".join(args))
 
-    print(os.environ)
-
     popen = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
@@ -98,8 +96,8 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
         universal_newlines=True,
         bufsize=1,
         cwd=cwd,
-        env=env,
-        executable=executable
+        env=env or os.environ,
+        executable=executable or sys.executable
     )
 
     # Blocks until finished
