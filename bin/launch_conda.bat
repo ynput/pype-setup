@@ -1,10 +1,9 @@
-
 title Avalon conda environment setup
 cls :: clear the screen command
 
 :: Change the working directory to the conda-git-deployment directory.
 :: "pushd" is being used so any UNC paths get mapped until a restart happens.
-REM pushd %~dp0
+pushd %~dp0
 
 :: Make CWD root of avalon-environment repository.
 cd ..
@@ -125,14 +124,14 @@ if "%SYNC_ENV%"=="1" (
 
 if "%REMOTE_ENV_ON%"=="1" (
     set PATH="%REMOTE_ENV_DIR%";"%REMOTE_ENV_DIR%\Scripts";"%REMOTE_ENV_DIR%\Library";"%REMOTE_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"%systemdrive%%homepath%\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
-    set PYTHONPATH=%REMOTE_ENV_DIR%\Lib\site-packages
-    set PYTHON_ENV=%REMOTE_ENV_DIR%
+    set PYTHONPATH=%PYTHONPATH%;%REMOTE_ENV_DIR%\Lib\site-packages;%PYPE_SETUP_ROOT%
+    set PYTHON_ENV="%REMOTE_ENV_DIR%"
     set GIT_PYTHON_GIT_EXECUTABLE=%REMOTE_ENV_DIR%\Library\bin\git.exe
     echo [92m^>^>^>[0m Running env from: [ [96m"%REMOTE_ENV_DIR%"[0m ]
 ) else (
     set PATH="%LOCAL_ENV_DIR%";"%LOCAL_ENV_DIR%\Scripts";"%LOCAL_ENV_DIR%\Library";"%LOCAL_ENV_DIR%\Library\bin";"C:\Windows\System32";"C:\Program Files (x86)\QuickTime\QTSystem\";"%systemdrive%%homepath%\AppData\Local\Microsoft\WindowsApps";"C:\Windows"
-    set PYTHONPATH=%LOCAL_ENV_DIR%\Lib\site-packages
-    set PYTHON_ENV=%LOCAL_ENV_DIR%
+    set PYTHONPATH=%PYTHONPATH%;%LOCAL_ENV_DIR%\Lib\site-packages;%PYPE_SETUP_ROOT%
+    set PYTHON_ENV="%LOCAL_ENV_DIR%"
     set GIT_PYTHON_GIT_EXECUTABLE=%LOCAL_ENV_DIR%\Library\bin\git.exe
     echo [92m^>^>^>[0m Running env from: [ [96m"%LOCAL_ENV_DIR%"[0m ]
 )
@@ -151,5 +150,5 @@ echo [92m^>^>^>[0m Git submodules created and updated
 :SUBMODULES_EXISTS
 
 :: Initialize submodules
-set PYTHONPATH=%PYPE_SETUP_ROOT%;%PYTHONPATH%
-echo [92m^>^>^>[0m All setup and goot to go!
+set PYTHONPATH=%PYTHONPATH%;%PYPE_SETUP_ROOT%
+echo [92m^>^>^>[0m All setup and good to go!
