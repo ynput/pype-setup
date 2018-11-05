@@ -61,10 +61,8 @@ self = sys.modules[__name__]
 self._templates_loaded = _templates_loaded
 
 
-print("Logger from pype-start: ", Logger)
-
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
+PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 
 # TODO: checking if project paths locations are available, if not it will set local locations
@@ -210,7 +208,6 @@ def main():
 
     else:
 
-        pprint(os.environ)
         root = os.environ["AVALON_PROJECTS"]
         returncode = forward([
             sys.executable, "-u", "-m", "launcher", "--root", root
