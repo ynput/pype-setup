@@ -7,28 +7,31 @@
     <x>0</x>
     <y>0</y>
     <width>332</width>
-    <height>268</height>
+    <height>297</height>
    </rect>
+  </property>
+  <property name="cursor">
+   <cursorShape>PointingHandCursor</cursorShape>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
   </property>
   <property name="windowTitle">
    <string>Pype_project_setting_ui</string>
   </property>
-  <widget class="QWidget" name="horizontalLayoutWidget">
+  <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>331</width>
+     <x>-1</x>
+     <y>-1</y>
+     <width>341</width>
      <height>271</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout" stretch="">
-    <property name="spacing">
-     <number>5</number>
-    </property>
-    <property name="sizeConstraint">
-     <enum>QLayout::SetMinAndMaxSize</enum>
-    </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout"/>
+    </item>
    </layout>
   </widget>
  </widget>

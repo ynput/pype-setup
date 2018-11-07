@@ -219,6 +219,7 @@ def get_tools(tools, platform_name=None):
             continue
 
         tool_env = parse(tool_env, platform_name=platform_name)
+
         environment = append(environment, tool_env)
 
     return environment

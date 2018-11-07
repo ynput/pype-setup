@@ -23,7 +23,6 @@ print(100*"_")
 
 a = Templates(
     type=["software"],
-    environment=["ftrack"]
 )
 print(100*"_")
 for k, v in a.items():

@@ -9,7 +9,6 @@ import os
 import sys
 import toml
 import platform
-from pprint import pprint
 import acre
 from copy import deepcopy
 from .formating import format
@@ -197,8 +196,8 @@ class Dict_to_obj(dict):
         else:
             self.environment = self.global_env
 
-        tools_env = acre.get_tools(self.environment)
-        env = acre.compute(tools_env)
+        tools_env = acre.get_tools(self.environment, self.platform)
+        env = acre.compute(dict(**tools_env, platform=self.platform))
         os.environ = acre.merge(env, dict(os.environ))
 
     def _distribute(self, template_list):
@@ -418,6 +417,8 @@ class Dict_to_obj(dict):
                         self._format(str(v), copy_dict)
                     )
             return data
+
+        copy_dict = iter_dict(copy_dict)
 
         return Dict_to_obj(iter_dict(copy_dict))
 
