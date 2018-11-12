@@ -135,6 +135,12 @@ def main():
 
     if not self._templates_loaded:
         Templates = templates()
+
+        pythonpath = os.getenv('PYTHONPATH').split(os.pathsep)
+        for path in pythonpath:
+            if path not in sys.path:
+                sys.path.append(path)
+
         self._templates_loaded = True
 
     parser = argparse.ArgumentParser(usage=__doc__)
@@ -202,6 +208,20 @@ def main():
 
         fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "actionServer.py")
 
+        # Login to ftrack is neccessary first
+        from pype.ftrack import credentials, login_dialog
+
+        cred = credentials._get_credentials()
+        if 'username' in cred and 'apiKey' in cred:
+            validation = credentials._check_credentials(
+                cred['username'],
+                cred['apiKey']
+            )
+            if validation is False:
+                login_dialog.run_login()
+        else:
+            login_dialog.run_login()
+        # TODO Logic for run this, if logged in...
         returncode = forward([
             sys.executable, "-u", fname
         ] + args)
