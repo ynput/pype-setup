@@ -135,12 +135,6 @@ def main():
 
     if not self._templates_loaded:
         Templates = templates()
-
-        pythonpath = os.getenv('PYTHONPATH').split(os.pathsep)
-        for path in pythonpath:
-            if path not in sys.path:
-                sys.path.append(path)
-
         self._templates_loaded = True
 
     parser = argparse.ArgumentParser(usage=__doc__)
@@ -207,17 +201,24 @@ def main():
     #         ] + args, silent=True)
 
     elif kwargs.actionserver:
-        fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "ftrackRun.py")
         args = ["--actionserver"]
-        # TODO Logic for run this, if logged in...
+
+        # TODO this path is same for more args!
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
+        fname = os.path.sep.join(items)
+
         returncode = forward([
             sys.executable, "-u", fname
         ] + args)
 
     elif kwargs.ftracklogout:
-        fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "ftrackRun.py")
         args = ["--logout"]
-        # TODO Logic for run this, if logged in...
+
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
+        fname = os.path.sep.join(items)
+
         returncode = forward([
             sys.executable, "-u", fname
         ] + args)
