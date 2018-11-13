@@ -169,6 +169,8 @@ def main():
                              "or supplied --root")
     parser.add_argument("--actionserver", action="store_true",
                         help="launch action server for ftrack")
+    parser.add_argument("--ftracklogout", action="store_true",
+                        help="Logout from Ftrack")
 
     kwargs, args = parser.parse_known_args()
 
@@ -205,22 +207,16 @@ def main():
     #         ] + args, silent=True)
 
     elif kwargs.actionserver:
+        fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "ftrackRun.py")
+        args = ["--actionserver"]
+        # TODO Logic for run this, if logged in...
+        returncode = forward([
+            sys.executable, "-u", fname
+        ] + args)
 
-        fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "actionServer.py")
-
-        # Login to ftrack is neccessary first
-        from pype.ftrack import credentials, login_dialog
-
-        cred = credentials._get_credentials()
-        if 'username' in cred and 'apiKey' in cred:
-            validation = credentials._check_credentials(
-                cred['username'],
-                cred['apiKey']
-            )
-            if validation is False:
-                login_dialog.run_login()
-        else:
-            login_dialog.run_login()
+    elif kwargs.ftracklogout:
+        fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "ftrackRun.py")
+        args = ["--logout"]
         # TODO Logic for run this, if logged in...
         returncode = forward([
             sys.executable, "-u", fname
