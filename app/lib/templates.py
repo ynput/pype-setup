@@ -197,7 +197,7 @@ class Dict_to_obj(dict):
             self.environment = self.global_env
 
         tools_env = acre.get_tools(self.environment, self.platform)
-        env = acre.compute(dict(**tools_env, platform=self.platform))
+        env = acre.compute(dict(tools_env, platform=self.platform))
         os.environ = acre.merge(env, dict(os.environ))
 
     def _distribute(self, template_list):
