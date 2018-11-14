@@ -163,6 +163,8 @@ def main():
                              "or supplied --root")
     parser.add_argument("--actionserver", action="store_true",
                         help="launch action server for ftrack")
+    parser.add_argument("--ftracklogout", action="store_true",
+                        help="Logout from Ftrack")
 
     kwargs, args = parser.parse_known_args()
 
@@ -199,8 +201,23 @@ def main():
     #         ] + args, silent=True)
 
     elif kwargs.actionserver:
+        args = ["--actionserver"]
 
-        fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "actionServer.py")
+        # TODO this path is same for more args!
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
+        fname = os.path.sep.join(items)
+
+        returncode = forward([
+            sys.executable, "-u", fname
+        ] + args)
+
+    elif kwargs.ftracklogout:
+        args = ["--logout"]
+
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
+        fname = os.path.sep.join(items)
 
         returncode = forward([
             sys.executable, "-u", fname
