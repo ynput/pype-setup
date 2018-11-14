@@ -2,6 +2,7 @@ import logging
 import os
 import datetime
 import time
+from io import open
 
 
 PYPE_DEBUG_STDOUT = os.getenv("PYPE_DEBUG_STDOUT") is "1"
