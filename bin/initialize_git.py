@@ -16,7 +16,7 @@ IS_WIN32 = sys.platform == "win32"
 repository_path = os.environ["PYPE_SETUP_ROOT"]
 rep_git_url = os.getenv(
     "PYPE_SETUP_GIT_URL",
-    "git@github.com:pypeclub/pype-setup.git"
+    "git@bitbucket.org:pypeclub/pype-setup.git"
 )
 rep_git_branch = os.getenv(
     "PYPE_SETUP_GIT_BRANCH",
@@ -25,11 +25,11 @@ rep_git_branch = os.getenv(
 # studio templates repository setting
 studio_templates_name = os.getenv(
     "PYPE_STUDIO_TEMPLATES_NAME",
-    "studio-templates"
+    "pype-templates"
 )
 studio_templates_url = os.getenv(
     "PYPE_STUDIO_TEMPLATES_URL",
-    "git@github.com:pypeclub/studio-templates.git"
+    "git@bitbucket.org:pypeclub/pype-templates.git"
 )
 studio_templates_submodule_root = os.getenv(
     "PYPE_STUDIO_TEMPLATES_SUBM_PATH",
