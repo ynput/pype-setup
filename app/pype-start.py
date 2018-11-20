@@ -39,21 +39,16 @@ import os
 import sys
 import shutil
 import tempfile
-import platform
 import contextlib
-from pprint import pprint
 
 from app.api import (
     Templates as templates,
     forward,
     git_make_repository,
-    Logger,
-    logger
+    Logger
 )
 
 from app import (
-    Templates,
-    _repos_installed,
     _templates_loaded,
 )
 
@@ -62,7 +57,6 @@ self._templates_loaded = _templates_loaded
 
 
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 
 # TODO: checking if project paths locations are available, if not it will set local locations
