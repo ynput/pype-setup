@@ -39,31 +39,15 @@ import os
 import sys
 import shutil
 import tempfile
-import platform
 import contextlib
-from pprint import pprint
 
 from app.api import (
-    Templates as templates,
     forward,
     git_make_repository,
-    Logger,
-    logger
+    Logger
 )
-
-from app import (
-    Templates,
-    _repos_installed,
-    _templates_loaded,
-)
-
-self = sys.modules[__name__]
-self._templates_loaded = _templates_loaded
-
 
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
-
 
 # TODO: checking if project paths locations are available, if not it will set local locations
 # TODO: software launchers
@@ -114,10 +98,10 @@ def _install(root=None):
             missing_dependencies.append(dependency)
 
     if missing_dependencies:
-        print("Sorry, there are some dependencies missing from your system.\n")
-        print("\n".join(" - %s" % d for d in missing_dependencies) + "\n")
-        print("See https://getavalon.github.io/2.0/howto/#install "
-              "for more details.")
+        log.warning("Sorry, there are some dependencies missing from your system.\n")
+        log.warning("\n".join(" - %s" % d for d in missing_dependencies) + "\n")
+        log.warning("See https://getavalon.github.io/2.0/howto/#install "
+                    "for more details.")
         sys.exit(1)
 
     if root is not None:
@@ -132,12 +116,10 @@ def _install(root=None):
 
 def main():
     import argparse
-
-    if not self._templates_loaded:
-        Templates = templates()
-        self._templates_loaded = True
+    from app import env
 
     parser = argparse.ArgumentParser(usage=__doc__)
+    parser.add_argument("--testing", help="Testing templates")
     parser.add_argument("--root", help="Projects directory")
     parser.add_argument("--import", dest="import_", action="store_true",
                         help="Import an example project into the database")
@@ -175,6 +157,11 @@ def main():
             sys.executable, "-u", "-m",
             "avalon.inventory", "--init"])
 
+    elif kwargs.testing:
+        returncode = 1
+        from app import pypeline
+        pypeline.main()
+
     elif kwargs.load:
         returncode = forward([
             sys.executable, "-u", "-m",
@@ -186,19 +173,12 @@ def main():
             "avalon.inventory", "--save"])
 
     elif kwargs.make:
-        # TODO: fix loop with Templates adding into function called independetly on running this make procedure
+        # TODO: fix loop with Templates adding into function called
+        # independetly on running this make procedure
         returncode = git_make_repository()
 
     elif kwargs.forward:
         returncode = forward(kwargs.forward.split())
-
-    # elif kwargs.publish:
-    #     os.environ["PYBLISH_HOSTS"] = "shell"
-    #
-    #     with install():
-    #         returncode = forward([
-    #             sys.executable, "-u", "-m", "pyblish", "gui"
-    #         ] + args, silent=True)
 
     elif kwargs.actionserver:
         args = ["--actionserver"]
