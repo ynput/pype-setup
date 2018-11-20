@@ -167,7 +167,9 @@ def main():
     parser.add_argument("--ftracklogout", action="store_true",
                         help="Logout from Ftrack")
     parser.add_argument("--tray", action="store_true",
-                        help="Logout from Ftrack")
+                        help="Launch tray application")
+    parser.add_argument("--traydebug", action="store_true",
+                        help="Launch tray application")
     kwargs, args = parser.parse_known_args()
 
     _install(root=kwargs.root)
@@ -240,12 +242,23 @@ def main():
             bufsize=1,
             cwd=None,
             executable=sys.executable,
+            env=os.environ,
             stdin=None,
             stdout=None,
             stderr=None,
             creationflags=DETACHED_PROCESS
         )
-        
+        print("Running Tray App")
+
+    elif kwargs.traydebug:
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "tray.py"]
+        fname = os.path.sep.join(items)
+
+        returncode = forward([
+            sys.executable, "-u", fname
+        ] + args)
+
     else:
 
         root = os.environ["AVALON_PROJECTS"]
