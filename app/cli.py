@@ -18,7 +18,6 @@ from app import (
 )
 
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = os.getenv("PYPE_DEBUG_STDOUT") is "1"
 
 terminal = {"windows": "cmd", "linux": "xterm", "darwin": "iTerm2"}
 

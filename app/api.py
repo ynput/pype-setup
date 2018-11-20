@@ -15,8 +15,7 @@ from .lib.templates import (
 )
 
 from .lib.pype_logging import (
-    Logger,
-    logger
+    Logger
 )
 
 __all__ = [
@@ -31,6 +30,5 @@ __all__ = [
 
     "forward",
 
-    "Logger",
-    "logger"
+    "Logger"
 ]

@@ -30,7 +30,6 @@ CONDA_SHARED="/tmp"
 
 # debugging
 export PYPE_DEBUG=1
-export PYPE_DEBUG_STDOUT=1
 
 # maintain python environment
 # will synchronize remote with local

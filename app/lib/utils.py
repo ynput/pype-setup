@@ -1,13 +1,12 @@
 import os
 import sys
 import subprocess
-from pprint import pprint
+
 from .pype_logging import (
     Logger
 )
-from pprint import pprint
+
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 
 def get_conf_file(
@@ -40,8 +39,7 @@ def get_conf_file(
         representation = ".toml"
 
     conf_file = root_file_name + representation
-    # print(dir, root_file_name, preset_name,
-    # split_pattern, representation)
+
     try:
         preset = os.environ["PYPE_TEMPLATES_PRESET"]
     except KeyError:
@@ -67,11 +65,10 @@ def get_conf_file(
             ][0]
     except IndexError as error:
 
-        if PYPE_DEBUG:
-            log.warning("File is missing '{}' will be"
-                        "used basic config file: {}".format(
-                            error, conf_file
-                        ))
+        log.warning("File is missing '{}' will be"
+                    "used basic config file: {}".format(
+                        error, conf_file
+                    ))
         pass
 
     return conf_file if os.path.exists(os.path.join(dir, conf_file)) else None
@@ -86,8 +83,7 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
 
     """
 
-    if PYPE_DEBUG:
-        print("Forwarding '%s'.." % " ".join(args))
+    log.info("Forwarding '%s'.." % " ".join(args))
 
     popen = subprocess.Popen(
         args,
@@ -104,13 +100,12 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
     while True:
         line = popen.stdout.readline()
         if line != '':
-            if not silent or PYPE_DEBUG:
-                sys.stdout.write(line)
+            if not silent:
+                log.debug(line)
         else:
             break
 
-    if PYPE_DEBUG:
-        print("avalon.py: Finishing up..")
+        log.info("avalon.py: Finishing up..")
 
     popen.wait()
     return popen.returncode

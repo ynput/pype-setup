@@ -27,16 +27,15 @@ if not _templates_loaded:
 terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(Logger))
 
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
 
-if PYPE_DEBUG:
-    for k, v in Templates.items():
-        log.debug("templates.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
+# write into log file what is seen by templates
+for k, v in Templates.items():
+    log.info("templates.item: `{}`,`{}`".format(k, v))
+log.info("\n")
 
-    for k, v in os.environ.items():
-        log.debug("os.environ.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
+for k, v in os.environ.items():
+    log.info("os.environ.item: `{}`,`{}`".format(k, v))
+log.info("\n")
 
 
 def main():

@@ -24,4 +24,3 @@ call %PYPE_SETUP_ROOT%\bin\launch_conda.bat
 
 :: debugging
 set PYPE_DEBUG=1
-set PYPE_DEBUG_STDOUT=1
