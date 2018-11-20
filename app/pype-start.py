@@ -41,6 +41,7 @@ import shutil
 import tempfile
 import platform
 import contextlib
+import subprocess
 from pprint import pprint
 
 from app.api import (
@@ -165,7 +166,8 @@ def main():
                         help="launch action server for ftrack")
     parser.add_argument("--ftracklogout", action="store_true",
                         help="Logout from Ftrack")
-
+    parser.add_argument("--tray", action="store_true",
+                        help="Logout from Ftrack")
     kwargs, args = parser.parse_known_args()
 
     _install(root=kwargs.root)
@@ -223,6 +225,27 @@ def main():
             sys.executable, "-u", fname
         ] + args)
 
+    elif kwargs.tray:
+        returncode = None
+        DETACHED_PROCESS = 0x00000008
+
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "tray.py"]
+        fname = os.path.sep.join(items)
+
+        args = ["-d", fname]
+        subprocess.Popen(
+            args,
+            universal_newlines=True,
+            bufsize=1,
+            cwd=None,
+            executable=sys.executable,
+            stdin=None,
+            stdout=None,
+            stderr=None,
+            creationflags=DETACHED_PROCESS
+        )
+        
     else:
 
         root = os.environ["AVALON_PROJECTS"]
