@@ -13,18 +13,12 @@ except NameError:
 
 PYPE_DEBUG_STDOUT = os.getenv("PYPE_DEBUG_STDOUT") is "1"
 
+"""
+This is hack for StreamHandler in Python 2.7 environments. If logging is set to
+utf-8, then standard StreamHandler in Maya 2018 will fail.
+"""
 class PypeStreamHandler(logging.StreamHandler):
     def emit(self, record):
-        """
-        Emit a record.
-
-        If a formatter is specified, it is used to format the record.
-        The record is then written to the stream with a trailing newline.  If
-        exception information is present, it is formatted using
-        traceback.print_exception and appended to the stream.  If the stream
-        has an 'encoding' attribute, it is used to determine how to do the
-        output to the stream.
-        """
         try:
             msg = self.format(record)
             stream = self.stream
@@ -39,12 +33,6 @@ class PypeStreamHandler(logging.StreamHandler):
                         try:
                             stream.write(ufs % msg)
                         except UnicodeEncodeError:
-                            #Printing to terminals sometimes fails. For example,
-                            #with an encoding of 'cp1251', the above write will
-                            #work if written to a stream opened or wrapped by
-                            #the codecs module, but fail when writing to a
-                            #terminal even when the codepage is set to cp1251.
-                            #An extra encoding step seems to be needed.
                             stream.write((ufs % msg).encode(stream.encoding))
                     else:
                         if (getattr(stream, 'encoding', 'utf-8')):
