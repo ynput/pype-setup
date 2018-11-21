@@ -41,7 +41,11 @@ import shutil
 import tempfile
 import contextlib
 
+
 from app.api import (
+    env_install,
+    env_uninstall,
+
     forward,
     git_make_repository,
     Logger
@@ -49,8 +53,6 @@ from app.api import (
 
 log = Logger.getLogger(__name__)
 
-# TODO: checking if project paths locations are available, if not it will set local locations
-# TODO: software launchers
 
 if os.path.basename(__file__) in os.listdir(os.getcwd()):
     '''
@@ -98,8 +100,10 @@ def _install(root=None):
             missing_dependencies.append(dependency)
 
     if missing_dependencies:
-        log.warning("Sorry, there are some dependencies missing from your system.\n")
-        log.warning("\n".join(" - %s" % d for d in missing_dependencies) + "\n")
+        log.warning("Sorry, there are some dependencies missing"
+                    "from your system.\n")
+        log.warning("\n".join(" - %s"
+                              % d for d in missing_dependencies) + "\n")
         log.warning("See https://getavalon.github.io/2.0/howto/#install "
                     "for more details.")
         sys.exit(1)
@@ -116,21 +120,14 @@ def _install(root=None):
 
 def main():
     import argparse
-    from app import env
+    import app
+    if not app._templates_loaded:
+        env_install()
 
     parser = argparse.ArgumentParser(usage=__doc__)
-    parser.add_argument("--testing", help="Testing templates")
     parser.add_argument("--root", help="Projects directory")
-    parser.add_argument("--import", dest="import_", action="store_true",
-                        help="Import an example project into the database")
-    parser.add_argument("--export", action="store_true",
-                        help="Export a project from the database")
-    parser.add_argument("--build", action="store_true",
-                        help="Build one of the bundled example projects")
-    parser.add_argument("--make", action="store_true",
-                        help="Install dependent repositories from "
-                        "templates/install/pype_repos.toml, also checkout"
-                        "to defined branches")
+    parser.add_argument("--launcher", action="store_true",
+                        help="Launch avalon launcher app")
     parser.add_argument("--init", action="store_true",
                         help="Establish a new project in the "
                              "current working directory")
@@ -138,6 +135,10 @@ def main():
                         help="Load project at the current working directory")
     parser.add_argument("--save", action="store_true",
                         help="Save project from the current working directory")
+    parser.add_argument("--make", action="store_true",
+                        help="Install dependent repositories from "
+                        "templates/install/pype_repos.toml, also checkout"
+                        "to defined branches")
     parser.add_argument("--forward",
                         help="Run arbitrary command from setup environment")
     parser.add_argument("--publish", action="store_true",
@@ -147,20 +148,34 @@ def main():
                         help="launch action server for ftrack")
     parser.add_argument("--ftracklogout", action="store_true",
                         help="Logout from Ftrack")
+    parser.add_argument("--terminal", action="store_true",
+                        help="Logout from Ftrack")
+    parser.add_argument("--local-mongodb", dest="localdb", action="store_true",
+                        help="Start local mongo server do `localhost`")
+    parser.add_argument("--testing", help="Testing templates")
 
     kwargs, args = parser.parse_known_args()
 
-    _install(root=kwargs.root)
+    if any([kwargs.launcher,
+            kwargs.init,
+            kwargs.load,
+            kwargs.save,
+            kwargs.publish,
+            kwargs.actionserver,
+            kwargs.ftracklogout,
+            kwargs.localdb, ]):
+        _install(root=kwargs.root)
 
-    if kwargs.init:
+    if kwargs.launcher:
+        root = os.environ["AVALON_PROJECTS"]
+        returncode = forward([
+            sys.executable, "-u", "-m", "launcher", "--root", root
+        ] + args)
+
+    elif kwargs.init:
         returncode = forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--init"])
-
-    elif kwargs.testing:
-        returncode = 1
-        from app import pypeline
-        pypeline.main()
 
     elif kwargs.load:
         returncode = forward([
@@ -179,6 +194,14 @@ def main():
 
     elif kwargs.forward:
         returncode = forward(kwargs.forward.split())
+
+    elif kwargs.publish:
+        os.environ["PYBLISH_HOSTS"] = "shell"
+
+        with install():
+            returncode = forward([
+                sys.executable, "-u", "-m", "pyblish", "gui"
+            ] + args, silent=True)
 
     elif kwargs.actionserver:
         args = ["--actionserver"]
@@ -203,15 +226,45 @@ def main():
             sys.executable, "-u", fname
         ] + args)
 
-    else:
+    elif kwargs.terminal:
+        import app.cli
+        returncode = app.cli.main()
 
-        root = os.environ["AVALON_PROJECTS"]
+    elif kwargs.localdb:
+        # import app.local_mongo_server
+        # app.local_mongo_server.main()
+        # args = ["--actionserver"]
+
+        # TODO this path is same for more args!
+        pype_setup_root = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup_root, "app", "local_mongo_server.py"]
+        fname = os.path.sep.join(items)
+
         returncode = forward([
-            sys.executable, "-u", "-m", "launcher", "--root", root
+            sys.executable, "-u", fname
         ] + args)
+        # returncode = 1
 
-    sys.exit(returncode)
+    elif kwargs.testing:
+        from app import pypeline
+        # template should be filled and environment setup
+        returncode = pypeline.test()
+        env_uninstall()
+        # template should be empty
+        returncode = pypeline.test()
+
+    else:
+        print(__doc__)
+        returncode = 1
+
+    env_uninstall()
+    return returncode
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        returncode = main()
+        sys.exit(returncode)
+    except Exception as e:
+        print(e)
+        sys.exit(1)

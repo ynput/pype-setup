@@ -18,7 +18,15 @@ from .lib.pype_logging import (
     Logger
 )
 
+from .pypeline import (
+    env_install,
+    env_uninstall
+)
+
 __all__ = [
+    "env_install",  # install repositories and environment from template
+    "env_uninstall",
+
     "format",
 
     "Templates",

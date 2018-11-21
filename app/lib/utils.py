@@ -1,7 +1,5 @@
 import os
-import sys
 import subprocess
-
 from .pype_logging import (
     Logger
 )
@@ -54,27 +52,40 @@ def get_conf_file(
         try:
             conf_file = [
                 f for f in test_files
-                if preset in os.path.splitext(f)[0].split(split_pattern)[1]
-                if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
+                if preset in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[1]
+                if root_file_name in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[0]
             ][0]
         except IndexError:
             conf_file = [
                 f for f in test_files
-                if preset_name in os.path.splitext(f)[0].split(split_pattern)[1]
-                if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
+                if preset_name in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[1]
+                if root_file_name in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[0]
             ][0]
     except IndexError as error:
 
-        log.warning("File is missing '{}' will be"
-                    "used basic config file: {}".format(
-                        error, conf_file
-                    ))
+        log.debug("File is missing '{}' will be"
+                  "used basic config file: {}".format(
+                      error, conf_file
+                  ))
         pass
 
     return conf_file if os.path.exists(os.path.join(dir, conf_file)) else None
 
 
-def forward(args, silent=False, cwd=None, env=None, executable=None):
+def forward(args,
+            silent=False,
+            cwd=None,
+            env=None,
+            executable=None,
+            shell=None):
     """Pass `args` to the Avalon CLI, within the Avalon Setup environment
 
     Arguments:
@@ -93,7 +104,8 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
         bufsize=1,
         cwd=cwd,
         env=env or os.environ,
-        executable=executable or sys.executable
+        # executable=executable or sys.executable,
+        shell=shell
     )
 
     # Blocks until finished
@@ -101,11 +113,13 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
         line = popen.stdout.readline()
         if line != '':
             if not silent:
+                if "@" in line and "Using" in line:
+                    print(line)
                 log.debug(line)
         else:
             break
 
-        log.info("avalon.py: Finishing up..")
+    log.info("Forward is finishing up..")
 
     popen.wait()
     return popen.returncode

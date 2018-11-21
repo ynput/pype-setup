@@ -130,8 +130,7 @@ def _test_module_import(module_path, module_name):
     if output:
         log.critical("ERROR: '{}' not found, check your "
                      "PYTHONPATH for '{}'.".format(module_name, module_path))
-        # sys.exit(1)
-        print("Error with running module: {}".format(module_name))
+
         git_make_repository()
 
 
@@ -163,7 +162,7 @@ def _setup_environment(repos=None):
     for key, value in repos.items():
 
         if key not in list(os.environ.keys()):
-            print("Adding '{}'...".format(key))
+            log.debug("Adding '{}'...".format(key))
             path = os.path.normpath(
                 os.path.join(
                     os.environ['PYPE_SETUP_ROOT'],
@@ -183,7 +182,7 @@ def get_pype_repos_file_content():
         install_dir,
         repos_config_file
     )
-    print("Pype-repos path: {}".format(repos_config_path))
+    log.info("Pype-repos path: {}".format(repos_config_path))
 
     os.environ["TOOL_ENV"] = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "environments")
 
@@ -198,4 +197,4 @@ def solve_dependecies():
     config_content = get_pype_repos_file_content()
     # adding stuff to environment variables
     _setup_environment(config_content)
-    print("All pype, avalon, pyblish environment variables are set")
+    log.info("All pype, avalon, pyblish environment variables are set")

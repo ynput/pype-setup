@@ -1,30 +1,62 @@
-import platform
-import os
 
+import platform
+import sys
+import subprocess
+import os
+import app
 
 from app.api import (
-    Templates as templates,
-    # solve_dependecies,
-    forward,
+    env_install,
     Logger
-)
-
-
-from app import (
-    Templates,
-    _repos_installed,
-    _templates_loaded,
-    local_mongo_server,
 )
 
 log = Logger.getLogger(__name__)
 
-terminal = {"windows": "cmd", "linux": "xterm", "darwin": "iTerm2"}
+TERMINAL = {
+    "windows": {
+        "clean_terminal": "cls",
+        "cmd": ["cmd"],
+        "env": {
+            "PROMPT": "(PYPE terminal) $P$G"
+        }
+    },
+    "linux": {
+        "clean_terminal": "cls",
+        "cmd": ["xfce4-terminal"],
+        "env": {
+            "PS1": "(PYPE terminal):\\u@\\h \\w > "
+        }
+    },
+    "darwin": {
+        "clean_terminal": "cls",
+        "cmd": ["iTerm2"],
+        "env": {
+            "PS1": "(PYPE terminal):\\u@\\h \\w > "
+        }
+    }
+}
 
-if not _templates_loaded:
-    Templates = templates()
-    _templates_loaded = True
 
-cmd = [terminal[platform.system().lower()]]
+def main():
 
-forward(cmd)
+    if not app._templates_loaded:
+        env_install()
+
+    os.system(TERMINAL[platform.system().lower()]["clean_terminal"])
+
+    subprocess.Popen(
+        TERMINAL[platform.system().lower()]["cmd"],
+        env=dict(
+            os.environ,
+            **TERMINAL[platform.system().lower()]["env"]),
+    )
+
+    return 1
+
+
+if __name__ == '__main__':
+    try:
+        returncode = main()
+    except Exception as e:
+        print(e)
+        sys.exit(returncode)
