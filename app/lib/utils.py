@@ -114,8 +114,9 @@ def forward(args,
         if line != '':
             if not silent:
                 if "@" in line and "Using" in line:
-                    print(line)
-                log.debug(line)
+                    log.info(line[:-2])
+                else:
+                    log.debug(line[:-2])
         else:
             break
 

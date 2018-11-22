@@ -60,7 +60,7 @@ def git_set_repository(cd=None, rep_dict=None):
             repo_path,
             # branch=repo['branch']
         )
-        log.debug("[git] getting into `{}` in `{}`".format(
+        log.warning("[git] getting into `{}` in `{}`".format(
             rep_dict['name'], repo_path)
         )
 

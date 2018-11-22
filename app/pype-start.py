@@ -41,7 +41,6 @@ import shutil
 import tempfile
 import contextlib
 
-
 from app.api import (
     env_install,
     env_uninstall,
@@ -50,6 +49,14 @@ from app.api import (
     git_make_repository,
     Logger
 )
+
+from app import (
+    _templates_loaded,
+)
+
+self = sys.modules[__name__]
+self._templates_loaded = _templates_loaded
+
 
 log = Logger.getLogger(__name__)
 
