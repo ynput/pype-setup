@@ -10,12 +10,12 @@ from .terminal import c_log
 
 PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
-DFT = '%(levelname)s >>> {%(name)s}: [%(message)s]'
-DBG = "  - {%(name)s}: [%(message)s]"
-INF = ">>> [%(message)s]"
-WRN = "*** WRN: >>> {%(name)s}: [%(message)s]"
-ERR = "--- ERR: %(asctime)s >>> {%(name)s}: [%(message)s]"
-CRI = "!!! CRI: %(asctime)s >>> {%(name)s}: [%(message)s]"
+DFT = '%(levelname)s >>> {%(name)s}: [%(message)s] '
+DBG = "  - {%(name)s}: [%(message)s] "
+INF = ">>> [%(message)s] "
+WRN = "*** WRN: >>> {%(name)s}: [%(message)s] "
+ERR = "--- ERR: %(asctime)s >>> {%(name)s}: [%(message)s] "
+CRI = "!!! CRI: %(asctime)s >>> {%(name)s}: [%(message)s] "
 
 
 FRMT_TERMINAL = {
