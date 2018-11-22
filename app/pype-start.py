@@ -204,8 +204,8 @@ def main():
         returncode = None
         DETACHED_PROCESS = 0x00000008
 
-        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
-        items = [stud_config, "pype", "ftrack", "tray.py"]
+        pype_setup = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup, "app", "tray.py"]
         fname = os.path.sep.join(items)
 
         args = ["-d", fname]
@@ -221,12 +221,11 @@ def main():
             stderr=subprocess.STDOUT,
             creationflags=DETACHED_PROCESS
         )
-        print("Running Tray App")
 
     elif kwargs.traydebug:
 
-        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
-        items = [stud_config, "pype", "ftrack", "tray.py"]
+        pype_setup = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup, "app", "tray.py"]
         fname = os.path.sep.join(items)
 
         returncode = forward([
