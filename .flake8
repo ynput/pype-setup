@@ -1,0 +1,12 @@
+[flake8]
+# ignore = D203
+exclude =
+  .git,
+  __pycache__,
+  bin/python,
+  docs,
+  temp,
+  repos,
+  */vendor
+
+max-complexity = 30
