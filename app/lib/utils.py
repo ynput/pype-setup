@@ -101,7 +101,14 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
         line = popen.stdout.readline()
         if line != '':
             if not silent:
+<<<<<<< Updated upstream
                 log.debug(line)
+=======
+                if "@" in line and "Using" in line:
+                    log.info(line[:-2])
+                else:
+                    log.debug(line[:-2])
+>>>>>>> Stashed changes
         else:
             break
 
