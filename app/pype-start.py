@@ -51,8 +51,7 @@ from app.api import (
 )
 
 from app import (
-    _templates_loaded,
-    Logger
+    _templates_loaded
 )
 
 self = sys.modules[__name__]
@@ -130,9 +129,12 @@ def main():
     import argparse
     import app
 
-    if not app._templates_loaded:
-        print("\n\n")
-        env_install()
+    try:
+        if not app._templates_loaded:
+            print("\n\n")
+            env_install()
+    except Exception as e:
+        log.error("Cannot load Templates... Error: {}".format(e))
 
     parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument("--root", help="Projects directory")
@@ -276,5 +278,5 @@ if __name__ == '__main__':
         returncode = main()
         sys.exit(returncode)
     except Exception as e:
-        print(e)
+        log.error(e)
         sys.exit(1)

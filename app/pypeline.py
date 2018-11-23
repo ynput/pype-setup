@@ -1,4 +1,4 @@
-
+import app
 from app.api import (
     Templates,
     Logger

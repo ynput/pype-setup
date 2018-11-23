@@ -99,7 +99,6 @@ class Pype_logging(object):
         self.logging.getLogger().setLevel(logging.INFO)
 
         if PYPE_DEBUG:
-            print("this is it")
             self.logging.getLogger().setLevel(logging.DEBUG)
 
     def attach_file_handler(self):

@@ -5,6 +5,8 @@ import os
 from colorama import Fore, Style, init
 
 sdict = {
+    r"--- ERR: %(asctime)s >>> {%(name)s}: ": Style.BRIGHT + Fore.LIGHTRED_EX + r"--- ERR: %(asctime)s >>> {%(name)s}: " + Style.RESET_ALL,
+    r"!!! CRI: %(asctime)s >>> {%(name)s}: ": Style.BRIGHT + Fore.RED + r"!!! CRI: %(asctime)s >>> {%(name)s}: " + Style.RESET_ALL,
     r">>>": Style.BRIGHT + Fore.GREEN + r">>>" + Style.RESET_ALL,
     r"!!!": Style.BRIGHT + Fore.RED + r"!!!" + Style.RESET_ALL,
     r"---": Style.BRIGHT + Fore.CYAN + r"---" + Style.RESET_ALL,
@@ -13,6 +15,7 @@ sdict = {
     r" [": Style.BRIGHT + Fore.LIGHTGREEN_EX + r" [" + Style.RESET_ALL,
     r"] ": Style.BRIGHT + Fore.LIGHTGREEN_EX + r"] " + Style.RESET_ALL,
     r"{%(name)s}": Style.BRIGHT + Fore.LIGHTBLUE_EX + r"{%(name)s}" + Style.RESET_ALL,
+
 }
 
 init()

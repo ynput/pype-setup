@@ -104,9 +104,8 @@ def forward(args,
         test = False
         for s in info_log_filter:
             if isinstance(s, tuple):
-                for i in s:
-                    if i in line:
-                        test = True
+                if len([i for i in s if i in line]) == len(s):
+                    test = True
             else:
                 if s in line:
                     test = True
