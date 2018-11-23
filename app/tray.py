@@ -24,9 +24,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         # TODO - Recognize that ftrack is used!!!!!!
         # Add ftrack menu
-        self.ftrack = FtrackRunner(self.parent, self)
-        self.menu.addMenu(self.ftrack.trayMenu(self.menu))
-        self.ftrack.validate()
+        if os.environ.get('FTRACK_SERVER') is not None:
+            self.ftrack = FtrackRunner(self.parent, self)
+            self.menu.addMenu(self.ftrack.trayMenu(self.menu))
+            self.ftrack.validate()
 
         # Add Exit action to menu
         aExit = QtWidgets.QAction("Exit", self)
