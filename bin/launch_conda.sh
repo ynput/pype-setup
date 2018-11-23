@@ -151,19 +151,17 @@ local_env_exists () {
     exit 1
   fi
   if [ "$REMOTE_ENV_ON" = "1" ] ; then
-    export PATH="$REMOTE_ENV_DIR:$REMOTE_ENV_DIR/Scripts:$REMOTE_ENV_DIR/Library/bin:$REMOTE_ENV_DIR/bin:$PATH"
-    export PYTHONPATH="$PYTHONPATH:$PYPE_SETUP_ROOT:$REMOTE_ENV_DIR/Lib/site-packages"
     export PYTHON_ENV="$REMOTE_ENV_DIR"
-    export GIT_PYTHON_GIT_EXECUTABLE="$REMOTE_ENV_DIR/bin/git"
     echo -e "${BIGreen}>>>${RST} Running remote env from: [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
   else
-    export PATH="$LOCAL_ENV_DIR:$LOCAL_ENV_DIR/Scripts:$LOCAL_ENV_DIR/Library/bin:$LOCAL_ENV_DIR/bin:$PATH"
-    export PYTHONPATH="$PYTHONPATH:$PYPE_SETUP_ROOT:$LOCAL_ENV_DIR/Lib/site-packages"
     export PYTHON_ENV="$LOCAL_ENV_DIR"
-    export GIT_PYTHON_GIT_EXECUTABLE="$LOCAL_ENV_DIR/bin/git"
     echo -e "${BIGreen}>>>${RST} Running local env from: [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
     # echo -e "${BICyan}DBG${RST} $PYTHONPATH"
   fi
+
+  export PATH="$PYTHON_ENV:$PYTHON_ENV/Scripts:$PYTHON_ENV/Library/bin:$PYTHON_ENV/bin:$PATH"
+  export PYTHONPATH="$PYTHONPATH:$PYPE_SETUP_ROOT:$PYTHON_ENV/Lib/site-packages"
+  export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/bin/git"
 
   if [ ! -d "$PYPE_SETUP_ROOT/app/repos/avalon-core/avalon" ] ; then
     echo -e "${BIYellow}***${RST} Git submodules in [ ${BIWhite}$PYPE_SETUP_ROOT/app/repos/avalon-core${RST} ] are missing ..."
