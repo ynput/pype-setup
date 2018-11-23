@@ -4,8 +4,50 @@ import datetime
 import time
 from io import open
 
+try:
+    unicode
+    _unicode = True
+except NameError:
+    _unicode = False
+
 
 PYPE_DEBUG_STDOUT = os.getenv("PYPE_DEBUG_STDOUT") is "1"
+
+"""
+This is hack for StreamHandler in Python 2.7 environments. If logging is set to
+utf-8, then standard StreamHandler in Maya 2018 will fail.
+"""
+class PypeStreamHandler(logging.StreamHandler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            fs = "%s\n"
+            if not _unicode: #if no unicode support...
+                stream.write(fs % msg)
+            else:
+                try:
+                    if (isinstance(msg, unicode) and
+                        getattr(stream, 'encoding', None)):
+                        ufs = u'%s\n'
+                        try:
+                            stream.write(ufs % msg)
+                        except UnicodeEncodeError:
+                            stream.write((ufs % msg).encode(stream.encoding))
+                    else:
+                        if (getattr(stream, 'encoding', 'utf-8')):
+                            ufs = u'%s\n'
+                            stream.write(ufs % unicode(msg))
+                        else:
+                            stream.write(fs % msg)
+                except UnicodeError:
+                    stream.write(fs % msg.encode("UTF-8"))
+            self.flush()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
 
 
 def logger():
@@ -33,7 +75,7 @@ def logger():
     )
 
     #formatter = logging.Formatter('%(asctime)-15s: %(levelname)-7s - %(message)s')
-    ch = logging.StreamHandler(log_file)
+    ch = PypeStreamHandler(log_file)
     ch.setLevel(logging.DEBUG)
     #ch.setFormatter(formatter)
 
