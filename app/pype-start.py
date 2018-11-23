@@ -52,6 +52,7 @@ from app.api import (
 
 from app import (
     _templates_loaded,
+    Logger
 )
 
 self = sys.modules[__name__]
@@ -128,7 +129,9 @@ def _install(root=None):
 def main():
     import argparse
     import app
+
     if not app._templates_loaded:
+        print("\n\n")
         env_install()
 
     parser = argparse.ArgumentParser(usage=__doc__)

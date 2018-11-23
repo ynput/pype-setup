@@ -1,6 +1,6 @@
 import os
 import subprocess
-from .pype_logging import (
+from . import (
     Logger
 )
 
@@ -93,8 +93,28 @@ def forward(args,
             within the active environment
 
     """
+    # testing this list to filter stdout line into log.info
+    # everything else will be log.debug
+    info_log_filter = (
+        "Connected to mongodb://",
+        ("@", "Using")  # AND condition
+    )
 
+    def filter_log_line(line, info_log_filter):
+        test = False
+        for s in info_log_filter:
+            if isinstance(s, tuple):
+                for i in s:
+                    if i in line:
+                        test = True
+            else:
+                if s in line:
+                    test = True
+        return test
+
+    print("\n\n")
     log.info("Forwarding '%s'.." % " ".join(args))
+    print("\n\n")
 
     popen = subprocess.Popen(
         args,
@@ -113,7 +133,7 @@ def forward(args,
         line = popen.stdout.readline()
         if line != '':
             if not silent:
-                if "@" in line and "Using" in line:
+                if filter_log_line(line, info_log_filter):
                     log.info(line[:-2])
                 else:
                     log.debug(line[:-2])

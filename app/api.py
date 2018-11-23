@@ -1,3 +1,5 @@
+from .lib import Logger
+
 from .lib.formating import format
 
 from .lib.utils import (
@@ -14,14 +16,12 @@ from .lib.templates import (
     Templates
 )
 
-from .lib.pype_logging import (
-    Logger
-)
 
 from .pypeline import (
     env_install,
     env_uninstall
 )
+
 
 __all__ = [
     "env_install",  # install repositories and environment from template
@@ -38,5 +38,5 @@ __all__ = [
 
     "forward",
 
-    "Logger"
+    "Logger",
 ]

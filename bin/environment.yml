@@ -14,4 +14,3 @@ dependencies:
     - psutil
     - gitpython
     - colorama
-    - termcolor

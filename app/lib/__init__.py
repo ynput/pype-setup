@@ -1,14 +1,6 @@
-# from .logging import (
-#     logger,
-#     Logger
-# )
-#
-#
-# # if not Logger:
-# #     Logger = logger()
-#
-#
-# __all__ = [
-#     "logger",
-#     "Logger"
-# ]
+from .pype_logging import Pype_logging
+Logger = Pype_logging()
+
+__all__ = [
+    "Logger"
+]

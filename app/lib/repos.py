@@ -8,7 +8,7 @@ from .utils import (
     get_conf_file
 )
 
-from .pype_logging import (
+from . import (
     Logger
 )
 

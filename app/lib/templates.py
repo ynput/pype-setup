@@ -15,7 +15,7 @@ from .formating import format
 from .utils import (get_conf_file)
 from .repos import (solve_dependecies)
 
-from .pype_logging import (
+from . import (
     Logger
 )
 
@@ -301,10 +301,8 @@ class Dict_to_obj(dict):
                 preset_name=t_preset
             )
 
-            log.info("_create_templ_item.t_root:"
-                     " {} ".format(t_root))
-            log.info("_create_templ_item.t_file:"
-                     " {} ".format(t_file))
+            log.debug("t_root: {} ".format(t_root))
+            log.debug("t_file: {} ".format(t_file))
 
             return {
                 "path": os.path.join(t_root, t_file),

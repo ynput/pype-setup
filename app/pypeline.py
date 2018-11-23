@@ -1,13 +1,10 @@
 
-import app
-
 from app.api import (
     Templates,
     Logger
 )
 
 from pprint import pprint
-
 
 log = Logger.getLogger(__name__)
 
