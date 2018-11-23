@@ -11,7 +11,7 @@ except NameError:
     _unicode = False
 
 
-PYPE_DEBUG_STDOUT = os.getenv("PYPE_DEBUG_STDOUT") is "1"
+PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 """
 This is hack for StreamHandler in Python 2.7 environments. If logging is set to
@@ -71,7 +71,7 @@ def logger():
     log_file = open(logger_file_path, "w", encoding="utf-8")
 
     logging.basicConfig(
-        level=logging.DEBUG
+        level=logging.INFO
     )
 
     #formatter = logging.Formatter('%(asctime)-15s: %(levelname)-7s - %(message)s')
@@ -79,7 +79,7 @@ def logger():
     ch.setLevel(logging.DEBUG)
     #ch.setFormatter(formatter)
 
-    if PYPE_DEBUG_STDOUT:
+    if PYPE_DEBUG:
         logging.getLogger().addHandler(ch)
 
     return logging

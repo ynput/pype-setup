@@ -41,6 +41,7 @@ import shutil
 import tempfile
 import platform
 import contextlib
+import subprocess
 from pprint import pprint
 
 from app.api import (
@@ -161,11 +162,8 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
-    parser.add_argument("--actionserver", action="store_true",
-                        help="launch action server for ftrack")
-    parser.add_argument("--ftracklogout", action="store_true",
-                        help="Logout from Ftrack")
-
+    parser.add_argument("--tray", action="store_true",
+                        help="Launch tray application")
     kwargs, args = parser.parse_known_args()
 
     _install(root=kwargs.root)
@@ -200,28 +198,36 @@ def main():
     #             sys.executable, "-u", "-m", "pyblish", "gui"
     #         ] + args, silent=True)
 
-    elif kwargs.actionserver:
-        args = ["--actionserver"]
+    elif kwargs.tray:
+        if PYPE_DEBUG > 0:
+            pype_setup = os.getenv('PYPE_SETUP_ROOT')
+            items = [pype_setup, "app", "tray.py"]
+            fname = os.path.sep.join(items)
 
-        # TODO this path is same for more args!
-        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
-        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
-        fname = os.path.sep.join(items)
+            returncode = forward([
+                sys.executable, "-u", fname
+            ] + args)
+        else:
+            returncode = None
+            DETACHED_PROCESS = 0x00000008
 
-        returncode = forward([
-            sys.executable, "-u", fname
-        ] + args)
+            pype_setup = os.getenv('PYPE_SETUP_ROOT')
+            items = [pype_setup, "app", "tray.py"]
+            fname = os.path.sep.join(items)
 
-    elif kwargs.ftracklogout:
-        args = ["--logout"]
-
-        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
-        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
-        fname = os.path.sep.join(items)
-
-        returncode = forward([
-            sys.executable, "-u", fname
-        ] + args)
+            args = ["-d", fname]
+            subprocess.Popen(
+                args,
+                universal_newlines=True,
+                bufsize=1,
+                cwd=None,
+                executable=sys.executable,
+                env=os.environ,
+                # stdin=None,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                creationflags=DETACHED_PROCESS
+            )
 
     else:
 
