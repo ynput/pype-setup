@@ -1,10 +1,10 @@
 import app
 from app.lib.templates import Templates
-from app import api
+from app.api import Logger
 
 from pprint import pprint
 
-log = api.Logger.getLogger(__name__)
+log = Logger.getLogger(__name__)
 
 
 def test():
