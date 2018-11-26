@@ -5,16 +5,14 @@ import toml
 import git
 
 from .utils import (
-    forward,
     get_conf_file
 )
 
-from .pype_logging import (
+from . import (
     Logger
 )
 
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 # TODO: updating repositories into defined branches from .gitmodules
 # TODO: write our own gitmodules and ensure it will install all
@@ -62,7 +60,7 @@ def git_set_repository(cd=None, rep_dict=None):
             repo_path,
             # branch=repo['branch']
         )
-        log.debug("[git] getting into `{}` in `{}`".format(
+        log.warning("[git] getting into `{}` in `{}`".format(
             rep_dict['name'], repo_path)
         )
 
@@ -132,8 +130,7 @@ def _test_module_import(module_path, module_name):
     if output:
         log.critical("ERROR: '{}' not found, check your "
                      "PYTHONPATH for '{}'.".format(module_name, module_path))
-        # sys.exit(1)
-        print("Error with running module: {}".format(module_name))
+
         git_make_repository()
 
 
@@ -165,7 +162,7 @@ def _setup_environment(repos=None):
     for key, value in repos.items():
 
         if key not in list(os.environ.keys()):
-            print("Adding '{}'...".format(key))
+            log.debug("Adding '{}'...".format(key))
             path = os.path.normpath(
                 os.path.join(
                     os.environ['PYPE_SETUP_ROOT'],
@@ -185,7 +182,7 @@ def get_pype_repos_file_content():
         install_dir,
         repos_config_file
     )
-    print("Pype-repos path: {}".format(repos_config_path))
+    log.info("Pype-repos path: {}".format(repos_config_path))
 
     os.environ["TOOL_ENV"] = os.path.join(os.environ["PYPE_STUDIO_TEMPLATES"], "environments")
 
@@ -200,4 +197,4 @@ def solve_dependecies():
     config_content = get_pype_repos_file_content()
     # adding stuff to environment variables
     _setup_environment(config_content)
-    print("All pype, avalon, pyblish environment variables are set")
+    log.info("All pype, avalon, pyblish environment variables are set")

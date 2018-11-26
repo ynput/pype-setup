@@ -1,3 +1,5 @@
+from .lib import Logger
+
 from .lib.formating import format
 
 from .lib.utils import (
@@ -10,16 +12,21 @@ from .lib.repos import (
     git_set_repository
 )
 
-from .lib.templates import (
+from . import (
     Templates
 )
 
-from .lib.pype_logging import (
-    Logger,
-    logger
+
+from .pypeline import (
+    env_install,
+    env_uninstall
 )
 
+
 __all__ = [
+    "env_install",  # install repositories and environment from template
+    "env_uninstall",
+
     "format",
 
     "Templates",
@@ -32,5 +39,4 @@ __all__ = [
     "forward",
 
     "Logger",
-    "logger"
 ]

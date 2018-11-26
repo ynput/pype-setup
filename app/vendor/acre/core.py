@@ -10,7 +10,7 @@ from . import lib
 PLATFORM = platform.system().lower()
 
 logging.basicConfig()
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class CycleError(ValueError):
@@ -207,12 +207,12 @@ def get_tools(tools, platform_name=None):
                 tool_env = toml.load(f)
             log.debug('Read tool successfully: {}'.format(tool_path))
         except IOError:
-            log.debug(
+            log.error(
                 'Unable to find the environment file: "{}"'.format(tool_path)
             )
             continue
         except ValueError as e:
-            log.debug(
+            log.error(
                 'Unable to read the environment file: "{0}", due to:'
                 '\n{1}'.format(tool_path, e)
             )

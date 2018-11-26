@@ -2,9 +2,8 @@
 TODO: check if shema validate can be used
 TODO: check if precaching function can be used
 TODO: cached versions of software tomls to ~/.pype/software
-
-
 '''
+
 import os
 import sys
 import toml
@@ -16,12 +15,10 @@ from .formating import format
 from .utils import (get_conf_file)
 from .repos import (solve_dependecies)
 
-from .pype_logging import (
+from . import (
     Logger
 )
 
-
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 log = Logger.getLogger(__name__)
 
@@ -303,11 +300,9 @@ class Dict_to_obj(dict):
                 root_file_name=t_name,
                 preset_name=t_preset
             )
-            if PYPE_DEBUG:
-                log.info("_create_templ_item.t_root:"
-                         " {} ".format(t_root))
-                log.info("_create_templ_item.t_file:"
-                         " {} ".format(t_file))
+
+            log.debug("t_root: {} ".format(t_root))
+            log.debug("t_file: {} ".format(t_file))
 
             return {
                 "path": os.path.join(t_root, t_file),

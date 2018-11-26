@@ -1,74 +1,63 @@
-import subprocess
+
 import os
 import sys
 import platform
+import subprocess
 from app.lib import terminal
 
-from app.api import (
-    Templates as templates,
-    forward,
-    git_make_repository,
-    Logger,
-    logger
-)
+from app import api
 
-from app import (
-    Templates,
-    _repos_installed,
-    _templates_loaded,
-)
+terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(api.Logger))
 
-from app.lib import terminal
-
-if not _templates_loaded:
-    Templates = templates()
-    _templates_loaded = True
-
-terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(Logger))
-
-log = Logger.getLogger(__name__)
-PYPE_DEBUG = bool(os.getenv("PYPE_DEBUG"))
-
-if PYPE_DEBUG:
-    for k, v in Templates.items():
-        log.debug("templates.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
-
-    for k, v in os.environ.items():
-        log.debug("os.environ.item: `{}`,`{}`".format(k, v))
-    log.debug("\n")
+log = api.Logger.getLogger(__name__)
 
 
 def main():
+    if not api.Templates:
+        api.env_install()
+
+    # write into log file what is seen by templates
+    for k, v in api.Templates.items():
+        log.info("templates.item: `{}`,`{}`".format(k, v))
+    log.info("\n")
+
+    for k, v in os.environ.items():
+        log.info("os.environ.item: `{}`,`{}`".format(k, v))
+    log.info("\n")
+
     # Get database location.
     try:
         location = os.environ["AVALON_DB_DATA"]
     except KeyError:
         location = os.path.join(os.path.expanduser("~"), "data", "db")
 
-    if len(sys.argv) == 2:
-        location = sys.argv[1]
-
     # Create database directory.
     if not os.path.exists(location):
         os.makedirs(location)
 
     # Start server.
-
     if platform.system().lower() == "linux":
-        subprocess.Popen(
+        log.info("@ Local mongodb is running...")
+        returncode = subprocess.Popen(
             ["mongod", "--dbpath", location, "--port",
-             os.environ["AVALON_MONGO_PORT"]]
-            ,close_fds=True
+             os.environ["AVALON_MONGO_PORT"]], close_fds=True
         )
     elif platform.system().lower() == "windows":
-
-        subprocess.Popen(
+        log.info("@ Local mongodb is running...")
+        returncode = subprocess.Popen(
             ["start", "Avalon MongoDB", "mongod", "--dbpath",
                 location, "--port", os.environ["AVALON_MONGO_PORT"]],
             shell=True
         )
 
+    api.env_uninstall()
+    return returncode
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        returncode = main()
+        sys.exit(returncode)
+    except Exception as e:
+        print(e)
+        sys.exit(1)

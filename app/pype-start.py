@@ -1,3 +1,18 @@
+from app import api
+from app import (
+    Templates,
+    _repos_installed,
+    _templates_loaded,
+)
+from app.api import (
+    Templates as templates,
+    forward,
+    git_make_repository,
+    Logger,
+    logger
+)
+from pprint import pprint
+import subprocess
 """Avalon Command-line Interface
 
 This module contains a CLI towards Avalon and all of what
@@ -39,35 +54,11 @@ import os
 import sys
 import shutil
 import tempfile
-import platform
 import contextlib
-import subprocess
-from pprint import pprint
-
-from app.api import (
-    Templates as templates,
-    forward,
-    git_make_repository,
-    Logger,
-    logger
-)
-
-from app import (
-    Templates,
-    _repos_installed,
-    _templates_loaded,
-)
-
-self = sys.modules[__name__]
-self._templates_loaded = _templates_loaded
 
 
-log = Logger.getLogger(__name__)
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
+log = api.Logger.getLogger(__name__)
 
-
-# TODO: checking if project paths locations are available, if not it will set local locations
-# TODO: software launchers
 
 if os.path.basename(__file__) in os.listdir(os.getcwd()):
     '''
@@ -80,8 +71,7 @@ if os.path.basename(__file__) in os.listdir(os.getcwd()):
     sys.exit(1)
 
 
-init = """\
-from avalon import api, shell
+init = """from avalon import api, shell
 api.install(shell)
 """
 
@@ -115,10 +105,12 @@ def _install(root=None):
             missing_dependencies.append(dependency)
 
     if missing_dependencies:
-        print("Sorry, there are some dependencies missing from your system.\n")
-        print("\n".join(" - %s" % d for d in missing_dependencies) + "\n")
-        print("See https://getavalon.github.io/2.0/howto/#install "
-              "for more details.")
+        log.warning("Sorry, there are some dependencies missing"
+                    "from your system.\n")
+        log.warning("\n".join(" - %s"
+                              % d for d in missing_dependencies) + "\n")
+        log.warning("See https://getavalon.github.io/2.0/howto/#install "
+                    "for more details.")
         sys.exit(1)
 
     if root is not None:
@@ -133,23 +125,19 @@ def _install(root=None):
 
 def main():
     import argparse
+    import app
 
-    if not self._templates_loaded:
-        Templates = templates()
-        self._templates_loaded = True
+    try:
+        if not api.Templates:
+            print("\n\n")
+            api.env_install()
+    except Exception as e:
+        log.error("Cannot load Templates... Error: {}".format(e))
 
     parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument("--root", help="Projects directory")
-    parser.add_argument("--import", dest="import_", action="store_true",
-                        help="Import an example project into the database")
-    parser.add_argument("--export", action="store_true",
-                        help="Export a project from the database")
-    parser.add_argument("--build", action="store_true",
-                        help="Build one of the bundled example projects")
-    parser.add_argument("--make", action="store_true",
-                        help="Install dependent repositories from "
-                        "templates/install/pype_repos.toml, also checkout"
-                        "to defined branches")
+    parser.add_argument("--launcher", action="store_true",
+                        help="Launch avalon launcher app")
     parser.add_argument("--init", action="store_true",
                         help="Establish a new project in the "
                              "current working directory")
@@ -157,6 +145,10 @@ def main():
                         help="Load project at the current working directory")
     parser.add_argument("--save", action="store_true",
                         help="Save project from the current working directory")
+    parser.add_argument("--make", action="store_true",
+                        help="Install dependent repositories from "
+                        "templates/install/pype_repos.toml, also checkout"
+                        "to defined branches")
     parser.add_argument("--forward",
                         help="Run arbitrary command from setup environment")
     parser.add_argument("--publish", action="store_true",
@@ -164,39 +156,65 @@ def main():
                              "or supplied --root")
     parser.add_argument("--tray", action="store_true",
                         help="Launch tray application")
+    parser.add_argument("--actionserver", action="store_true",
+                        help="launch action server for ftrack")
+    parser.add_argument("--ftracklogout", action="store_true",
+                        help="Logout from Ftrack")
+    parser.add_argument("--terminal", action="store_true",
+                        help="Logout from Ftrack")
+    parser.add_argument("--local-mongodb", dest="localdb", action="store_true",
+                        help="Start local mongo server do `localhost`")
+    parser.add_argument("--testing", action="store_true",
+                        help="Testing templates")
+
     kwargs, args = parser.parse_known_args()
 
-    _install(root=kwargs.root)
+    if any([kwargs.launcher,
+            kwargs.init,
+            kwargs.load,
+            kwargs.save,
+            kwargs.publish,
+            kwargs.actionserver,
+            kwargs.ftracklogout,
+            kwargs.localdb, ]):
+        _install(root=kwargs.root)
 
-    if kwargs.init:
-        returncode = forward([
+    if kwargs.launcher:
+        root = os.environ["AVALON_PROJECTS"]
+        returncode = api.forward([
+            sys.executable, "-u", "-m", "launcher", "--root", root
+        ] + args)
+
+    elif kwargs.init:
+        returncode = api.forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--init"])
 
     elif kwargs.load:
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--load"])
 
     elif kwargs.save:
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--save"])
 
     elif kwargs.make:
-        # TODO: fix loop with Templates adding into function called independetly on running this make procedure
-        returncode = git_make_repository()
+        # TODO: fix loop with Templates adding into function called
+        # independetly on running this make procedure
+        returncode = api.git_make_repository()
 
     elif kwargs.forward:
-        returncode = forward(kwargs.forward.split())
+        returncode = api.forward(kwargs.forward.split())
 
-    # elif kwargs.publish:
-    #     os.environ["PYBLISH_HOSTS"] = "shell"
-    #
-    #     with install():
-    #         returncode = forward([
-    #             sys.executable, "-u", "-m", "pyblish", "gui"
-    #         ] + args, silent=True)
+    elif kwargs.publish:
+        os.environ["PYBLISH_HOSTS"] = "shell"
+
+        with install():
+            returncode = api.forward([
+                sys.executable, "-u", "-m", "pyblish", "gui"
+            ] + args, silent=True)
 
     elif kwargs.tray:
         if PYPE_DEBUG > 0:
@@ -204,7 +222,7 @@ def main():
             items = [pype_setup, "app", "tray.py"]
             fname = os.path.sep.join(items)
 
-            returncode = forward([
+            returncode = api.forward([
                 sys.executable, "-u", fname
             ] + args)
         else:
@@ -229,15 +247,69 @@ def main():
                 creationflags=DETACHED_PROCESS
             )
 
-    else:
+    elif kwargs.actionserver:
+        args = ["--actionserver"]
 
-        root = os.environ["AVALON_PROJECTS"]
-        returncode = forward([
-            sys.executable, "-u", "-m", "launcher", "--root", root
+        # TODO this path is same for more args!
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
+        fname = os.path.sep.join(items)
+
+        returncode = api.forward([
+            sys.executable, "-u", fname
         ] + args)
 
-    sys.exit(returncode)
+    elif kwargs.ftracklogout:
+        args = ["--logout"]
+
+        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
+        fname = os.path.sep.join(items)
+
+        returncode = api.forward([
+            sys.executable, "-u", fname
+        ] + args)
+
+    elif kwargs.terminal:
+        import app.cli
+        returncode = app.cli.main()
+
+    elif kwargs.localdb:
+        # import app.local_mongo_server
+        # app.local_mongo_server.main()
+        # args = ["--actionserver"]
+
+        # TODO this path is same for more args!
+        pype_setup_root = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup_root, "app", "local_mongo_server.py"]
+        fname = os.path.sep.join(items)
+
+        returncode = api.forward([
+            sys.executable, "-u", fname
+        ] + args)
+        # returncode = 1
+
+    elif kwargs.testing:
+        from app import pypeline
+        # template should be filled and environment setup
+        returncode = pypeline.test()
+        api.env_uninstall()
+        # template should be empty
+        returncode = pypeline.test()
+        print(args)
+
+    else:
+        print(__doc__)
+        returncode = 1
+
+    api.env_uninstall()
+    return returncode
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        returncode = main()
+        sys.exit(returncode)
+    except Exception as e:
+        log.error(e)
+        sys.exit(1)

@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-
 import os
-import sys
 
-from app.api import (
-    Templates as templates,
-    forward
-)
+# from pprint import pprint
+from app import api
+api.env_install(environment=["ftrack"])
 
-Templates = templates(environment=["ftrack"])
+# pprint(api.Templates)
 
-for k, v in os.environ.items():
-    if "PYPE" in k or "AVALON" in k or "PYTHON_ENV" in k:
-        print(k, v)
-print(100*"_")
+# for k, v in os.environ.items():
+#     if "PYPE" in k or "AVALON" in k or "PYTHON_ENV" in k:
+#         print(k, v)
+# print(100*"_")
 
 
 ftrack_api = __import__("ftrack_api")
+pype = __import__("pype")
 
 
 path = os.path.join(
@@ -35,7 +33,7 @@ executable = os.path.join(
 os.environ["FTRACK_API_KEY"] = "ddb005c0-fec8-11e7-83b5-0a580aa01115"
 os.environ["FTRACK_API_USER"] = "jakub.jezek"
 
-returncode = forward(
+returncode = api.forward(
     [executable, '-u',
      path]
 )

@@ -1,13 +1,10 @@
 import os
-import sys
 import subprocess
-from pprint import pprint
-from .pype_logging import (
+from . import (
     Logger
 )
-from pprint import pprint
+
 log = Logger.getLogger(__name__)
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 
 def get_conf_file(
@@ -40,8 +37,7 @@ def get_conf_file(
         representation = ".toml"
 
     conf_file = root_file_name + representation
-    # print(dir, root_file_name, preset_name,
-    # split_pattern, representation)
+
     try:
         preset = os.environ["PYPE_TEMPLATES_PRESET"]
     except KeyError:
@@ -56,28 +52,40 @@ def get_conf_file(
         try:
             conf_file = [
                 f for f in test_files
-                if preset in os.path.splitext(f)[0].split(split_pattern)[1]
-                if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
+                if preset in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[1]
+                if root_file_name in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[0]
             ][0]
         except IndexError:
             conf_file = [
                 f for f in test_files
-                if preset_name in os.path.splitext(f)[0].split(split_pattern)[1]
-                if root_file_name in os.path.splitext(f)[0].split(split_pattern)[0]
+                if preset_name in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[1]
+                if root_file_name in os.path.splitext(
+                    f)[0].split(
+                    split_pattern)[0]
             ][0]
     except IndexError as error:
 
-        if PYPE_DEBUG:
-            log.warning("File is missing '{}' will be"
-                        "used basic config file: {}".format(
-                            error, conf_file
-                        ))
+        log.debug("File is missing '{}' will be"
+                  "used basic config file: {}".format(
+                      error, conf_file
+                  ))
         pass
 
     return conf_file if os.path.exists(os.path.join(dir, conf_file)) else None
 
 
-def forward(args, silent=False, cwd=None, env=None, executable=None):
+def forward(args,
+            silent=False,
+            cwd=None,
+            env=None,
+            executable=None,
+            shell=None):
     """Pass `args` to the Avalon CLI, within the Avalon Setup environment
 
     Arguments:
@@ -85,9 +93,27 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
             within the active environment
 
     """
+    # testing this list to filter stdout line into log.info
+    # everything else will be log.debug
+    info_log_filter = (
+        "Connected to mongodb://",
+        ("@", "Using")  # AND condition
+    )
 
-    if PYPE_DEBUG:
-        print("Forwarding '%s'.." % " ".join(args))
+    def filter_log_line(line, info_log_filter):
+        test = False
+        for s in info_log_filter:
+            if isinstance(s, tuple):
+                if len([i for i in s if i in line]) == len(s):
+                    test = True
+            else:
+                if s in line:
+                    test = True
+        return test
+
+    print("\n")
+    log.info("Forwarding '%s'.." % " ".join(args))
+    print("\n")
 
     popen = subprocess.Popen(
         args,
@@ -97,20 +123,23 @@ def forward(args, silent=False, cwd=None, env=None, executable=None):
         bufsize=1,
         cwd=cwd,
         env=env or os.environ,
-        executable=executable or sys.executable
+        # executable=executable or sys.executable,
+        shell=shell
     )
 
     # Blocks until finished
     while True:
         line = popen.stdout.readline()
         if line != '':
-            if not silent or PYPE_DEBUG:
-                sys.stdout.write(line)
+            if not silent:
+                if filter_log_line(line, info_log_filter):
+                    log.info(line[:-2])
+                else:
+                    log.debug(line[:-2])
         else:
             break
 
-    if PYPE_DEBUG:
-        print("avalon.py: Finishing up..")
+    log.info("Forward is finishing up..")
 
     popen.wait()
     return popen.returncode
