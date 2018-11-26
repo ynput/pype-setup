@@ -49,6 +49,10 @@ FRMT_FILE = {
 
 
 class PypeStreamHandler(logging.StreamHandler):
+    def __init__(self, stream=None):
+        logging.StreamHandler.__init__(self, stream)
+        self.set_name("Pype_Stream_Handler")
+
     def emit(self, record):
         try:
             msg = self.format(record)
@@ -137,7 +141,7 @@ class Pype_logging(object):
             logger_file_path,
             when='midnight'
         )
-
+        file_handler.set_name("Pype_File_Handler")
         file_handler.setFormatter(formater)
         return file_handler
 
