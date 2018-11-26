@@ -42,7 +42,6 @@ import tempfile
 import contextlib
 import subprocess
 
-import app
 from app import api
 
 log = api.Logger.getLogger(__name__)
@@ -115,7 +114,7 @@ def _install(root=None):
 
 def main():
     import argparse
-
+    import app
     try:
         if not app.Templates:
             print("\n\n")
