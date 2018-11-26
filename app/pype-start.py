@@ -41,24 +41,13 @@ import shutil
 import tempfile
 import contextlib
 
-from app.api import (
-    env_install,
-    env_uninstall,
+from app import api
 
-    forward,
-    git_make_repository,
-    Logger
-)
-
-from app import (
-    _templates_loaded
-)
 
 self = sys.modules[__name__]
-self._templates_loaded = _templates_loaded
 
 
-log = Logger.getLogger(__name__)
+log = api.Logger.getLogger(__name__)
 
 
 if os.path.basename(__file__) in os.listdir(os.getcwd()):
@@ -72,8 +61,7 @@ if os.path.basename(__file__) in os.listdir(os.getcwd()):
     sys.exit(1)
 
 
-init = """\
-from avalon import api, shell
+init = """from avalon import api, shell
 api.install(shell)
 """
 
@@ -130,9 +118,9 @@ def main():
     import app
 
     try:
-        if not app._templates_loaded:
+        if not api.Templates:
             print("\n\n")
-            env_install()
+            api.env_install()
     except Exception as e:
         log.error("Cannot load Templates... Error: {}".format(e))
 
@@ -164,7 +152,7 @@ def main():
                         help="Logout from Ftrack")
     parser.add_argument("--local-mongodb", dest="localdb", action="store_true",
                         help="Start local mongo server do `localhost`")
-    parser.add_argument("--testing", help="Testing templates")
+    parser.add_argument("--testing", action="store_true", help="Testing templates")
 
     kwargs, args = parser.parse_known_args()
 
@@ -180,38 +168,38 @@ def main():
 
     if kwargs.launcher:
         root = os.environ["AVALON_PROJECTS"]
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", "-m", "launcher", "--root", root
         ] + args)
 
     elif kwargs.init:
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--init"])
 
     elif kwargs.load:
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--load"])
 
     elif kwargs.save:
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", "-m",
             "avalon.inventory", "--save"])
 
     elif kwargs.make:
         # TODO: fix loop with Templates adding into function called
         # independetly on running this make procedure
-        returncode = git_make_repository()
+        returncode = api.git_make_repository()
 
     elif kwargs.forward:
-        returncode = forward(kwargs.forward.split())
+        returncode = api.forward(kwargs.forward.split())
 
     elif kwargs.publish:
         os.environ["PYBLISH_HOSTS"] = "shell"
 
         with install():
-            returncode = forward([
+            returncode = api.forward([
                 sys.executable, "-u", "-m", "pyblish", "gui"
             ] + args, silent=True)
 
@@ -223,7 +211,7 @@ def main():
         items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
         fname = os.path.sep.join(items)
 
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", fname
         ] + args)
 
@@ -234,7 +222,7 @@ def main():
         items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
         fname = os.path.sep.join(items)
 
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", fname
         ] + args)
 
@@ -252,24 +240,26 @@ def main():
         items = [pype_setup_root, "app", "local_mongo_server.py"]
         fname = os.path.sep.join(items)
 
-        returncode = forward([
+        returncode = api.forward([
             sys.executable, "-u", fname
         ] + args)
         # returncode = 1
 
     elif kwargs.testing:
+
         from app import pypeline
         # template should be filled and environment setup
         returncode = pypeline.test()
-        env_uninstall()
+        api.env_uninstall()
         # template should be empty
         returncode = pypeline.test()
+        print(args)
 
     else:
         print(__doc__)
         returncode = 1
 
-    env_uninstall()
+    api.env_uninstall()
     return returncode
 
 

@@ -111,9 +111,9 @@ def forward(args,
                     test = True
         return test
 
-    print("\n\n")
+    print("\n")
     log.info("Forwarding '%s'.." % " ".join(args))
-    print("\n\n")
+    print("\n")
 
     popen = subprocess.Popen(
         args,

@@ -5,12 +5,9 @@ import subprocess
 import os
 import app
 
-from app.api import (
-    env_install,
-    Logger
-)
+from app import api
 
-log = Logger.getLogger(__name__)
+log = api.Logger.getLogger(__name__, "cli")
 
 TERMINAL = {
     "windows": {
@@ -39,8 +36,8 @@ TERMINAL = {
 
 def main():
 
-    if not app._templates_loaded:
-        env_install()
+    if not api.Templates:
+        api.env_install()
 
     os.system(TERMINAL[platform.system().lower()]["clean_terminal"])
 

@@ -12,7 +12,7 @@ from .lib.repos import (
     git_set_repository
 )
 
-from .lib.templates import (
+from . import (
     Templates
 )
 

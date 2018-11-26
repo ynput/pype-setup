@@ -5,26 +5,19 @@ import platform
 import subprocess
 from app.lib import terminal
 
-from app.api import (
-    env_install,
-    env_uninstall,
-    forward,
-    Logger,
-)
+from app import api
 
+terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(api.Logger))
 
-terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(Logger))
-
-log = Logger.getLogger(__name__)
+log = api.Logger.getLogger(__name__)
 
 
 def main():
-    import app
-    if not app._templates_loaded:
-        env_install()
+    if not api.Templates:
+        api.env_install()
 
     # write into log file what is seen by templates
-    for k, v in app.Templates.items():
+    for k, v in api.Templates.items():
         log.info("templates.item: `{}`,`{}`".format(k, v))
     log.info("\n")
 
@@ -44,20 +37,20 @@ def main():
 
     # Start server.
     if platform.system().lower() == "linux":
-        print("@ Local mongodb is running...")
+        log.info("@ Local mongodb is running...")
         returncode = subprocess.Popen(
             ["mongod", "--dbpath", location, "--port",
              os.environ["AVALON_MONGO_PORT"]], close_fds=True
         )
     elif platform.system().lower() == "windows":
-        print("@ Local mongodb is running...")
+        log.info("@ Local mongodb is running...")
         returncode = subprocess.Popen(
             ["start", "Avalon MongoDB", "mongod", "--dbpath",
                 location, "--port", os.environ["AVALON_MONGO_PORT"]],
             shell=True
         )
 
-    env_uninstall()
+    api.env_uninstall()
     return returncode
 
 

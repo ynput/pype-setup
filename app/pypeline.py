@@ -1,33 +1,28 @@
-import app
-from app.api import (
-    Templates,
-    Logger
-)
+from app.lib.templates import Templates as _Templates
+
+from app import api
 
 from pprint import pprint
 
-log = Logger.getLogger(__name__)
+log = api.Logger.getLogger(__name__)
 
 
 def test():
     log.debug("________starting app_____________")
-    log.debug("app._templates_loaded: {}".format(app._templates_loaded))
-    log.debug("app.Templates: {}".format(pprint(app.Templates)))
+    log.debug("app.Templates: {}".format(pprint(api.Templates)))
     return 1
 
 
-def env_install():
-    app.Templates = Templates()
-    app._templates_loaded = True
+def env_install(type=None, environment=None):
+    api.Templates = _Templates(type, environment)
     log.info("Pype's environment was installed...")
 
 
 def env_uninstall():
-    app.Templates = None
-    app._templates_loaded = None
+    api.Templates = None
     log.info("Pype's environment was uninstalled...")
 
 
 if __name__ == '__main__':
-    if not app._templates_loaded:
-        install()
+    if not api.Templates:
+        env_install()
