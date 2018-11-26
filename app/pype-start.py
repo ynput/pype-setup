@@ -144,12 +144,8 @@ def main():
                              "or supplied --root")
     parser.add_argument("--tray", action="store_true",
                         help="Launch tray application")
-    parser.add_argument("--actionserver", action="store_true",
-                        help="launch action server for ftrack")
-    parser.add_argument("--ftracklogout", action="store_true",
-                        help="Logout from Ftrack")
     parser.add_argument("--terminal", action="store_true",
-                        help="Logout from Ftrack")
+                        help="Open terminal")
     parser.add_argument("--local-mongodb", dest="localdb", action="store_true",
                         help="Start local mongo server do `localhost`")
     parser.add_argument("--testing", action="store_true",
@@ -162,8 +158,6 @@ def main():
             kwargs.load,
             kwargs.save,
             kwargs.publish,
-            kwargs.actionserver,
-            kwargs.ftracklogout,
             kwargs.localdb, ]):
         _install(root=kwargs.root)
 
@@ -234,29 +228,6 @@ def main():
                 stderr=subprocess.STDOUT,
                 creationflags=DETACHED_PROCESS
             )
-
-    elif kwargs.actionserver:
-        args = ["--actionserver"]
-
-        # TODO this path is same for more args!
-        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
-        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
-        fname = os.path.sep.join(items)
-
-        returncode = api.forward([
-            sys.executable, "-u", fname
-        ] + args)
-
-    elif kwargs.ftracklogout:
-        args = ["--logout"]
-
-        stud_config = os.getenv('PYPE_STUDIO_CONFIG')
-        items = [stud_config, "pype", "ftrack", "ftrackRun.py"]
-        fname = os.path.sep.join(items)
-
-        returncode = api.forward([
-            sys.executable, "-u", fname
-        ] + args)
 
     elif kwargs.terminal:
         import app.cli
