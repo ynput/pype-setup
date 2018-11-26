@@ -1,18 +1,3 @@
-from app import api
-from app import (
-    Templates,
-    _repos_installed,
-    _templates_loaded,
-)
-from app.api import (
-    Templates as templates,
-    forward,
-    git_make_repository,
-    Logger,
-    logger
-)
-from pprint import pprint
-import subprocess
 """Avalon Command-line Interface
 
 This module contains a CLI towards Avalon and all of what
@@ -55,9 +40,13 @@ import sys
 import shutil
 import tempfile
 import contextlib
+import subprocess
 
+from app import api
 
 log = api.Logger.getLogger(__name__)
+
+PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 
 if os.path.basename(__file__) in os.listdir(os.getcwd()):
@@ -125,7 +114,6 @@ def _install(root=None):
 
 def main():
     import argparse
-    import app
 
     try:
         if not api.Templates:
@@ -275,9 +263,6 @@ def main():
         returncode = app.cli.main()
 
     elif kwargs.localdb:
-        # import app.local_mongo_server
-        # app.local_mongo_server.main()
-        # args = ["--actionserver"]
 
         # TODO this path is same for more args!
         pype_setup_root = os.getenv('PYPE_SETUP_ROOT')
