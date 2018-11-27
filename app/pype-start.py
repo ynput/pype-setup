@@ -144,6 +144,8 @@ def main():
                              "or supplied --root")
     parser.add_argument("--tray", action="store_true",
                         help="Launch tray application")
+    parser.add_argument("--traydebug", action="store_true",
+                        help="Launch tray application")
     parser.add_argument("--terminal", action="store_true",
                         help="Open terminal")
     parser.add_argument("--local-mongodb", dest="localdb", action="store_true",
@@ -157,6 +159,8 @@ def main():
             kwargs.init,
             kwargs.load,
             kwargs.save,
+            kwargs.tray,
+            kwargs.traydebug,
             kwargs.publish,
             kwargs.localdb, ]):
         _install(root=kwargs.root)
@@ -199,35 +203,34 @@ def main():
             ] + args, silent=True)
 
     elif kwargs.tray:
-        if PYPE_DEBUG > 0:
-            pype_setup = os.getenv('PYPE_SETUP_ROOT')
-            items = [pype_setup, "app", "tray.py"]
-            fname = os.path.sep.join(items)
+        returncode = None
+        DETACHED_PROCESS = 0x00000008
 
-            returncode = api.forward([
-                sys.executable, "-u", fname
-            ] + args)
-        else:
-            returncode = None
-            DETACHED_PROCESS = 0x00000008
+        pype_setup = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup, "app", "tray.py"]
+        fname = os.path.sep.join(items)
 
-            pype_setup = os.getenv('PYPE_SETUP_ROOT')
-            items = [pype_setup, "app", "tray.py"]
-            fname = os.path.sep.join(items)
+        args = ["-d", fname]
+        subprocess.Popen(
+            args,
+            universal_newlines=True,
+            bufsize=1,
+            cwd=None,
+            executable=sys.executable,
+            env=os.environ,
+            # stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            creationflags=DETACHED_PROCESS
+        )
+    elif kwargs.traydebug:
+        pype_setup = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup, "app", "tray.py"]
+        fname = os.path.sep.join(items)
 
-            args = ["-d", fname]
-            subprocess.Popen(
-                args,
-                universal_newlines=True,
-                bufsize=1,
-                cwd=None,
-                executable=sys.executable,
-                env=os.environ,
-                # stdin=None,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                creationflags=DETACHED_PROCESS
-            )
+        returncode = api.forward([
+            sys.executable, "-u", fname
+        ] + args)
 
     elif kwargs.terminal:
         import app.cli
