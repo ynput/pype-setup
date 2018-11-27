@@ -68,15 +68,29 @@ class Dict_to_obj(dict):
         else:
             self._obj(args)
 
+    def _iter_dict_to_obj(self, key, value, args):
+        if key not in "path":
+            value["obj_copy"] = args["obj_copy"]
+            value = Dict_to_obj(value)
+        else:
+            value = value[self.platform]
+        return value
+
     def _obj(self, args):
         assert isinstance(args, dict), "`args` must be <dict>"
         for key, value in args.items():
+            if isinstance(value, list or tuple):
+                temp_list = list()
+                for i, item in enumerate(value):
+                    if isinstance(value, dict):
+                        value = self._iter_dict_to_obj(key, item, args)
+                        temp_list.append(value)
+                    else:
+                        temp_list.append(item)
+                value = temp_list
+
             if isinstance(value, dict):
-                if key not in "path":
-                    value["obj_copy"] = args["obj_copy"]
-                    value = Dict_to_obj(value)
-                else:
-                    value = value[self.platform]
+                value = self._iter_dict_to_obj(key, value, args)
 
             if key.isupper():
                 continue
@@ -392,12 +406,9 @@ class Dict_to_obj(dict):
         if args and isinstance(args, tuple):
             [data.update(d) for d in args]
         elif args:
-            data = args
-        else:
-            data = None
+            data.update(args)
 
-        if data:
-            self.update(data)
+        self.update(data)
 
         copy_dict = deepcopy(dict(**self).copy())
 
