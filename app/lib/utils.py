@@ -99,6 +99,13 @@ def forward(args,
         "Connected to mongodb://",
         ("@", "Using")  # AND condition
     )
+    log_levels = {
+        log.info: ">>> [",
+        log.warning: "*** WRN:",
+        log.error: "--- ERR:",
+        log.critical: "!!! CRI:",
+        log.debug: "  - {"
+    }
 
     def filter_log_line(line, info_log_filter):
         test = False
@@ -132,10 +139,19 @@ def forward(args,
         line = popen.stdout.readline()
         if line != '':
             if not silent:
-                if filter_log_line(line, info_log_filter):
-                    log.info(line[:-2])
-                else:
-                    log.debug(line[:-2])
+                # if filter_log_line(line, info_log_filter):
+                #     log.info(line[:-2])
+                # else:
+                for funct, test_string in log_levels.items():
+                    if test_string in line:
+                        funct(
+                            "Fwd: {}".format(
+                                line[:-2]
+                            ).replace(
+                                test_string,
+                                ""
+                            ).replace("]", "")
+                        )
         else:
             break
 

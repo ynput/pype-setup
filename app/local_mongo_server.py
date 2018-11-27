@@ -3,27 +3,26 @@ import os
 import sys
 import platform
 import subprocess
-from app.lib import terminal
 
+from pprint import pprint
+
+import app
 from app import api
 
-terminal.c_echo(">>> Logger from pype-start: [ {} ]".format(api.Logger))
 
 log = api.Logger.getLogger(__name__)
 
 
 def main():
-    if not api.Templates:
+    if not app.Templates:
         api.env_install()
 
-    # write into log file what is seen by templates
-    for k, v in api.Templates.items():
-        log.info("templates.item: `{}`,`{}`".format(k, v))
-    log.info("\n")
+    t = app.Templates
+    log.debug(pprint(t))
 
     for k, v in os.environ.items():
-        log.info("os.environ.item: `{}`,`{}`".format(k, v))
-    log.info("\n")
+        log.debug("os.environ.item: `{}`,`{}`".format(k, v))
+    log.debug("\n")
 
     # Get database location.
     try:
@@ -46,7 +45,7 @@ def main():
         log.info("@ Local mongodb is running...")
         returncode = subprocess.Popen(
             ["start", "Avalon MongoDB", "mongod", "--dbpath",
-                location, "--port", os.environ["AVALON_MONGO_PORT"]],
+             location, "--port", os.environ["AVALON_MONGO_PORT"]],
             shell=True
         )
 
@@ -57,7 +56,8 @@ def main():
 if __name__ == "__main__":
     try:
         returncode = main()
+        log.debug("Ending returncode: {}".format(returncode))
         sys.exit(returncode)
     except Exception as e:
-        print(e)
+        log.error("Exception at the end: {}".format(e))
         sys.exit(1)
