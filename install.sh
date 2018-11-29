@@ -1,7 +1,6 @@
 #!/bin/bash
 #
 # Pype-setup
-# Linux server launcher
 #
 
 # Full path of the current script
@@ -18,12 +17,14 @@ EOF
 }
 # subshell will not work for symlinks. Use readlink then.
 export PYPE_SETUP_ROOT="$(cd $DIR; pwd)"
-export PYPE_STUDIO_TEMPLATES="$(cd $PYPE_SETUP_ROOT/studio/studio-templates; pwd)"
+export PYPE_STUDIO_TEMPLATES="$PYPE_SETUP_ROOT/repos/pype-templates"
 
 # basic Setup
-export PYPE_SETUP_GIT_URL="git@github.com:pypeclub/pype-setup.git"
+export PYPE_SETUP_GIT_URL="git@bitbucket.org:pypeclub/pype-setup.git"
 export PYPE_SETUP_GIT_BRANCH="master"
-export PYPE_STUDIO_TEMPLATES_URL="git@github.com:pypeclub/studio-templates.git"
+export PYPE_STUDIO_TEMPLATES_NAME="pype-templates"
+export PYPE_STUDIO_TEMPLATES_URL="git@bitbucket.org:pypeclub/pype-templates.git"
+export PYPE_STUDIO_TEMPLATES_SUBM="repos"
 export PYPE_STUDIO_TEMPLATES_BRANCH="master"
 # Directory, where will be local evironment. Should be accessible for all
 CONDA_SHARED="/tmp"
@@ -33,9 +34,9 @@ export PYPE_DEBUG=1
 
 # maintain python environment
 # will synchronize remote with local
-SYNC_ENV=1
+SYNC_ENV=0
 # will switch to remote
-REMOTE_ENV_ON=1
+REMOTE_ENV_ON=0
 
 # Load colors definitions for easy output coloring
 source "$PYPE_SETUP_ROOT/bin/colors.sh"
