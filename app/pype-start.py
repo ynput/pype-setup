@@ -211,18 +211,32 @@ def main():
         fname = os.path.sep.join(items)
 
         args = ["-d", fname]
-        subprocess.Popen(
-            args,
-            universal_newlines=True,
-            bufsize=1,
-            cwd=None,
-            executable=sys.executable,
-            env=os.environ,
-            # stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            creationflags=DETACHED_PROCESS
-        )
+        if sys.platform.startswith('linux'):
+            subprocess.Popen(
+                args,
+                universal_newlines=True,
+                bufsize=1,
+                executable=sys.executable,
+                env=os.environ,
+                # stdin=None,
+                stdout=None,
+                stderr=None,
+                preexec_fn=os.setpgrp
+            )
+
+        if sys.platform == 'win32':
+            subprocess.Popen(
+                args,
+                universal_newlines=True,
+                bufsize=1,
+                cwd=None,
+                executable=sys.executable,
+                env=os.environ,
+                # stdin=None,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                creationflags=DETACHED_PROCESS
+            )
     elif kwargs.traydebug:
         pype_setup = os.getenv('PYPE_SETUP_ROOT')
         items = [pype_setup, "app", "tray.py"]

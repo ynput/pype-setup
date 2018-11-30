@@ -163,7 +163,7 @@ local_env_exists () {
   export PYTHONPATH="$PYTHONPATH:$PYPE_SETUP_ROOT:$PYTHON_ENV/Lib/site-packages"
   export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/bin/git"
 
-  if [ ! -d "$PYPE_SETUP_ROOT/app/repos/avalon-core/avalon" ] ; then
+  if [ ! -d "$PYPE_SETUP_ROOT/repos/avalon-core/avalon" ] ; then
     echo -e "${BIYellow}***${RST} Git submodules in [ ${BIWhite}$PYPE_SETUP_ROOT/app/repos/avalon-core${RST} ] are missing ..."
 
     # Initialize submodules

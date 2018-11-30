@@ -18,14 +18,14 @@ TERMINAL = {
         }
     },
     "linux": {
-        "clean_terminal": "cls",
+        "clean_terminal": "clear",
         "cmd": ["xfce4-terminal"],
         "env": {
             "PS1": "(PYPE terminal):\\u@\\h \\w > "
         }
     },
     "darwin": {
-        "clean_terminal": "cls",
+        "clean_terminal": "clear",
         "cmd": ["iTerm2"],
         "env": {
             "PS1": "(PYPE terminal):\\u@\\h \\w > "
