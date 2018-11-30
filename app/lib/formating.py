@@ -1,6 +1,11 @@
 import re
 import os
 import platform
+from . import (
+    Logger
+)
+
+log = Logger.getLogger(__name__)
 
 platform = platform.system().lower()
 
@@ -60,6 +65,7 @@ def _solve_optional(template, data):
         template = template.replace(group, "")
 
     try:
+
         solved = template.format(**data)
 
         # Remove optional symbols
@@ -67,9 +73,11 @@ def _solve_optional(template, data):
         solved = solved.replace(">", "")
 
         return solved
-    except KeyError as error:
-        # print("!! formating._solve_optional> {}".format(error))
+    except KeyError:
         return template
+    except ValueError as e:
+        log.error("Error in _solve_optional: {},"
+                  "`template`: {}".foramt(e, template))
 
 
 def _slicing(template):
