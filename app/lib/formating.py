@@ -77,7 +77,7 @@ def _solve_optional(template, data):
         return template
     except ValueError as e:
         log.error("Error in _solve_optional: {},"
-                  "`template`: {}".foramt(e, template))
+                  "`template`: {}".format(e, template))
 
 
 def _slicing(template):
