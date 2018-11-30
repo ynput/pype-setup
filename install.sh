@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
-# Pype-setup
+# Pype install
 #
 
 # Full path of the current script
@@ -62,5 +62,3 @@ echo -e "${IGreen}>>>${RST} launching Conda ..."
 
 # Launch Conda
 source "$PYPE_SETUP_ROOT/bin/launch_conda.sh"
-
-export PYTHONPATH="$PYPE_SETUP_ROOT"
