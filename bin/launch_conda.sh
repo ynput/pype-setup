@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # part of pype-Setup
+#
+# this initialize environment for pype and take care of installing all
+# necessary dependencies.
 #
 
 shared_permission_help () {

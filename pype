@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+#
+# Pype command
+#
+
+# Full path of the current script
+THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
+# The directory where current script resides
+DIR=`dirname "${THIS}"`
+
+export PYPE_SETUP_ROOT="$(cd $DIR; pwd)"
+export PYPE_SETUP_ROOT="$(cd $DIR; pwd)"
+
+source "$PYPE_SETUP_ROOT/bin/colors.sh"
+
+echo -e "${IGreen}>>>${RST} ${BIWhite}Welcome to Pipe Club${RST}"
+echo -e "${IGreen}>>>${RST} Checking environment ..."
+
+# basic test if we have proper PYTHONPATH. Need to do more robust checks.
+if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_ROOT:"* ]]; then
+  echo -e "${ICyan}---${RST} Setting environment ..."
+  # debugging
+  export PYPE_DEBUG=0
+  export PYPE_DEBUG_STDOUT=0
+  CONDA_SHARED="/tmp"
+
+  export PYPE_STUDIO_TEMPLATES="$PYPE_SETUP_ROOT/repos/pype-templates"
+
+  # maintain python environment
+  SYNC_ENV=0 # will synchronize remote with local
+  REMOTE_ENV_ON=0 # will switch to remote
+
+  echo -e "${IGreen}>>>${RST} launching Conda ..."
+
+  # Launch Conda
+  source "$PYPE_SETUP_ROOT/bin/launch_conda.sh"
+
+fi
+python "$PYPE_SETUP_ROOT/app/pype-start.py" "$@"
