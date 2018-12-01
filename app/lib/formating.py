@@ -90,6 +90,7 @@ def _slicing(template):
         template (string): value from toml templates
         data (directory): containing keys to be filled into template
 
+
     """
     pairs = []
     # patterns
