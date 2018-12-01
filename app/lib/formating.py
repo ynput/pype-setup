@@ -89,6 +89,7 @@ def _slicing(template):
     Arguments:
         template (string): value from toml templates
         data (directory): containing keys to be filled into template
+
     """
     pairs = []
     # patterns
@@ -110,8 +111,9 @@ def _slicing(template):
             clean_key = sliced.replace(slicing[i], "")
             template = template.replace(slicing[i], "")
             pairs.append((clean_key, numbers_get))
-        except ValueError:
+        except ValueError as e:
             pairs.append(None)
+            log.debug("formating._slicing: {}".format(e))
     return template, pairs
 
 
