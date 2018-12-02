@@ -1,6 +1,6 @@
 @echo off
 
-title Avalon conda environment setup
+title Pype's environment setup
 cls :: clear the screen command
 
 :: Change the working directory to the conda-git-deployment directory.

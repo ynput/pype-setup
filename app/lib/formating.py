@@ -1,6 +1,11 @@
 import re
 import os
 import platform
+from . import (
+    Logger
+)
+
+log = Logger.getLogger(__name__)
 
 platform = platform.system().lower()
 
@@ -60,6 +65,7 @@ def _solve_optional(template, data):
         template = template.replace(group, "")
 
     try:
+
         solved = template.format(**data)
 
         # Remove optional symbols
@@ -67,9 +73,11 @@ def _solve_optional(template, data):
         solved = solved.replace(">", "")
 
         return solved
-    except KeyError as error:
-        # print("!! formating._solve_optional> {}".format(error))
+    except KeyError:
         return template
+    except ValueError as e:
+        log.error("Error in _solve_optional: {},"
+                  "`template`: {}".format(e, template))
 
 
 def _slicing(template):
@@ -81,6 +89,8 @@ def _slicing(template):
     Arguments:
         template (string): value from toml templates
         data (directory): containing keys to be filled into template
+
+
     """
     pairs = []
     # patterns
@@ -102,8 +112,9 @@ def _slicing(template):
             clean_key = sliced.replace(slicing[i], "")
             template = template.replace(slicing[i], "")
             pairs.append((clean_key, numbers_get))
-        except ValueError:
+        except ValueError as e:
             pairs.append(None)
+            log.debug("formating._slicing: {}".format(e))
     return template, pairs
 
 
