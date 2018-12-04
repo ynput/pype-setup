@@ -139,10 +139,8 @@ def forward(args,
         line = popen.stdout.readline()
         if line != '':
             if not silent:
-                # if filter_log_line(line, info_log_filter):
-                #     log.info(line[:-2])
-                # else:
                 for funct, test_string in log_levels.items():
+                    line_test = False
                     if test_string in line:
                         funct(
                             "Fwd: {}".format(
@@ -150,8 +148,14 @@ def forward(args,
                             ).replace(
                                 test_string,
                                 ""
-                            ).replace("]", "")
+                            )
                         )
+                        line_test = True
+                        break
+
+                if int(os.getenv("PYPE_DEBUG", "0")) == 3 and not line_test:
+                    print(line[:-2])
+
         else:
             break
 
