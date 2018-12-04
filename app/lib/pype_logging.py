@@ -13,15 +13,13 @@ except NameError:
     _unicode = False
 
 
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
+PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
+
 
 """
 This is hack for StreamHandler in Python 2.7 environments. If logging is set to
 utf-8, then standard StreamHandler in Maya 2018 will fail.
 """
-
-
-PYPE_DEBUG = os.getenv("PYPE_DEBUG") is "1"
 
 DFT = '%(levelname)s >>> {%(name)s}: [%(message)s] '
 DBG = "  - {%(name)s}: [%(message)s] "
@@ -148,7 +146,7 @@ class Pype_logging(object):
     def set_levels(self):
         self.logging.getLogger().setLevel(logging.INFO)
 
-        if PYPE_DEBUG:
+        if PYPE_DEBUG is 1:
             self.logging.getLogger().setLevel(logging.DEBUG)
 
     def attach_file_handler(self):
