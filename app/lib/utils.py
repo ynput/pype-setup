@@ -154,7 +154,7 @@ def forward(args,
                         break
 
                 if int(os.getenv("PYPE_DEBUG", "0")) == 3 and not line_test:
-                    print(line[:-2])
+                    print(line[:-1])
 
         else:
             break

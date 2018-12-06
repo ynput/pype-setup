@@ -146,6 +146,8 @@ def main():
                         help="Launch tray application")
     parser.add_argument("--traydebug", action="store_true",
                         help="Launch tray application")
+    parser.add_argument("--eventserver", action="store_true",
+                        help="Launch event server")
     parser.add_argument("--terminal", action="store_true",
                         help="Open terminal")
     parser.add_argument("--local-mongodb", dest="localdb", action="store_true",
@@ -161,6 +163,7 @@ def main():
             kwargs.save,
             kwargs.tray,
             kwargs.traydebug,
+            kwargs.eventserver,
             kwargs.publish,
             kwargs.localdb, ]):
         _install(root=kwargs.root)
@@ -240,6 +243,15 @@ def main():
     elif kwargs.traydebug:
         pype_setup = os.getenv('PYPE_SETUP_ROOT')
         items = [pype_setup, "app", "tray.py"]
+        fname = os.path.sep.join(items)
+
+        returncode = api.forward([
+            sys.executable, "-u", fname
+        ] + args)
+
+    elif kwargs.eventserver:
+        pype_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [pype_config, "pype", "ftrack", "event_server.py"]
         fname = os.path.sep.join(items)
 
         returncode = api.forward([

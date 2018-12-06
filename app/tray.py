@@ -1,6 +1,6 @@
 import os
 import sys
-from pype.ftrack.ftrackRun import FtrackRunner
+from pype.ftrack.ftrack_run import FtrackRunner
 from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
 
@@ -22,7 +22,6 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.menu = QtWidgets.QMenu()
         self.menu.setStyleSheet(style.load_stylesheet())
 
-        # TODO - Recognize that ftrack is used!!!!!!
         # Add ftrack menu
         if os.environ.get('FTRACK_SERVER') is not None:
             self.ftrack = FtrackRunner(self.parent, self)
