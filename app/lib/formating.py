@@ -54,7 +54,7 @@ def _solve_optional(template, data):
     """
     # print(template)
     # Remove optional missing keys
-    pattern = re.compile(r"<.*?[^0-9]>")
+    pattern = re.compile(r"(<.*?[^{0]*>)+[^0-9]*?")
     invalid_optionals = []
     for group in pattern.findall(template):
         try:
@@ -65,15 +65,21 @@ def _solve_optional(template, data):
         template = template.replace(group, "")
 
     try:
-
         solved = template.format(**data)
 
-        # Remove optional symbols
-        solved = solved.replace("<", "")
-        solved = solved.replace(">", "")
+        # solving after format optional in second round
+        for catch in re.compile(r"(<.*?[^{0]*>)+[^0-9]*?").findall(solved):
+            if "{" in catch:
+                # remove all optional
+                solved = solved.replace(catch, "")
+            else:
+                # Remove optional symbols
+                solved = solved.replace(catch, catch[1:-1])
 
         return solved
-    except KeyError:
+    except KeyError as e:
+        log.info("_solve_optional: {},"
+                 "`template`: {}".format(e, template))
         return template
     except ValueError as e:
         log.error("Error in _solve_optional: {},"
@@ -128,6 +134,7 @@ def format(template="{template_string}", data=dict()):
         data (directory): containing keys to be filled into template
     """
     template, range = _slicing(template)
+
     converted = _solve_optional(
         template,
         _Dict_to_obj_with_range(
