@@ -111,7 +111,7 @@ class Pype_logging(object):
         console_handler.setFormatter(formater)
         return console_handler
 
-    def get_file_handler(self):
+    def get_file_path(self):
         if not self.host_name:
             self.host_name = "pype"
 
@@ -133,6 +133,11 @@ class Pype_logging(object):
         if not os.path.exists(logger_file_root):
             os.mkdir(logger_file_root)
 
+        return logger_file_path
+
+    def get_file_handler(self):
+        logger_file_path = self.get_file_path()
+        
         formater = Pype_formatter(FRMT_FILE)
 
         file_handler = TimedRotatingFileHandler(
