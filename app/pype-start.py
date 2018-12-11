@@ -236,7 +236,7 @@ def main():
                 executable=sys.executable,
                 env=os.environ,
                 # stdin=None,
-                stdout=subprocess.PIPE,
+                stdout=open(api.Logger.get_file_path(), 'w+'),
                 stderr=subprocess.STDOUT,
                 creationflags=DETACHED_PROCESS
             )
