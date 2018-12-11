@@ -78,8 +78,8 @@ def _solve_optional(template, data):
 
         return solved
     except KeyError as e:
-        log.info("_solve_optional: {},"
-                 "`template`: {}".format(e, template))
+        log.debug("_solve_optional: {},"
+                  "`template`: {}".format(e, template))
         return template
     except ValueError as e:
         log.error("Error in _solve_optional: {},"
