@@ -68,7 +68,7 @@ echo -e "${BIGreen}OK${RST}"
 
 echo -e "${IGreen}>>>${RST} Checking environment ..."
 
-if [ ! -d "$LOCAL_ENV_DIR" ] ; then
+if [ ! -d "$LOCAL_ENV_DIR" ] || [ ! "$(ls -A $LOCAL_ENV_DIR)" ] ; then
   launch_conda
 fi
 if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_ROOT:"* ]]; then
