@@ -167,74 +167,75 @@ EOF
       exit 1
     fi
   fi
-  echo -e "${BIGreen}>>>${RST} Creating conda environment using [ ${BIWhite}$PYPE_SETUP_ROOT/bin/environment.yml${RST} ] ..."
-    conda env create -f "$PYPE_SETUP_ROOT/bin/environment.yml" -p "$LOCAL_ENV_DIR"
-    if [ $? != 0 ] ; then
-      echo -e "${BIRed}!!!${RST} Creating conda env failed."
-      cat <<-EOF
+  echo -e "${BIGreen}>>>${RST} Processing environment for [ ${BIWhite}python 2${RST} ] ..."
+  echo -e "${BIGreen}---${RST} Creating conda environment using [ ${BIWhite}$PYPE_SETUP_ROOT/bin/environment2.yml${RST} ] ..."
+  conda env create -f "$PYPE_SETUP_ROOT/bin/environment2.yml" -p "$LOCAL_ENV_DIR/python2"
+  if [ $? != 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Creating conda env failed."
+    cat <<-EOF
 Unable to create Conda environment. Usually this is caused by insufficient permissions
 on local environment directory or some dependency issues in Conda. Please consult error
 messages above.
 EOF
-      exit 1
-    fi
-    echo -e "${BIGreen}>>>${RST} Conda created [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
+    exit 1
+  fi
+  echo -e "${BIGreen}>>>${RST} Conda created [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
 
-    # activatin the local env for pip updgrading
-    echo -e "${BICyan}-->${RST} Entering local environment ..."
-    . activate "$LOCAL_ENV_DIR"
-    echo -e "${BIGreen}>>>${RST} Updating PIP to latest version ..."
-    python -m pip install --upgrade pip
-    if [ $? != 0 ] ; then
-      echo -e "${BIRed}!!!${RST} PIP wasn't updated successfully."
-      cat <<-EOF
+  # activatin the local env for pip updgrading
+  echo -e "${BICyan}-->${RST} Entering local environment ..."
+  . activate "$LOCAL_ENV_DIR"
+  echo -e "${BIGreen}>>>${RST} Updating PIP to latest version ..."
+  python -m pip install --upgrade pip
+  if [ $? != 0 ] ; then
+    echo -e "${BIRed}!!!${RST} PIP wasn't updated successfully."
+    cat <<-EOF
 This is not fatal error, but using outdated PIP version can result in many
 different compatibility issues later on while installing pipeline dependencies.
 EOF
-    else
-      echo -e "${BIGreen}>>>${RST} Pip updated ..."
-    fi
+  else
+    echo -e "${BIGreen}>>>${RST} Pip updated ..."
+  fi
 
-    # Deactivate avalon_env local environment as it is more safe to activate it
-    # with feeding it into the path (there was a bug with cPython binary)
-    echo -e "${BICyan}<--${RST} Leaving local environment ..."
-    . deactivate
+  # Deactivate avalon_env local environment as it is more safe to activate it
+  # with feeding it into the path (there was a bug with cPython binary)
+  echo -e "${BICyan}<--${RST} Leaving local environment ..."
+  . deactivate
 
-    # Deactivate root environment to escape completely from conda. We dont need it
-    # anymore
-    echo -e "${BICyan}<--${RST} Leaving root environment ..."
-    . deactivate
+  # Deactivate root environment to escape completely from conda. We dont need it
+  # anymore
+  echo -e "${BICyan}<--${RST} Leaving root environment ..."
+  . deactivate
 
-    # create checksum file
-    compute_local_checksum
+  # create checksum file
+  compute_local_checksum
 
-    # creates remote environment dir if not exists
-    if [ ! -d "$REMOTE_ENV_DIR" ] ; then
-      mkdir -p "$REMOTE_ENV_DIR"
-    fi
-    # checks if it is not empty
-    if [ "$(ls -A $REMOTE_ENV_DIR)" ] ; then
-      echo -e "${BIRed}!!!${RST} Remote environment dir exists and is not empty."
-      echo -e "${BIRed}!!!${RST} [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
-      cat <<-EOF
+  # creates remote environment dir if not exists
+  if [ ! -d "$REMOTE_ENV_DIR" ] ; then
+    mkdir -p "$REMOTE_ENV_DIR"
+  fi
+  # checks if it is not empty
+  if [ "$(ls -A $REMOTE_ENV_DIR)" ] ; then
+    echo -e "${BIRed}!!!${RST} Remote environment dir exists and is not empty."
+    echo -e "${BIRed}!!!${RST} [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+    cat <<-EOF
 As a safety measure, we will not install environment to already existing one.
 You should check this directory and remove it. After that run installation again.
 EOF
-      exit 1
-    fi
+    exit 1
+  fi
 
-    # sync fresh local environment to remote one
-    echo -e "${BIGreen}-->${RST} Copying [ ${BIWhite}$LOCAL_ENV_DIR${RST} ] -> [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
-    rcmd="$rsync_command $LOCAL_ENV_DIR/ $REMOTE_ENV_DIR"
-    ${rcmd}
-    if [ $? != 0 ] ; then
-      echo -e "${BIRed}!!!${RST} Sync failed."
-      cat <<-EOF
+  # sync fresh local environment to remote one
+  echo -e "${BIGreen}-->${RST} Copying [ ${BIWhite}$LOCAL_ENV_DIR${RST} ] -> [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+  rcmd="$rsync_command $LOCAL_ENV_DIR/ $REMOTE_ENV_DIR"
+  ${rcmd}
+  if [ $? != 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Sync failed."
+    cat <<-EOF
 Syncing of both environment has failed. Please, consult output above for error messages.
 EOF
-      exit 1
-    fi
-    echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+    exit 1
+  fi
+  echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
 }
 
 
