@@ -1,2 +1,2 @@
 @echo off
-python %~dp0app\pype-start.py %*
+powershell -noexit -nologo -executionpolicy bypass -File pype.ps1 %*
