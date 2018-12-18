@@ -179,11 +179,25 @@ messages above.
 EOF
     exit 1
   fi
-  echo -e "${BIGreen}>>>${RST} Conda created [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
+  echo -e "${BIGreen}>>>${RST} Conda created [ ${BIWhite}$LOCAL_ENV_DIR/python2${RST} ]"
+
+  echo -e "${BIGreen}>>>${RST} Processing environment for [ ${BIWhite}python 3${RST} ] ..."
+  echo -e "${BIGreen}---${RST} Creating conda environment using [ ${BIWhite}$PYPE_SETUP_ROOT/bin/environment3.yml${RST} ] ..."
+  conda env create -f "$PYPE_SETUP_ROOT/bin/environment3.yml" -p "$LOCAL_ENV_DIR/python3"
+  if [ $? != 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Creating conda env failed."
+    cat <<-EOF
+Unable to create Conda environment. Usually this is caused by insufficient permissions
+on local environment directory or some dependency issues in Conda. Please consult error
+messages above.
+EOF
+    exit 1
+  fi
+  echo -e "${BIGreen}>>>${RST} Conda created [ ${BIWhite}$LOCAL_ENV_DIR/python3${RST} ]"
 
   # activatin the local env for pip updgrading
   echo -e "${BICyan}-->${RST} Entering local environment ..."
-  . activate "$LOCAL_ENV_DIR"
+  . activate "$LOCAL_ENV_DIR/python2"
   echo -e "${BIGreen}>>>${RST} Updating PIP to latest version ..."
   python -m pip install --upgrade pip
   if [ $? != 0 ] ; then
@@ -338,11 +352,11 @@ else
   echo -e "${BIGreen}>>>${RST} Running local environment from: [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
 fi
 
-export PATH="$PYTHON_ENV/bin:$PATH"
+export PATH="$PYTHON_ENV/python3/bin:$PATH"
 # hardwired path to python should be changed as conda is updgrading
 # TODO: better handling of python version in path.
-export PYTHONPATH="$PYPE_SETUP_ROOT:$PYTHON_ENV/lib/python3.6/site-packages"
-export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/bin/git"
+export PYTHONPATH="$PYPE_SETUP_ROOT:$PYPE_SETUP_ROOT/app/vendor"
+export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/python3/bin/git"
 if [ ! -d "$PYPE_SETUP_ROOT/repos/pype-templates" ] ; then
   echo -e "${BIYellow}***${RST} Git repositories in [ ${BIWhite}$PYPE_SETUP_ROOT/app/repos${RST} ] are missing ..."
 

@@ -4,7 +4,7 @@ dependencies:
   - git=2.14.1
   - pip:
     - pymongo==3.6.1
-    - pyqt5==5.7.1
+    - pyside2
     - checksumdir
     - toml
     - autopep8
@@ -14,3 +14,4 @@ dependencies:
     - psutil
     - gitpython
     - colorama
+    - Xlib
