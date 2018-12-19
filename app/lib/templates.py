@@ -426,7 +426,8 @@ class Dict_to_obj(dict):
 
         copy_dict = iter_dict(copy_dict)
 
-        return Dict_to_obj(iter_dict(copy_dict))
+        return_obj = Dict_to_obj(iter_dict(copy_dict))
+        return return_obj
 
 
 class Templates(Dict_to_obj):
