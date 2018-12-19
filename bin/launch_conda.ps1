@@ -67,11 +67,12 @@ or sync didn't finish properly. Check remote environment, delete it if necessary
 function Create-Installer {
   if (-not Test-Path -Path "$($env:CONDA_FILENAME)" -PathType Leaf) {
     # miniconda cannot be found, so we download it via wget
-    Write-Color -Text "*** ", "Miniconda.sh", " in [ ", $MINICONDA_DIRECTORY, " ] is missing ..." - Color Yellow, Cyan, Gray, White, Gray
+    Write-Color -Text "*** ", "Miniconda.exe", " in [ ", $MINICONDA_DIRECTORY, " ] is missing ..." -Color Yellow, Cyan, Gray, White, Gray
     New-Item -ItemType directory -Path "$($env:MINICONDA_DIRECTORY)"
     # 64-bit version
     $URL = "https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe"
     try {
+      Write-Color -Text ">>> ", "Downloading Miniconda [ ", $env:MINICONDA_DIRECTORY, " ] ..." -Color Green, Gray, White, Gray
       Import-Module BitsTransfer
       Start-BitsTransfer -Source $URL -Destination $env:CONDA_FILENAME
     }
@@ -80,8 +81,64 @@ function Create-Installer {
       Write-Host $_.Exception.Message
       exit
     }
-    Write-Color -Text ">>> ", "Miniconda", " downloaded to [ ", $env:CONDA_FILENAME, " ]" - Color Green, Cyan, Gray, White, Gray
+    Write-Color -Text ">>> ", "Miniconda", " downloaded to [ ", $env:CONDA_FILENAME, " ]" -Color Green, Cyan, Gray, White, Gray
   }
+}
+
+function Run-Installer {
+  #TODO: Find update option on windows
+  if (Test-Path -Path "$($env:INSTALLATION_DIRECTORY)" -PathType Container) {
+    Write-Color -Text ">>> ", "Updating Conda root env. Please wait ..." -Color Green, Gray
+    $cmd = "& '$($env:CONDA_FILENAME)' /RegisterPython=0 /AddToPath=0 /S /D='$($env:INSTALLATION_DIRECTORY)'"
+    Invoke-Expression $cmd
+  }
+  else {
+    Write-Color -Text ">>> ", "Installing Conda root env. Please wait ..." -Color Green, Gray
+    $cmd = "& '$($env:CONDA_FILENAME)' /RegisterPython=0 /AddToPath=0 /S /D='$($env:INSTALLATION_DIRECTORY)'"
+    Invoke-Expression $cmd
+  }
+  Write-COlor -Text ">>> ", "Conda created root env in [ ", $env:INSTALLATION_DIRECTORY, " ]" -Color Green, Gray, White, Gray
+}
+
+function Create-LocalEnv {
+  if ($env:REMOTE_ENV_ON -ne "1") {
+    if ($env:SYNC_ENV -ne "1") {
+      Write-Color -Text "!!! ", "Sync is disabled and we are forcing local environment." -Color Red, Gray
+      Write-Color -Text "!!! ", "But local environment is empty." - Color Red, Gray
+      Write-Host @'
+Either allow sync from remote environment by setting $SYNC_ENV to 1, or use
+remote environment by setting $REMOTE_ENV_ON to 1. Also, we have detected
+existing remote environment directory. If you need to install remote directory,
+remove existing one and run install again.
+'@
+    exit
+    }
+  }
+  else {
+    if (-not Test-Path -Path "$($env:REMOTE_ENV_DIR)" -PathType Container) {
+      Write-Color -Text "!!! ", "Forcing remote environment use but it is missing." -Color Red, Gray
+      Write-Host @'
+We are forcing use of remote environment, but it wasn't found. If you want
+to create new one, delete local environment too and run installer again, or
+manually copy existing local environment to remote destination.
+'@
+      exit
+    }
+  }
+  if ($env:SYNC_ENV) {
+    # sync remote environment to local
+    Sync-RemoteToLocal
+    # check its validity
+    Check-LocalValidity
+  }
+
+  Create-Installer
+  Run-Installer
+  Create-RemoteEnv
+}
+
+function Create-RemoteEnv {
+  #TODO: implement
 }
 
 
