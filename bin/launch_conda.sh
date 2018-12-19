@@ -104,9 +104,10 @@ run_installer () {
 
 create_local_env () {
   # if we disabled sync and are not running from remote
-  if [ "$SYNC_ENV" != "1" ] || [ "$REMOTE_ENV_ON" != "1" ] ; then
-    if [ -d "$REMOTE_ENV_DIR" ] ; then
-      echo -e "${BIRed}!!!${RST} Sync is disabled and we are forcing local environment."
+  # if [ "$SYNC_ENV" != "1" ] || [ "$REMOTE_ENV_ON" != "1" ] ; then
+  if [ "$REMOTE_ENV_ON" != "1" ] ; then
+    if [ "$SYNC_ENV" != "1" ] ; then
+      cho -e "${BIRed}!!!${RST} Sync is disabled and we are forcing local environment."
       echo -e "${BIRed}!!!${RST} But local environment is empty."
       cat <<-EOF
 Either allow sync from remote environment by setting $SYNC_ENV to 1, or use
@@ -114,28 +115,24 @@ remote environment by setting $REMOTE_ENV_ON to 1. Also, we have detected
 existing remote environment directory. If you need to install remote directory,
 remove existing one and run install again.
 EOF
-      exit 1
-    fi
-  fi
-  # check if we have remote env
-  if [ -d "$REMOTE_ENV_DIR" ] ; then
-    # we have, so we'll sync and test later
-    if [ "$SYNC_ENV" = "1" ] ; then
-      sync_remote_to_local
-      # check if we have checksum file
-      check_local_validity
+      return 1
     fi
   else
-    # remote env is missing
-    if [ "$REMOTE_ENV_ON" = "1" ] ; then
+    if [ ! -d "$REMOTE_ENV_DIR" ] ; then
       echo -e "${BIRed}!!!${RST} Forcing remote environment use but it is missing."
       cat <<-EOF
 We are forcing use of remote environment, but it wasn't found. If you want
 to create new one, delete local environment too and run installer again, or
 manually copy existing local environment to remote destination.
 EOF
-      exit 1
+      return 1
     fi
+  fi
+  if [ "$SYNC_ENV" = "1" ] ; then
+    sync_remote_to_local
+    # check if we have checksum file
+    check_local_validity
+  else
     # no remote and local is empty
     # run full install
     create_installer
@@ -299,6 +296,21 @@ EOF
     exit 1
   fi
   echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+fi
+
+if [ "$ARG" = "--sync" ] ; then
+  if [ ! -d "$REMOTE_ENV_DIR" ] ; then
+    echo -e "${BIRed}!!!${RST} Cannot sync, remote environment is missing."
+    exit 1
+  fi
+  sync_remote_to_local
+  if [ $? = 0 ] ; then
+    cho -e "${BIRed}!!!${RST} Sync failed."
+    cat <<-EOF
+Syncing of both environment has failed. Please, consult output above for error messages.
+EOF
+    exit 1
+  fi
 fi
 
 # check if local env exist and is not empty
