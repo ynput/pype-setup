@@ -22,12 +22,8 @@ check_if_env_match () {
     if [ "$SYNC_ENV" = "1" ] ; then
       # sync dir remote -> local
       sync_remote_to_local
-      if [ $? = 1 ] ; then
-        return 1
-      fi
     fi
   fi
-  return 0
 }
 
 sync_remote_to_local () {
@@ -39,9 +35,8 @@ sync_remote_to_local () {
     cat <<-EOF
       Syncing of both environment has failed. Please, consult output above for error messages.
 EOF
-    return 1
+    exit 1
   fi
-  return 0
 }
 
 compute_remote_checksum () {
@@ -61,7 +56,7 @@ check_local_validity () {
       Checksum file must be present in environment. Either remote environment is invalid (empty or otherwise),
       or sync didn't finish properly. Check remote environment, delete it if necessary and run installer again.
 EOF
-    return 1
+    exit 1
   fi
   echo -e "${BIGreen}>>>${RST} Computing checksum for [ ${BIWhite}$LOCAL_ENV_DIR${RST} ] ..."
   grep -ar -e . "$LOCAL_ENV_DIR" | md5sum | cut -c-32 | diff -q "$LOCAL_ENV_DIR/checksum" -
@@ -70,9 +65,8 @@ EOF
     cat <<-EOF
       We've synced either invalid environment or sync failed. Delete both local and remote and run installer again.
 EOF
-    return 1
+    exit 1
   fi
-  return 0
 }
 
 create_installer () {
@@ -82,7 +76,7 @@ create_installer () {
     /bin/mkdir "$MINICONDA_DIRECTORY"
     if [ $? != 0 ] ; then
       echo -e "${BIRed}!!!${RST} Cannot create directory for Miniconda installer."
-      return 1
+      exit 1
     fi
     # 64bit version; change if needed
     URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
@@ -90,11 +84,10 @@ create_installer () {
     wget -O "$CONDA_FILENAME" "$URL"
     if [ $? != 0 ] ; then
       echo -e "${BIRed}!!!${RST} Cannot download Miniconda."
-      return 1
+      exit 1
     fi
     echo -e "${BIGreen}>>>${RST} ${BIBlue}Miniconda${RST} downloaded to in [ ${BIWhite}$CONDA_FILENAME${RST} ]"
   fi
-  return 0
 }
 
 run_installer () {
@@ -107,7 +100,6 @@ run_installer () {
     fi
 
     echo -e "${BIGreen}>>>${RST} Conda created root env in [ ${BIWhite}$INSTALLATION_DIRECTORY${RST} ]"
-    return 0
 }
 
 create_local_env () {
@@ -124,21 +116,6 @@ existing remote environment directory. If you need to install remote directory,
 remove existing one and run install again.
 EOF
       return 1
-    fi
-  fi
-  # check if we have remote env
-  if [ -d "$REMOTE_ENV_DIR" ] ; then
-    # we have, so we'll sync and test later
-    if [ "$SYNC_ENV" = "1" ] ; then
-      sync_remote_to_local
-      if [ $? = 1 ] ; then
-        return 1
-      fi
-      # check if we have checksum file
-      check_local_validity
-      if [ $? = 1 ] ; then
-        return 1
-      fi
     fi
   else
     if [ ! -d "$REMOTE_ENV_DIR" ] ; then
@@ -159,19 +136,9 @@ EOF
     # no remote and local is empty
     # run full install
     create_installer
-    if [ $? = 1 ] ; then
-      return 1
-    fi
     run_installer
-    if [ $? = 1 ] ; then
-      return 1
-    fi
     create_remote_env
-    if [ $? = 1 ] ; then
-      return 1
-    fi
   fi
-  return 0
 }
 
 create_remote_env () {
@@ -194,7 +161,7 @@ Cannot remove directory containing local environment. It could be caused by
 permissions or process still running from within. Please consult error messages
 above.
 EOF
-      return 1
+      exit 1
     fi
   fi
   echo -e "${BIGreen}>>>${RST} Processing environment for [ ${BIWhite}python 2${RST} ] ..."
@@ -265,8 +232,8 @@ EOF
 As a safety measure, we will not install environment to already existing one.
 You should check this directory and remove it. After that run installation again.
 EOF
-      return 1
-    fi
+    exit 1
+  fi
 
   # sync fresh local environment to remote one
   echo -e "${BIGreen}-->${RST} Copying [ ${BIWhite}$LOCAL_ENV_DIR${RST} ] -> [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
@@ -277,136 +244,9 @@ EOF
     cat <<-EOF
 Syncing of both environment has failed. Please, consult output above for error messages.
 EOF
-      return 1
-    fi
-    echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
-    return 0
-}
-
-main () {
-  if [ "$ARG" = "--pushtoremote" ] ; then
-    if [ ! -d "$REMOTE_ENV_DIR" ] ; then
-      mkdir -p "$REMOTE_ENV_DIR"
-    fi
-    if [ $? != 0 ] ; then
-      echo -e "${BIRed}!!!${RST} Cannot create remote environment directory [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]."
-      return 1
-    fi
-    echo -e "${BIGreen}-->${RST} Copying [ ${BIWhite}$LOCAL_ENV_DIR${RST} ] -> [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
-    rcmd="$rsync_command $LOCAL_ENV_DIR/ $REMOTE_ENV_DIR"
-    ${rcmd}
-    if [ $? != 0 ] ; then
-      echo -e "${BIRed}!!!${RST} Sync failed."
-      cat <<-EOF
-Syncing of both environment has failed. Please, consult output above for error messages.
-EOF
-      return 1
-    fi
-    echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+    exit 1
   fi
-
-  if [ "$ARG" = "--sync" ] ; then
-    if [ ! -d "$REMOTE_ENV_DIR" ] ; then
-      echo -e "${BIRed}!!!${RST} Cannot sync, remote environment is missing."
-      exit 1
-    fi
-    sync_remote_to_local
-    if [ $? = 0 ] ; then
-      cho -e "${BIRed}!!!${RST} Sync failed."
-      cat <<-EOF
-  Syncing of both environment has failed. Please, consult output above for error messages.
-EOF
-      return 1
-    fi
-  fi
-
-  # check if local env exist and is not empty
-  if [ -d "$LOCAL_ENV_DIR" ] ; then
-    # we have local env dir
-    if [ ! "$(ls -A $LOCAL_ENV_DIR)" ] ; then
-      # but it is empty
-      create_local_env
-      if [ $? = 1 ] ; then
-        return 1
-      fi
-    else
-      # local env exists
-      # print warning if remote doesn't exist
-      if [ ! -d "$REMOTE_ENV_DIR" ] ; then
-        if [ "$SYNC_ENV" = "1" ] ; then
-          echo -e "${BIRed}!!!${RST} Cannot sync, remote environment is missing."
-          return 1
-        else
-          if [ "$REMOTE_ENV_ON" = "1" ] ; then
-            echo -e "${BIRed}!!!${RST} Cannot use remote environment as it is missing."
-            cat <<-EOF
-We are forcing use of remote environment, but it wasn't found. If you want
-to create new one, delete local environment too and run installer again, or
-manually copy existing local environment to remote destination.
-EOF
-            return 1
-          fi
-          echo -e "${BIYellow}!!!${RST} Remote environment is missing."
-        fi
-      else
-        # remote env exists
-        if [ "$SYNC_ENV" = "1" ] ; then
-          # sync to local
-          sync_remote_to_local
-          if [ $? = 1 ] ; then
-            return 1
-          fi
-          # check if we have checksum file
-          check_local_validity
-          if [ $? = 1 ] ; then
-            return 1
-          fi
-        fi
-      fi
-    # end local not empty
-    fi
-  else
-    # local env doesn't exist
-    echo -e "${BIYellow}>>>${RST} Local environment not exists: [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
-    create_local_env
-    if [ $? = 1 ] ; then
-      return 1
-    fi
-  fi
-
-  # now we should have checked environments. Set variables
-  if [ "$REMOTE_ENV_ON" = "1" ] ; then
-    export PYTHON_ENV="$REMOTE_ENV_DIR"
-    echo -e "${BIGreen}>>>${RST} Running remote environment from: [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
-  else
-    export PYTHON_ENV="$LOCAL_ENV_DIR"
-    echo -e "${BIGreen}>>>${RST} Running local environment from: [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
-  fi
-
-  export PATH="$PYTHON_ENV/bin:$PATH"
-  # hardwired path to python should be changed as conda is updgrading
-  # TODO: better handling of python version in path.
-  export PYTHONPATH="$PYPE_SETUP_ROOT:$PYTHON_ENV/lib/python3.6/site-packages"
-  export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/bin/git"
-  if [ ! -d "$PYPE_SETUP_ROOT/repos/pype-templates" ] ; then
-    echo -e "${BIYellow}***${RST} Git repositories in [ ${BIWhite}$PYPE_SETUP_ROOT/app/repos${RST} ] are missing ..."
-
-    # Initialize submodules
-    echo -e "${BIGreen}>>>${RST} Running Git initialization ... "
-    #echo -e "${BICyan}DBG${RST} $PYTHONPATH"
-    python "$PYPE_SETUP_ROOT/bin/initialize_git.py"
-    if [ $? != "0" ] ; then
-      echo -e "${BIRed}!!!${RST} Cannot use initialize git repositories."
-      cat <<-EOF
-Initialization of git repositories essential for pype correct function has failed.
-Please check any error messages above.
-EOF
-      return 1
-    fi
-
-    echo -e "${BIGreen}>>>${RST} Git repositories created and updated"
-  fi
-  return 0
+  echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
 }
 
 
@@ -437,5 +277,105 @@ pushd $CONDA_DIR > /dev/null
 # Make CWD root of repository.
 cd ..
 
-main "$@"
-return $?
+if [ "$ARG" = "--pushtoremote" ] ; then
+  if [ ! -d "$REMOTE_ENV_DIR" ] ; then
+    mkdir -p "$REMOTE_ENV_DIR"
+  fi
+  if [ $? != 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Cannot create remote environment directory [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]."
+    exit 1
+  fi
+  echo -e "${BIGreen}-->${RST} Copying [ ${BIWhite}$LOCAL_ENV_DIR${RST} ] -> [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+  rcmd="$rsync_command $LOCAL_ENV_DIR/ $REMOTE_ENV_DIR"
+  ${rcmd}
+  if [ $? != 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Sync failed."
+    cat <<-EOF
+Syncing of both environment has failed. Please, consult output above for error messages.
+EOF
+    exit 1
+  fi
+  echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+fi
+
+if [ "$ARG" = "--sync" ] ; then
+  if [ ! -d "$REMOTE_ENV_DIR" ] ; then
+    echo -e "${BIRed}!!!${RST} Cannot sync, remote environment is missing."
+    exit 1
+  fi
+  sync_remote_to_local
+  if [ $? = 0 ] ; then
+    cho -e "${BIRed}!!!${RST} Sync failed."
+    cat <<-EOF
+Syncing of both environment has failed. Please, consult output above for error messages.
+EOF
+    exit 1
+  fi
+fi
+
+# check if local env exist and is not empty
+if [ -d "$LOCAL_ENV_DIR" ] ; then
+  # we have local env dir
+  if [ ! "$(ls -A $LOCAL_ENV_DIR)" ] ; then
+    # but it is empty
+    create_local_env
+  else
+    # local env exists
+    # print warning if remote doesn't exist
+    if [ ! -d "$REMOTE_ENV_DIR" ] ; then
+      if [ "$SYNC_ENV" = "1" ] ; then
+        echo -e "${BIRed}!!!${RST} Cannot sync, remote environment is missing."
+        exit 1
+      else
+        if [ "$REMOTE_ENV_ON" = "1" ] ; then
+          echo -e "${BIRed}!!!${RST} Cannot use remote environment as it is missing."
+          cat <<-EOF
+We are forcing use of remote environment, but it wasn't found. If you want
+to create new one, delete local environment too and run installer again, or
+manually copy existing local environment to remote destination.
+EOF
+          exit 1
+        fi
+        echo -e "${BIYellow}!!!${RST} Remote environment is missing."
+      fi
+    else
+      # remote env exists
+      if [ "$SYNC_ENV" = "1" ] ; then
+        # sync to local
+        sync_remote_to_local
+        # check if we have checksum file
+        check_local_validity
+      fi
+    fi
+  # end local not empty
+  fi
+else
+  # local env doesn't exist
+  echo -e "${BIYellow}>>>${RST} Local environment not exists: [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
+  create_local_env
+fi
+
+# now we should have checked environments. Set variables
+if [ "$REMOTE_ENV_ON" = "1" ] ; then
+  export PYTHON_ENV="$REMOTE_ENV_DIR"
+  echo -e "${BIGreen}>>>${RST} Running remote environment from: [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
+else
+  export PYTHON_ENV="$LOCAL_ENV_DIR"
+  echo -e "${BIGreen}>>>${RST} Running local environment from: [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
+fi
+
+export PATH="$PYTHON_ENV/python3/bin:$PATH"
+# hardwired path to python should be changed as conda is updgrading
+# TODO: better handling of python version in path.
+export PYTHONPATH="$PYPE_SETUP_ROOT:$PYPE_SETUP_ROOT/app/vendor"
+export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/python3/bin/git"
+if [ ! -d "$PYPE_SETUP_ROOT/repos/pype-templates" ] ; then
+  echo -e "${BIYellow}***${RST} Git repositories in [ ${BIWhite}$PYPE_SETUP_ROOT/app/repos${RST} ] are missing ..."
+
+  # Initialize submodules
+  echo -e "${BIGreen}>>>${RST} Running Git initialization ... "
+  #echo -e "${BICyan}DBG${RST} $PYTHONPATH"
+  python "$PYPE_SETUP_ROOT/bin/initialize_git.py"
+
+  echo -e "${BIGreen}>>>${RST} Git repositories created and updated"
+fi

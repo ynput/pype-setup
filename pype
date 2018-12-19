@@ -29,7 +29,6 @@ launch_conda () {
   echo -e "${IGreen}>>>${RST} launching Conda ..."
   # Launch Conda
   source "$PYPE_SETUP_ROOT/bin/launch_conda.sh"
-  return $?
 }
 
 # Full path of the current script
@@ -75,6 +74,4 @@ fi
 if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_ROOT:"* ]]; then
   launch_conda
 fi
-if [ $? != 1 ] ; then
-  python "$PYPE_SETUP_ROOT/app/pype-start.py" "$ARGS"
-fi
+python "$PYPE_SETUP_ROOT/app/pype-start.py" "$ARGS"
