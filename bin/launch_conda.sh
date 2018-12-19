@@ -284,7 +284,7 @@ EOF
 }
 
 main () {
-  if [ "$ARG" = "--pushtoremote" ] ; then
+  if [ "$ARGS" = "--pushtoremote" ] ; then
     if [ ! -d "$REMOTE_ENV_DIR" ] ; then
       mkdir -p "$REMOTE_ENV_DIR"
     fi
@@ -305,7 +305,7 @@ EOF
     echo -e "${BIGreen}>>>${RST} Remote environment created in [ ${BIWhite}$REMOTE_ENV_DIR${RST} ]"
   fi
 
-  if [ "$ARG" = "--sync" ] ; then
+  if [ "$ARGS" = "--sync" ] ; then
     if [ ! -d "$REMOTE_ENV_DIR" ] ; then
       echo -e "${BIRed}!!!${RST} Cannot sync, remote environment is missing."
       exit 1
