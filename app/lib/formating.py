@@ -54,7 +54,7 @@ def _solve_optional(template, data):
     """
     # print(template)
     # Remove optional missing keys
-    pattern = re.compile(r"(<.*?[^{0]*>)+[^0-9]*?")
+    pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
     invalid_optionals = []
     for group in pattern.findall(template):
         try:
@@ -68,7 +68,7 @@ def _solve_optional(template, data):
         solved = template.format(**data)
 
         # solving after format optional in second round
-        for catch in re.compile(r"(<.*?[^{0]*>)+[^0-9]*?").findall(solved):
+        for catch in re.compile(r"(<.*?[^{0]*>)[^0-9]*?").findall(solved):
             if "{" in catch:
                 # remove all optional
                 solved = solved.replace(catch, "")
