@@ -12,7 +12,7 @@
 
 # Check if local and remote environments are same
 
-# This use robocopy, parsing its logs to show progress bar.DESCRIPTION
+# This use robocopy, parsing its logs to show progress bar
 # Slightly hackish, but doing it's job quite well. I have feeling that it is
 # copying slow, maybe parsing logs overhead. Need more testing.
 # https://keithga.wordpress.com/2014/06/23/copy-itemwithprogress/
@@ -75,7 +75,7 @@ write-progress Copy -ID $RoboRun.ID -Completed
 remove-item $RoboLog, $ScanLog
 }
 
-
+# Check if environments match
 function Check-EnvMatch {
   Write-Color -Text ">>> ", "Checking difference between local and remote env (this can take a momet) ..." -Color Green, Gray
   $local = Get-ChildItem -Recurse -Path $env:LOCAL_ENV_DIR
@@ -115,7 +115,8 @@ function Sync-RemoteToLocal {
   Write-Color -Text "--> ", "Syncing [ ", "REMOTE", " ] -> [ ", "LOCAL", " ] " -Color Green, Gray, White, Gray, White, Gray
 
   Copy-ItemWithProgress $env:REMOTE_ENV_DIR $env:LOCAL_ENV_DIR /MIR
-  if ($LASTEXITCODE -ne 1) {
+  # robocopy exit code 0 is no file copied and no error occured, 1 is one or more where copied
+  if ($LASTEXITCODE -eq 1 -Or $LASTEXITCODE -eq 0) {
     Write-Color -Text "!!! ", "Sync failed" -Color Red, Gray
     Write-Color -Text "!!! ", "robocopy exit code $LASTEXITCODE"
     exit 1
@@ -141,26 +142,58 @@ You should check this directory and remove it. After that run installation again
 
   Copy-ItemWithProgress $env:LOCAL_ENV_DIR $env:REMOTE_ENV_DIR /MIR
   # robocopy exit code 0 is no file copied and no error occured, 1 is one or more where copied
-  if ($LASTEXITCODE -ne 1) {
+  if ($LASTEXITCODE -eq 1 -Or $LASTEXITCODE -eq 0) {
     Write-Color -Text "!!! ", "Sync failed" -Color Red, Gray
-    Write-Color -Text "!!! ", "robocopy exit code $LASTEXITCODE"
+    Write-Color -Text "!!! ", "robocopy exit code ", $LASTEXITCODE -Color Red, Gray, Yellow
     exit 1
   }
 
   Write-Color -Text ">>> ", "Remote environment created in [ ", $env:REMOTE_ENV_DIR, " ]" -Color Green, Gray, White, Gray
 }
 
+# Display spinner for running job
+function Start-Progress {
+  param(
+    [ScriptBlock]
+    $code
+  )
+  $scroll = "/-\|/-\|"
+  $idx = 0
+  $origpos = $host.UI.RawUI.CursorPosition
+  $newPowerShell = [PowerShell]::Create().AddScript($code)
+  $handle = $newPowerShell.BeginInvoke()
+  while ($handle.IsCompleted -eq $false) {
+    $host.UI.RawUI.CursorPosition = $origpos
+    Write-Host $scroll[$idx] -NoNewline
+    $idx++
+    if($idx -ge $scroll.Length)
+    {
+      $idx = 0
+    }
+    Start-Sleep -Milliseconds 100
+  }
+  Write-Host ''
+  $newPowerShell.EndInvoke($handle)
+  $newPowerShell.Runspace.Close()
+  $newPowerShell.Dispose()
+}
+
 # Compute checksum for local environment
 function Compute-LocalChecksum {
   param ($folder)
   Write-Color -Text ">>> ", "Computing checksum for [ ", $folder, " ] ..." -Color Green, Gray, White, Gray
-  $files = Get-ChildItem -Path $folder -Recurse -Force | Sort-Object | Get-FileHash | Select Hash, Path
+  Write-Color -Text "  - ", "Building file list (this can take a moment) ..." -Color Cyan, Gray
+  Write-Host "    Building " -NoNewline
+
+  $files = Start-Progress {Get-ChildItem -Path $folder -Recurse -Force | Sort-Object | Get-FileHash | Select Hash, Path }
+
   $allBytes = New-Object System.Collections.Generic.List[byte]
   $I=0
-  $PID = 153051
+  $PD = 153051
+  Write-Color -Text "  - ", "Calculating checksums ..." -Color Cyan, Gray
   foreach ($file in $files)
   {
-    Write-Progress -Activity "Calculating checksum" -ID $PID -Status "Progress:" -PercentComplete ($I/$files.count*100) -Status $file.Path
+    Write-Progress -Activity "Calculating checksum" -ID $PD -PercentComplete ($I/$files.count*100) -Status $file.Path
     $file.Path = $file.Path.Replace($folder, "")
     $allBytes.AddRange([System.Text.Encoding]::UTF8.GetBytes($file.Path))
     $allBytes.AddRange([System.Text.Encoding]::UTF8.GetBytes($file.Hash))
@@ -168,7 +201,7 @@ function Compute-LocalChecksum {
   }
   $hasher = [System.Security.Cryptography.SHA256]::Create()
   $checksum = [string]::Join("", $($hasher.ComputeHash($allBytes.ToArray()) | %{"{0:x2}" -f $_}))
-  Write-Progress -ID $PID -Completed
+  Write-Progress -Activity "Complete" -ID $PD -Completed
   return $checksum
 }
 
@@ -181,7 +214,6 @@ Checksum file must be present in environment. Either remote environment is inval
 or sync didn't finish properly. Check remote environment, delete it if necessary and run installer again.
 '@
   }
-  Write-Color -Text ">>> ", "Computing checksum for [ ", $LOCAL_ENV_DIR, " ] ..." -Color Green, Gray, White, Gray
   $invalid = false
   $checksum = Compute-LocalChecksum $env:LOCAL_ENV_DIR
   if (Compare-Object -ReferenceObject $checksum -DifferenceObject $(Get-Content "$($env:LOCAL_ENV_DIR)\checksum")) {
@@ -264,15 +296,11 @@ function Create-LocalEnv {
       # but we are not using it
       if ($env:SYNC_ENV -ne "1") {
         # and we even don't want to sync it. Throw error.
-        Write-Color -Text "!!! ", "Sync is disabled and we are forcing local environment." -Color Red, Gray
-        Write-Color -Text "!!! ", "But local environment is empty." -Color Red, Gray
-        Write-Host @'
-Either allow sync from remote environment by setting $SYNC_ENV to 1, or use
-remote environment by setting $REMOTE_ENV_ON to 1. Also, we have detected
-existing remote environment directory. If you need to install remote directory,
-remove existing one and run install again.
-'@
-      exit 1
+        Write-Color -Text "--- ", "Forcing sync" -Color Yellow, Gray
+        # sync remote environment to local
+        Sync-RemoteToLocal
+        # check its validity
+        Check-LocalValidity
       }
     }
   }
@@ -323,7 +351,7 @@ messages above.
 '@
     exit 1
   }
-  Write-Color -Text ">>> ", "Conda created [ ", "$($env:LOCAL_ENV_DIR)\python3", " ]" -Color Green, Gray, White, Gray
+  Write-Color -Text ">>> ", "Conda created [ ", "$($env:LOCAL_ENV_DIR)\python2", " ]" -Color Green, Gray, White, Gray
 
   Write-Color -Text ">>> ", "Processing environment for [ ", "python 3", " ] ..." -Color Green, Gray, White, Gray
   Write-Color -Text "--- ", "Creating conda environment using [ ", "$($env:PYPE_SETUP_ROOT)\bin\environment3.yml", " ] ..." -Color Cyan, Gray, White, Gray
@@ -337,7 +365,7 @@ messages above.
 '@
     exit 1
   }
-  Write-Color -Text ">>> ", "Conda created [ ", "$($env:LOCAL_ENV_DIR)/python3", " ]" -Color Green, Gray, White, Gray
+  Write-Color -Text ">>> ", "Conda created [ ", "$($env:LOCAL_ENV_DIR)\python3", " ]" -Color Green, Gray, White, Gray
 
 # We don't really want to do this stuff, don't we. Latest version of pip should be
 # Downloaded by Conda
@@ -499,3 +527,4 @@ Check error messages above.
 
   Write-Color -Text ">>> ", "Git repositories created and updated." -Color Green, Gray
 }
+exit 
