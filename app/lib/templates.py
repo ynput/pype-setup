@@ -185,7 +185,7 @@ class Dict_to_obj(dict):
                         )
                     os.environ[key] = paths
                 else:
-                    self._path_to_environ(self, key, value)
+                    self._path_to_environ(key, value)
 
     def _path_to_environ(self, key, value):
         value = str(value)
@@ -273,7 +273,7 @@ class Dict_to_obj(dict):
                          if k in selected_keys}
 
         for k, v in env_to_change.items():
-            self._path_to_environ(self, k, v)
+            self._path_to_environ(k, v)
 
         # fix sys.path
         sys_paths = sys.path
