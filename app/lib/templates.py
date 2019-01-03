@@ -5,6 +5,7 @@ TODO: cached versions of software tomls to ~/.pype/software
 '''
 
 import os
+import re
 import sys
 import toml
 import platform
@@ -184,12 +185,24 @@ class Dict_to_obj(dict):
                         )
                     os.environ[key] = paths
                 else:
-                    if "://" not in str(value):
-                        os.environ[key] = os.path.normpath(
-                            self._format(str(value), self)
-                        )
-                    else:
-                        os.environ[key] = self._format(str(value), self)
+                    self._path_to_environ(self, key, value)
+
+    def _path_to_environ(self, key, value):
+        value = str(value)
+        frward = re.compile(r'^//').search(value)
+        bckwrd = re.compile(r'^\\').search(value)
+        url = re.compile(r'://').search(value)
+
+        if frward:
+            os.environ[key] = os.path.normpath(
+                self._format(value, self))
+        elif bckwrd:
+            os.environ[key] = self._format(value, self)
+        elif url:
+            os.environ[key] = self._format(value, self)
+        else:
+            os.environ[key] = os.path.normpath(
+                self._format(value, self))
 
     def _distribute_args(self):
         ''' Populates all available configs from templates
@@ -247,7 +260,6 @@ class Dict_to_obj(dict):
             self.update(data)
             # adds to environment variables
             self.add_to_env_var(data)
-
             # format environment variables
             self._format_env_vars()
         else:
@@ -261,13 +273,7 @@ class Dict_to_obj(dict):
                          if k in selected_keys}
 
         for k, v in env_to_change.items():
-            if "://" not in str(v):
-                os.environ[k] = os.path.normpath(
-                    self._format(v, self)
-                )
-
-            else:
-                os.environ[k] = self._format(v, self)
+            self._path_to_environ(self, k, v)
 
         # fix sys.path
         sys_paths = sys.path
