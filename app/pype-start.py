@@ -202,8 +202,8 @@ def main():
 
         with install():
             returncode = api.forward([
-                sys.executable, "-u", "-m", "pyblish", "gui"
-            ] + args, silent=True)
+                sys.executable, "-u", "-m", "pyblish"
+            ] + args + ["gui"], silent=True)
 
     elif kwargs.tray:
         returncode = None
