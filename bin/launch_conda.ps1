@@ -71,8 +71,9 @@ write-progress Copy -ID $RoboRun.ID -Completed
 
 # Parse full RoboCopy pass results, and cleanup
 (get-content $RoboLog)[-11..-2] | out-string | Write-Verbose
-[PSCustomObject]@{ ExitCode = $RoboRun.ExitCode }
+$res = [PSCustomObject]@{ ExitCode = $RoboRun.ExitCode }
 remove-item $RoboLog, $ScanLog
+return $res
 }
 
 # Check if environments match
@@ -114,9 +115,9 @@ function Sync-RemoteToLocal {
   }
   Write-Color -Text "--> ", "Syncing [ ", "REMOTE", " ] -> [ ", "LOCAL", " ] " -Color Green, Gray, White, Gray, White, Gray
 
-  Copy-ItemWithProgress $env:REMOTE_ENV_DIR $env:LOCAL_ENV_DIR /MIR
+  $r = Copy-ItemWithProgress $env:REMOTE_ENV_DIR $env:LOCAL_ENV_DIR /MIR
   # robocopy exit code 0 is no file copied and no error occured, 1 is one or more where copied
-  if ($LASTEXITCODE -eq 1 -Or $LASTEXITCODE -eq 0) {
+  if ($r.ExitCode -ne 1 -And $r.ExitCode -ne 0) {
     Write-Color -Text "!!! ", "Sync failed" -Color Red, Gray
     Write-Color -Text "!!! ", "robocopy exit code $LASTEXITCODE"
     exit 1
@@ -140,9 +141,9 @@ You should check this directory and remove it. After that run installation again
   }
   Write-Color -Text "--> ", "Copying [ ", $env:LOCAL_ENV_DIR, " ] -> [ ", $env:REMOTE_ENV_DIR, " ]" -Color Green, Gray, White, Gray, White, Gray
 
-  Copy-ItemWithProgress $env:LOCAL_ENV_DIR $env:REMOTE_ENV_DIR /MIR
+  $r = Copy-ItemWithProgress $env:LOCAL_ENV_DIR $env:REMOTE_ENV_DIR /MIR
   # robocopy exit code 0 is no file copied and no error occured, 1 is one or more where copied
-  if ($LASTEXITCODE -eq 1 -Or $LASTEXITCODE -eq 0) {
+  if ($r.ExitCode -ne 1 -And $r.ExitCode -ne 0) {
     Write-Color -Text "!!! ", "Sync failed" -Color Red, Gray
     Write-Color -Text "!!! ", "robocopy exit code ", $LASTEXITCODE -Color Red, Gray, Yellow
     exit 1
@@ -527,4 +528,4 @@ Check error messages above.
 
   Write-Color -Text ">>> ", "Git repositories created and updated." -Color Green, Gray
 }
-exit 
+exit
