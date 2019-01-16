@@ -1,10 +1,14 @@
+channels:
+  - conda-forge
+
 dependencies:
   - mongodb=3.4.10
   - python=2.7
   - git=2.14.1
+  # add pyside2 only on host lacking buildin python 2 Qt5 support
+  # - pyside2
   - pip:
     - pymongo==3.6.1
-    - pyside2
     - checksumdir
     - toml
     - autopep8
