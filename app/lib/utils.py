@@ -107,6 +107,8 @@ def forward(args,
         log.debug: "  - {"
     }
 
+    log_levels_debug = ['DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
+
     def filter_log_line(line, info_log_filter):
         test = False
         for s in info_log_filter:
@@ -139,8 +141,8 @@ def forward(args,
         line = popen.stdout.readline()
         if line != '':
             if not silent:
+                line_test = False
                 for funct, test_string in log_levels.items():
-                    line_test = False
                     if test_string in line:
                         funct(
                             "Fwd: {}".format(
@@ -150,6 +152,10 @@ def forward(args,
                                 ""
                             )
                         )
+                        line_test = True
+                        break
+                for test_string in log_levels_debug:
+                    if line.startswith(test_string):
                         line_test = True
                         break
 
