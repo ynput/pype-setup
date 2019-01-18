@@ -17,8 +17,8 @@ $env:PYPE_STUDIO_TEMPLATES = "$($env:PYPE_SETUP_ROOT)\repos\pype-templates"
 $env:CONDA_LOCAL =  "C:\Users\Public"
 $env:LOCAL_ENV_DIR = "$($env:CONDA_LOCAL)\pype_env"
 # Debugging
-$env:PYPE_DEBUG=0
-$env:PYPE_DEBUG_STDOUT=0
+if (-not (Test-Path 'env:PYPE_DEBUG')) { $env:PYPE_DEBUG = 0 }
+if (-not (Test-Path 'env:PYPE_DEBUG_STDOUT')) { $env:PYPE_DEBUG_STDOUT = 0 }
 # Syncing
 # will synchronize remote with local if 1
 $env:SYNC_ENV=0
@@ -54,7 +54,7 @@ if (-not (Test-Path -Path "$($env:LOCAL_ENV_DIR)" -PathType Container)) {
 }
 
 # if PYTHONPATH isn't present set it empty
-if (-not (Test-Path $env:PYTHONPATH)) { $env:PYTHONPATH = '' }
+if (-not (Test-Path 'env:PYTHONPATH')) { $env:PYTHONPATH = '' }
 
 if (($env:PYTHONPATH.split(";") | ?{$_ -Like "$($env:PYPE_SETUP_ROOT)"} | measure).count -lt 1) {
   Launch-Conda
