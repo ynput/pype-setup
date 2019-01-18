@@ -139,6 +139,9 @@ def main():
                         "to defined branches")
     parser.add_argument("--forward",
                         help="Run arbitrary command from setup environment")
+    parser.add_argument("--publish-gui", dest="publishgui", action="store_true",
+                        help="Publish with gui from current working directory, "
+                             "or supplied --root")
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
@@ -165,6 +168,7 @@ def main():
             kwargs.traydebug,
             kwargs.eventserver,
             kwargs.publish,
+            kwargs.publishgui,
             kwargs.localdb, ]):
         _install(root=kwargs.root)
 
@@ -197,13 +201,21 @@ def main():
     elif kwargs.forward:
         returncode = api.forward(kwargs.forward.split())
 
-    elif kwargs.publish:
+    elif kwargs.publishgui:
         os.environ["PYBLISH_HOSTS"] = "shell"
 
         with install():
             returncode = api.forward([
                 sys.executable, "-u", "-m", "pyblish"
             ] + args + ["gui"], silent=True)
+
+    elif kwargs.publish:
+        os.environ["PYBLISH_HOSTS"] = "shell"
+
+        with install():
+            returncode = api.forward([
+                sys.executable, "-u", "-m", "pyblish"
+            ] + args, silent=True)
 
     elif kwargs.tray:
         returncode = None
