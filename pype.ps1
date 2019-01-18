@@ -53,6 +53,9 @@ if (-not (Test-Path -Path "$($env:LOCAL_ENV_DIR)" -PathType Container)) {
   Launch-Conda
 }
 
+# if PYTHONPATH isn't present set it empty
+if (-not (Test-Path $env:PYTHONPATH)) { $env:PYTHONPATH = '' }
+
 if (($env:PYTHONPATH.split(";") | ?{$_ -Like "$($env:PYPE_SETUP_ROOT)"} | measure).count -lt 1) {
   Launch-Conda
 }
