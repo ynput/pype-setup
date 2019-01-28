@@ -7,6 +7,7 @@ from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from avalon import io
 from launcher import lib as launcher_lib, launcher_widget
 
+
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def __init__(self, parent=None):
 
@@ -38,18 +39,30 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         aExit = QtWidgets.QAction("Exit", self)
         aExit.triggered.connect(self.exit)
         self.menu.addAction(aExit)
-
+        # Catch activate event
+        self.activated.connect(self.on_systray_activated)
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
+
+    def on_systray_activated(self, reason):
+        # show contextMenu if left click
+        if reason == QtWidgets.QSystemTrayIcon.Trigger:
+            # get position of cursor
+            position = QtGui.QCursor().pos()
+            self.contextMenu().popup(position)
 
     def exit(self):
         # icon won't stay in tray after exit
         self.hide()
         QtCore.QCoreApplication.exit()
 
-    def launcher_menu(self,parent):
+    def launcher_menu(self, parent):
         icon_path = launcher_lib.resource("icon", "main.png")
-        self.ac_show_launcher = QtWidgets.QAction(QtGui.QIcon(icon_path),"&Launcher", parent)
+        self.ac_show_launcher = QtWidgets.QAction(
+            QtGui.QIcon(icon_path),
+            "&Launcher",
+            parent
+        )
         self.ac_show_launcher.triggered.connect(self.show_launcher)
 
         return self.ac_show_launcher
@@ -59,7 +72,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         if self.app_launcher is None:
             parser = argparse.ArgumentParser()
             parser.add_argument("--demo", action="store_true")
-            parser.add_argument("--root", default=os.environ["AVALON_PROJECTS"])
+            parser.add_argument(
+                "--root", default=os.environ["AVALON_PROJECTS"]
+            )
             kwargs = parser.parse_args()
 
             root = kwargs.root
@@ -84,6 +99,7 @@ class Application(QtWidgets.QApplication):
 
         self.trayIcon = SystemTrayIcon(self.main_window)
         self.trayIcon.show()
+
 
 def main():
     app = Application()
