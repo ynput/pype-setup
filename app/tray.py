@@ -33,7 +33,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         # Add Avalon apps submenu
         self.avalon_app = AvalonApps(self.parent, self)
-        self.menu.addMenu(self.avalon_app.tray_menu(self.menu))
+        self.avalon_app.tray_menu(self.menu)
 
         # Add Exit action to menu
         aExit = QtWidgets.QAction("Exit", self)
@@ -58,6 +58,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
 
 class AvalonApps:
+    from app.api import Logger
+    log = Logger.getLogger(__name__)
+
     def __init__(self, main_parent=None, parent=None):
 
         self.main_parent = main_parent
@@ -65,29 +68,32 @@ class AvalonApps:
         self.app_launcher = None
 
     # Definition of Tray menu
-    def tray_menu(self, parent):
-        # Menu for Tray App
-        menu = QtWidgets.QMenu('Avalon', parent)
-        menu.setProperty('submenu', 'on')
-        menu.setStyleSheet(style.load_stylesheet())
-
+    def tray_menu(self, parent_menu=None):
         # Actions
+        if parent_menu is None:
+            if self.parent is None:
+                self.log.warning('Parent menu is not set')
+                return
+            elif self.parent.hasattr('menu'):
+                parent_menu = self.parent.menu
+            else:
+                self.log.warning('Parent menu is not set')
+                return
+
         avalon_launcher_icon = launcher_lib.resource("icon", "main.png")
         aShowLauncher = QtWidgets.QAction(
-            QtGui.QIcon(avalon_launcher_icon), "&Launcher", menu
+            QtGui.QIcon(avalon_launcher_icon), "&Launcher", parent_menu
         )
 
-        aLibraryLoader = QtWidgets.QAction("Library Loader", menu)
+        aLibraryLoader = QtWidgets.QAction("Library", parent_menu)
 
-        menu.addAction(aShowLauncher)
-        menu.addAction(aLibraryLoader)
+        parent_menu.addAction(aShowLauncher)
+        parent_menu.addAction(aLibraryLoader)
 
         aShowLauncher.triggered.connect(self.show_launcher)
         aLibraryLoader.triggered.connect(self.show_library_loader)
 
-        menu = menu
-
-        return menu
+        return
 
     def show_launcher(self):
         # if app_launcher don't exist create it/otherwise only show main window
@@ -110,7 +116,9 @@ class AvalonApps:
     def show_library_loader(self):
         libraryloader.show(
             parent=self.main_parent,
-            icon=self.parent.icon
+            icon=self.parent.icon,
+            show_projects=True,
+            show_libraries=True
         )
 
 
