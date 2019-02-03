@@ -6,11 +6,11 @@ from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from avalon import io
 from launcher import lib as launcher_lib, launcher_widget
+from avalon.tools import libraryloader
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def __init__(self, parent=None):
-
         pype_setup = os.getenv('PYPE_SETUP_ROOT')
         items = [pype_setup, "app", "resources", "icon.png"]
         fname = os.path.sep.join(items)
@@ -31,9 +31,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self.menu.addMenu(self.ftrack.trayMenu(self.menu))
             self.ftrack.validate()
 
-        # Add Launcher action
-        self.app_launcher = None
-        self.menu.addAction(self.launcher_menu(self.menu))
+        # Add Avalon apps submenu
+        self.avalon_app = AvalonApps(self.parent, self)
+        self.avalon_app.tray_menu(self.menu)
 
         # Add Exit action to menu
         aExit = QtWidgets.QAction("Exit", self)
@@ -56,16 +56,44 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.hide()
         QtCore.QCoreApplication.exit()
 
-    def launcher_menu(self, parent):
-        icon_path = launcher_lib.resource("icon", "main.png")
-        self.ac_show_launcher = QtWidgets.QAction(
-            QtGui.QIcon(icon_path),
-            "&Launcher",
-            parent
-        )
-        self.ac_show_launcher.triggered.connect(self.show_launcher)
 
-        return self.ac_show_launcher
+class AvalonApps:
+    from app.api import Logger
+    log = Logger.getLogger(__name__)
+
+    def __init__(self, main_parent=None, parent=None):
+
+        self.main_parent = main_parent
+        self.parent = parent
+        self.app_launcher = None
+
+    # Definition of Tray menu
+    def tray_menu(self, parent_menu=None):
+        # Actions
+        if parent_menu is None:
+            if self.parent is None:
+                self.log.warning('Parent menu is not set')
+                return
+            elif self.parent.hasattr('menu'):
+                parent_menu = self.parent.menu
+            else:
+                self.log.warning('Parent menu is not set')
+                return
+
+        avalon_launcher_icon = launcher_lib.resource("icon", "main.png")
+        aShowLauncher = QtWidgets.QAction(
+            QtGui.QIcon(avalon_launcher_icon), "&Launcher", parent_menu
+        )
+
+        aLibraryLoader = QtWidgets.QAction("Library", parent_menu)
+
+        parent_menu.addAction(aShowLauncher)
+        parent_menu.addAction(aLibraryLoader)
+
+        aShowLauncher.triggered.connect(self.show_launcher)
+        aLibraryLoader.triggered.connect(self.show_library_loader)
+
+        return
 
     def show_launcher(self):
         # if app_launcher don't exist create it/otherwise only show main window
@@ -83,9 +111,15 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             APP_PATH = launcher_lib.resource("qml", "main.qml")
             self.app_launcher = launcher_widget.Launcher(root, APP_PATH)
 
-            self.app_launcher.window.show()
-        else:
-            self.app_launcher.window.show()
+        self.app_launcher.window.show()
+
+    def show_library_loader(self):
+        libraryloader.show(
+            parent=self.main_parent,
+            icon=self.parent.icon,
+            show_projects=True,
+            show_libraries=True
+        )
 
 
 class Application(QtWidgets.QApplication):
