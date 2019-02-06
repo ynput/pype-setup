@@ -41,7 +41,7 @@ export PYPE_SETUP_ROOT="$(cd $DIR; pwd)"
 
 source "$PYPE_SETUP_ROOT/bin/colors.sh"
 
-echo -e "${IGreen}>>>${RST} ${BIWhite}Welcome to Pipe Club${RST}"
+echo -e "${IGreen}>>>${RST} ${BIWhite}Welcome to Pype Club${RST}"
 # test system dependencies
 echo -e "${IGreen}>>>${RST} Checking for dependencies ..."
 echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ git ]${RST} ... \c"

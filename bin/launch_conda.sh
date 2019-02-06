@@ -112,24 +112,16 @@ run_installer () {
 
 create_local_env () {
   # if we disabled sync and are not running from remote
-  # if [ "$SYNC_ENV" != "1" ] || [ "$REMOTE_ENV_ON" != "1" ] ; then
   if [ "$REMOTE_ENV_ON" != "1" ] ; then
     if [ "$SYNC_ENV" != "1" ] ; then
-      cho -e "${BIRed}!!!${RST} Sync is disabled and we are forcing local environment."
-      echo -e "${BIRed}!!!${RST} But local environment is empty."
-      cat <<-EOF
-Either allow sync from remote environment by setting $SYNC_ENV to 1, or use
-remote environment by setting $REMOTE_ENV_ON to 1. Also, we have detected
-existing remote environment directory. If you need to install remote directory,
-remove existing one and run install again.
-EOF
-      return 1
+      echo -e "${BIRed}!!!${RST} Sync is disabled and we are forcing local environment."
+      echo -e "${BIRed}!!!${RST} Forcing sync"
     fi
   fi
   # check if we have remote env
   if [ -d "$REMOTE_ENV_DIR" ] ; then
-    # we have, so we'll sync and test later
-    if [ "$SYNC_ENV" = "1" ] ; then
+    if [ "$REMOTE_ENV_ON" != "1" ] ; then
+      # we have, so we'll sync and test later
       sync_remote_to_local
       if [ $? = 1 ] ; then
         return 1
@@ -141,7 +133,7 @@ EOF
       fi
     fi
   else
-    if [ ! -d "$REMOTE_ENV_DIR" ] ; then
+    if [ "$REMOTE_ENV_ON" == "1" ] ; then
       echo -e "${BIRed}!!!${RST} Forcing remote environment use but it is missing."
       cat <<-EOF
 We are forcing use of remote environment, but it wasn't found. If you want
@@ -151,25 +143,19 @@ EOF
       return 1
     fi
   fi
-  if [ "$SYNC_ENV" = "1" ] ; then
-    sync_remote_to_local
-    # check if we have checksum file
-    check_local_validity
-  else
-    # no remote and local is empty
-    # run full install
-    create_installer
-    if [ $? = 1 ] ; then
-      return 1
-    fi
-    run_installer
-    if [ $? = 1 ] ; then
-      return 1
-    fi
-    create_remote_env
-    if [ $? = 1 ] ; then
-      return 1
-    fi
+  # no remote and local is empty
+  # run full install
+  create_installer
+  if [ $? = 1 ] ; then
+    return 1
+  fi
+  run_installer
+  if [ $? = 1 ] ; then
+    return 1
+  fi
+  create_remote_env
+  if [ $? = 1 ] ; then
+    return 1
   fi
   return 0
 }
@@ -383,11 +369,11 @@ EOF
     echo -e "${BIGreen}>>>${RST} Running local environment from: [ ${BIWhite}$LOCAL_ENV_DIR${RST} ]"
   fi
 
-  export PATH="$PYTHON_ENV/bin:$PATH"
+  export PATH="$PYTHON_ENV/python3/bin:$PATH"
   # hardwired path to python should be changed as conda is updgrading
   # TODO: better handling of python version in path.
   export PYTHONPATH="$PYPE_SETUP_ROOT:$PYTHON_ENV/lib/python3.6/site-packages"
-  export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/bin/git"
+  export GIT_PYTHON_GIT_EXECUTABLE="$PYTHON_ENV/python3/bin/git"
   if [ ! -d "$PYPE_SETUP_ROOT/repos/pype-templates" ] ; then
     echo -e "${BIYellow}***${RST} Git repositories in [ ${BIWhite}$PYPE_SETUP_ROOT/app/repos${RST} ] are missing ..."
 
