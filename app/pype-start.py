@@ -151,6 +151,8 @@ def main():
                         help="Launch tray application")
     parser.add_argument("--eventserver", action="store_true",
                         help="Launch event server")
+    parser.add_argument("--eventservercli", action="store_true",
+                        help="Launch event server")
     parser.add_argument("--terminal", action="store_true",
                         help="Open terminal")
     parser.add_argument("--local-mongodb", dest="localdb", action="store_true",
@@ -264,6 +266,15 @@ def main():
     elif kwargs.eventserver:
         pype_config = os.getenv('PYPE_STUDIO_CONFIG')
         items = [pype_config, "pype", "ftrack", "event_server.py"]
+        fname = os.path.sep.join(items)
+
+        returncode = api.forward([
+            sys.executable, "-u", fname
+        ] + args)
+
+    elif kwargs.eventservercli:
+        event_server_path = os.getenv('FTRACK_EVENT_SERVER')
+        items = [event_server_path, "eventServer.py"]
         fname = os.path.sep.join(items)
 
         returncode = api.forward([
