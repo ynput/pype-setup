@@ -1,5 +1,3 @@
-# Pypeclub / Pype
-# part of pype-setup
 #     ____________  ____      ____  ____________  ____________
 #   / \           \/\   \    /\   \/\           \/\           \
 #   \  \      ---  \ \   \___\_\   \ \      ---  \ \     ------\
@@ -9,67 +7,215 @@
 #       \/____/           \/____/     \/____/       \/___________/
 #
 #                    ...  █░░ --=[ CLuB ]]=-- ░░█ ...
-# install dependencies
 
-$env:PYPE_SETUP_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$env:PYPE_STUDIO_TEMPLATES = "$($env:PYPE_SETUP_ROOT)\repos\pype-templates"
-# Directory prefix for local environment
-$env:CONDA_LOCAL =  "C:\Users\Public"
-$env:LOCAL_ENV_DIR = "$($env:CONDA_LOCAL)\pype_env"
-# Debugging
-if (-not (Test-Path 'env:PYPE_DEBUG')) { $env:PYPE_DEBUG = 0 }
-if (-not (Test-Path 'env:PYPE_DEBUG_STDOUT')) { $env:PYPE_DEBUG_STDOUT = 0 }
-# Syncing
-# will synchronize remote with local if 1
-$env:SYNC_ENV=0
-# will switch to remote if 1
-$env:REMOTE_ENV_ON=0
+param(
+  [switch]$install=$false,
+  [switch]$force=$false,
+  [switch]$ignore=$false,
+  [switch]$offline=$false,
+  [switch]$download=$false
+)
 
+$arguments = $ARGS
+$env:PYPE_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
+# Install PSWriteColor to support colorized output to terminal
 if (-not (Get-Module -ListAvailable -Name "PSWriteColor")) {
-
   Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser
   Install-Module -Name "PSWriteColor" -Scope CurrentUser
 }
 
-function Launch-Conda {
-  Write-Color -Text ">>> ", "Launching Conda ..." -Color Green, Gray
+function Activate-Venv {
+  param(
+    [string]$Environment
+  )
   try {
-    . ("$($env:PYPE_SETUP_ROOT)\bin\launch_conda.ps1")
+    . ("$Environment\Scripts\Activate.ps1")
   }
   catch {
-    Write-Color -Text "!!! ", "Failed to launch conda setup" -Color Red, Gray
+    Write-Color -Text "!!! ", "Failed to activate." -Color Red, Gray
     Write-Host $_.Exception.Message
-    exit
+    return $false
+  }
+  return $true
+}
+
+function Check-Environment {
+  # get current pip environment
+  $p = &{pip freeze}
+  # get requirements file
+  $r = Get-Content "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
+  if (Compare-Object -ReferenceObject $p -DifferenceObject $r) {
+    # environment differs from requirements.txt
+    return $false
+  }
+  return $true
+}
+
+function Bootstrap-Pype {
+  # ensure latest pip version
+  if ($offline -ne $true)
+  {
+    & python -m pip install --upgrade pip
+
+    # install essential dependecies
+    & pip install -r pypeapp/requirements.txt
+  } else {
+    # in offline mode, install all from vendor
+    & pip install -r pypeapp/requirements.txt -f vendor/packages
   }
 }
 
-Write-Color -Text ">>> ", "Welcome to ", "Pype Club !" -C Green, Gray, White
-Write-Color -Text ">>> ", "Checking environment ..." -C Green, Gray
-
-$arguments = $ARGS
-
-if (-not (Test-Path -Path "$($env:LOCAL_ENV_DIR)" -PathType Container)) {
-  Launch-Conda
-}
-
-# if PYTHONPATH isn't present set it empty
-if (-not (Test-Path 'env:PYTHONPATH')) { $env:PYTHONPATH = ' ' }
-
-if (($env:PYTHONPATH.split(";") | ?{$_ -Like "$($env:PYPE_SETUP_ROOT)"} | measure).count -lt 1) {
-  Launch-Conda
-}
-
-if (-not (Test-Path -Path "$($env:LOCAL_ENV_DIR)\checksum" -PathType Leaf)) {
-  Write-Color -Text "!!! ", "Environment at [ ", $env:LOCAL_ENV_DIR, " ] is corrupted." -Color Red, Gray, White, Gray
-  exit 1
-}
-
-# compare checksums and notify if they differs.DESCRIPTION
-if (Test-Path -Path "$($env:REMOTE_ENV_DIR)\checksum" -PathType Leaf) {
-  if (Compare-Object -ReferenceObject $(Get-Content "$($env:REMOTE_ENV_DIR)\checksum") -DifferenceObject $(Get-Content "$($env:LOCAL_ENV_DIR)\checksum")) {
-    Write-Color -Text "!!! ", "Warning: ", "REMOTE and LOCAL environments are not same." -Color Yellow, White, Gray
+function Deploy-Pype {
+  param(
+    [bool]$Force=$false
+  )
+  # process pype deployment
+  if ($Force -eq $true) {
+    & python -m "pypeapp" --deploy --force
+  } else {
+    & python -m "pypeapp" --deploy
   }
 }
 
-& python "$($env:PYPE_SETUP_ROOT)\app\pype-start.py" "$arguments"
+function Validate-Pype {
+  & python -m "pypeapp" --validate
+}
+
+Write-Color -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White, Gray
+
+# Set default environment variables if not already set
+if (-not (Test-Path 'env:PYPE_ENV')) { $env:PYPE_ENV = "C:\Users\Public\pype_env2" }
+if (-not (Test-Path 'env:PYPE_DEBUG')) { $env:PYPE_DEBUG = 0 }
+# Add pypeapp to PYTHONPATH
+$env:PYTHONPATH = "$($env:PYPE_ROOT)\pypeapp;$($env:PYTHONPATH)"
+
+# Test if python is available
+Write-Color -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
+if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
+  Write-Color -Text "FAILED", " Python not detected" -Color Red, Yellow
+  exit
+}
+
+# Test python version available
+$version_command = @'
+import sys
+print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
+'@
+
+$p = &{python -c $version_command}
+$m = $p -match '(\d+)\.(\d+)'
+if(-not $m) {
+  Write-Color -Text "FAILED", " Cannot determine version" -Color Red, Yellow
+  exit
+}
+# We are supporting python 3.6 and up
+if(($matches[1] -lt 3) -or ($matches[2] -lt 6)) {
+  Write-Color -Text "FAILED", " Version [ ", $p, " ] is old and unsupported" -Color Red, Yellow, Cyan, Yellow
+  exit
+}
+
+Write-Color -Text "OK" -Color Green -NoNewLine
+Write-Color -Text " - version [ ", $p ," ]" -Color Gray, Cyan, Gray
+
+# Detect existing venv
+Write-Color -Text ">>> ", "Detecting environment ... " -Color Green, Gray -NoNewLine
+
+$needToInstall = $false
+# Does directory exist?
+if (Test-Path -Path "$($env:PYPE_ENV)" -PathType Container) {
+  # If so, is it empy?
+  if ((Get-ChildItem $env:PYPE_ENV -Force | Select-Object -First 1 | Measure-Object).Count -eq 0) {
+    $needToInstall = $true
+  }
+} else {
+  $needToInstall = $true
+}
+
+if ($install -eq $true) {
+  $needToInstall = $true
+}
+
+if ($needToInstall -eq $true) {
+  if ($install -eq $true) {
+    Write-Color -Text "WILL BE INSTALLED" -Color Yellow
+  } else {
+    Write-Color -Text "NOT FOUND" -Color Yellow
+  }
+
+  Write-Color -Text ">>> ", "Installing environment to [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
+  if($force -eq $true) {
+      & python -m "pypeapp" --install --force
+  } else {
+      & python -m "pypeapp" --install
+  }
+  if ($LASTEXITCODE -ne 0) {
+    Write-Color -Text "!!! ", "Installation failed (", $LASTEXITCODE, ")" -Color Red, Yellow, Magenta, Yellow
+    exit 1
+  }
+  # activate environment
+  Write-Color -Text "--> ", "Activating environment [ ", $env:PYPE_ENV," ]" -Color Cyan, Gray, White, Gray
+  $r = Activate-Venv -Environment $env:PYPE_ENV
+  if ($r -eq $false) {
+    exit 1
+  }
+
+  Bootstrap-Pype
+  Deploy-Pype
+
+} else {
+  Write-Color -Text "FOUND", " - [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
+  Write-Color -Text "--> ", "Activating environment [ ", $env:PYPE_ENV," ]" -Color Cyan, Gray, White, Gray
+  $r = Activate-Venv -Environment $env:PYPE_ENV
+  if ($r -eq $false) {
+    exit 1
+  }
+
+  Write-Color -Text ">>> ", "Validating environment dependencies ... " -Color Green, Gray -NoNewLine
+  $r = Check-Environment
+  if ($r -eq $false) {
+    Write-Color -Text "FAILED" -Color Yellow
+    Write-Color -Text "*** ", "Environment dependencies inconsistent, fixing ..." -Color Yellow, Gray
+    if ($offline -ne $true) {
+      & pip install -r pypeapp\requirements.txt
+    } else {
+      & pip install -r pypeapp\requirements.txt -f vendor\packages
+    }
+
+  } else {
+    Write-Color -Text "OK" -Color Green
+  }
+}
+
+# Download
+# This will download pip packages to vendor/packages for later offline installation and exit
+if ($download -eq $true) {
+  Write-Color -Text ">>> ", "Downloading packages for offline installation ... " -Color Green, Gray
+  & pip download -r pypeapp\requirements.txt -d vendor\packages --platform any
+  Write-Color -Text "<-- ", "Deactivating environment ..." -Color Cyan, Gray
+  deactivate
+  Write-Color -Text "xxx ", "Terminating ..." -Color Magenta, Gray
+  exit
+}
+
+Write-Color -Text ">>> ", "Validating ", "Pype", " deployment ... " -Color Green, Gray, White, Gray -NoNewLine
+$r = Validate-Pype
+if ($r -eq $false) {
+  # if force set, than re-deploy
+  if ($force -eq $true) {
+    Write-Color -Text "INVALID", " - forcing re-deployment" -Color Yellow
+    Write-Color -Text ">>> ", "Deploying ", "Pype", " ..." -Color Green, Gray, White, Gray
+    Deploy-Pype -Force $force
+  }
+  # if ignore set, run even if validation failed
+  if ($ignore -ne $true) {
+    Write-Color -Text "INVALID" -Color Red
+    Write-Color -Text "!!! ", "Pype deployment is invalid. Use ", "--force", " to re-deploy." -Color Red, Gray, White, Gray
+    Write-Color -Text "... ", "Use ", "--ignore", "if you want to run Pype nevertheless at your own risk."
+    exit 1
+  } else {
+    Write-Color -Text "INVALID", " - forced to ignore" -Color Red, Yellow
+  }
+} else {
+  Write-Color -Text "OK" -Color Green
+}

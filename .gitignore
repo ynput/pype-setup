@@ -3,5 +3,7 @@
 *.pyc
 __pycache__/
 *.py[cod]
-bin/python
-repos/
+/deploy/*
+!/deploy/*.*
+/vendor/packages/*
+!/vendor/packages/README.md

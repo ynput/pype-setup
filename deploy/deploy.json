@@ -1,0 +1,55 @@
+{
+	"repositories": [
+		{
+			"name": "avalon-core",
+			"url": "git@github.com:pypeclub/avalon-core.git",
+			"branch": "develop"
+		},
+    {
+      "name": "avalon-launcher",
+      "url": "git@github.com:pypeclub/avalon-launcher.git",
+      "branch": "develop"
+    },
+    {
+      "name": "pyblish-base",
+      "url": "https://github.com/pyblish/pyblish.git",
+      "branch": "master"
+    },
+    {
+      "name": "pyblish-lite",
+      "url": "https://github.com/pyblish/pyblish-lite.git",
+      "branch": "master"
+    },
+    {
+      "name": "pyblish-qml",
+      "url": "https://github.com/pyblish/pyblish-qml.git",
+      "branch": "master"
+    },
+    {
+      "name": "maya-look-assigner",
+      "url": "git@github.com:pypeclub/maya-look-assigner.git",
+      "branch": "develop"
+    },
+    {
+      "name": "pype",
+      "url": "git@bitbucket.org:pypeclub/pype-config.git",
+      "branch": "develop"
+    },
+    {
+      "name": "pype-config",
+      "url": "git@bitbucket.org:pypeclub/pype-templates.git",
+      "branch": "develop"
+    }
+	],
+  "pip": [
+    "ftrack-python-api",
+    "colorama",
+    "six",
+    "toml",
+    "pymongo",
+    "gitpython",
+    "psutil",
+    "Xlib",
+    "pyqt5"
+  ]
+}
