@@ -61,7 +61,7 @@ class PypeStreamHandler(logging.StreamHandler):
                 stream.write(fs % msg)
             else:
                 try:
-                    if (isinstance(msg, unicode) and
+                    if (isinstance(msg, unicode) and  # noqa: F821
                             getattr(stream, 'encoding', None)):
                         ufs = u'%s\n'
                         try:
@@ -71,7 +71,7 @@ class PypeStreamHandler(logging.StreamHandler):
                     else:
                         if (getattr(stream, 'encoding', 'utf-8')):
                             ufs = u'%s\n'
-                            stream.write(ufs % unicode(msg))
+                            stream.write(ufs % unicode(msg))  # noqa: F821
                         else:
                             stream.write(fs % msg)
                 except UnicodeError:
