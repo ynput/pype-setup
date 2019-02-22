@@ -36,8 +36,8 @@ def install(force=False):
                 if files or dirnames:
                     m = t.echo("!!! Destination directory is not empty.")
                     t.echo("Use --force argument to delete content")
-                    log.error(m[3:])
                     sys.exit(75)
+                    break
         # exists but is empty
     else:
         try:
@@ -48,7 +48,7 @@ def install(force=False):
                 "!!! Cannot create destination directory [ {0} ].\n{1}".format(
                     pype_env, e.message
                 ))
-            log.error(m[3:])
+            # log.error(m[3:])
             sys.exit(74)
         pass
 

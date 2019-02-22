@@ -26,7 +26,7 @@ class Terminal:
 
     # shortcuts for colorama codes
     if noColorama:
-        SB, RST, LR, LG, LB, LM, R, G, B, C, Y, W = ""
+        SB = RST = LR = LG = LB = LM = R = G = B = C = Y = W = ""
     else:
         SB = Style.BRIGHT
         RST = Style.RESET_ALL
@@ -61,7 +61,8 @@ class Terminal:
     }
 
     def __init__(self):
-        init()
+        if not noColorama:
+            init()
 
     def _multiple_replace(self, text, adict):
         """Replace multiple tokens defined in dict """
@@ -83,7 +84,6 @@ class Terminal:
         """Return color formatted message"""
         # if we dont want colors, just print raw message
         if os.environ.get('PYPE_LOG_NO_COLORS', None) is not None:
-            print(message)
             message = re.sub(r'\[(.*)\]', '[ ' + self.SB + self.W +
                              r'\1' + self.RST + ' ]', message)
         message = self._multiple_replace(message + self.RST, self.sdict)
