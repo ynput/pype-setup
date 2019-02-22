@@ -15,8 +15,10 @@
 import json
 import os
 import jsonschema
+# from pprint import pprint
 from pypeapp import Logger
 from pypeapp.lib.Terminal import Terminal
+from git import Repo
 
 
 class DeployException(Exception):
@@ -37,11 +39,14 @@ class Deployment(object):
         information, create `repos` and setup `vendors`
     """
 
+    _deploy_dir = 'deploy'
+    _deploy_file = 'deploy.json'
+    _schema_file = 'deploy_schema-1.0.json'
     _pype_root = None
     log = Logger().getLogger()
     t = Terminal()
 
-    def __init__(self, pype_root):
+    def __init__(self, pype_root: str):
         """ Init deployment object
 
         This will initialize object and check if **pype_root** is valid
@@ -60,7 +65,7 @@ class Deployment(object):
         self._pype_root = normalized
         pass
 
-    def _read_deployment_file(self, file):
+    def _read_deployment_file(self, file: str) -> dict:
         """ Just reads deployment file as a json
 
             :param file: path to json file
@@ -73,26 +78,25 @@ class Deployment(object):
             data = json.load(deployment_file)
         return data
 
-    def _read_schema(self):
+    def _read_schema(self, file: str) -> dict:
         """ Reads json schema from file
 
-            Using hardcoded path in *deploy/deploy_schema-1.0.json*
-
+            :param file: path to schema json
+            :type file: string
             :return: parsed json schema
             :rtype: dict
             :raises: DeployException
 
         """
-        schema_file = os.path.join(self._pype_root,
-                                   "deploy", "deploy_schema-1.0.json")
-        if (not os.path.exists(schema_file)):
+        if (not os.path.exists(file)):
             raise DeployException(
-                "Cannot find schema to validate `deploy.json`")
-        with open(schema_file) as schema:
+                "Cannot find schema to validate `{}`".format(
+                    self._deploy_file))
+        with open(file) as schema:
             data = json.load(schema)
         return data
 
-    def _determine_deployment_file(self):
+    def _determine_deployment_file(self) -> str:
         """ Determine which deployment file to use.
 
             We use default one distributed with **Pype**. But if
@@ -108,21 +112,24 @@ class Deployment(object):
 
         """
         file = os.path.join(self._pype_root,
-                            "deploy", "deploy.json")
+                            self._deploy_dir, self._deploy_file)
         if (not os.path.exists(file)):
-            raise DeployException("Factory `deploy.json` doesn't exist")
+            raise DeployException("Factory `{}` doesn't exist".format(
+                self._deploy_file))
 
         override = None
-        with os.scandir(self._pype_root) as i:
+        deploy_path = os.path.join(self._pype_root, self._deploy_dir)
+        with os.scandir(deploy_path) as i:
+
             for entry in i:
-                if not entry.name.startswith('.') and entry.is_dir():
-                    override = os.path.join(entry.path, "deploy.json")
+                if entry.is_dir():
+                    override = os.path.join(entry.path, self._deploy_file)
                     if (os.path.exists(override)):
                         file = override
                         break
-        return file
+        return os.path.normpath(file)
 
-    def _validate_schema(self, settings):
+    def _validate_schema(self, settings: dict) -> bool:
         """ Validate json deployment setting against json schema.
 
             :param settings: Deployment settings from parsed json
@@ -135,7 +142,12 @@ class Deployment(object):
                 :func:`Deployment.__read_deployment_file`
 
         """
-        schema = self._read_schema()
+        schema_file = os.path.join(
+            self._pype_root,
+            self._deploy_dir,
+            self._schema_file
+            )
+        schema = self._read_schema(schema_file)
 
         try:
             jsonschema.validate(settings, schema)
@@ -147,7 +159,7 @@ class Deployment(object):
             return False
         return True
 
-    def validate(self):
+    def validate(self) -> bool:
         """ Do deployment setting validation.
 
             First, deployment settings is determined. It can be default
@@ -161,4 +173,43 @@ class Deployment(object):
         if (not self._validate_schema(settings)):
             self.t.echo("Invalid deployment file [ {} ]", format(settings))
             return False
+
+        # go throught repos and find existing
+        deploy = self._read_deployment_file()
+        for ritem in deploy.get('repositories'):
+            test_path = os.path.join(
+                self._pype_root, "repos", ritem.get('name'))
+            # does repo directory exist?
+            if not os.path.exists(test_path):
+                return False
+
+            repo = Repo(test_path)
+            # bare repo isn't allowed
+            if repo.bare is True:
+                return False
+
+            head = repo.heads[0]
+            # check we are on branch
+            if ritem.get('branch'):
+                if head.name != ritem.get('branch'):
+                    self.log.error(
+                        'repo {0} head is not on {1}(!={2}) branch'.format(
+                            ritem.get('name'),
+                            ritem.get('branch'),
+                            head.name
+                        ))
+                    return False
+            commit = head.commit
+            # check we are on ref
+            if ritem.get('ref'):
+                if not commit.hexsha.startswith(ritem.get('ref')):
+                    return False
+            # check tag
+            if ritem.get('tag'):
+                tag = next(
+                    rtag for rtag in head.tags
+                    if rtag["tag"] == ritem.get('tag'))
+                if tag.commit.hexsha != commit.hexsha:
+                    return False
+
         return True
