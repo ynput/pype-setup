@@ -28,7 +28,7 @@
     {
       "name": "maya-look-assigner",
       "url": "git@github.com:pypeclub/maya-look-assigner.git",
-      "branch": "develop"
+      "branch": "master"
     },
     {
       "name": "pype",

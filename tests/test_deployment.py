@@ -3,6 +3,7 @@ import os
 import json
 from pprint import pprint
 from pathlib import Path
+from shutil import copyfile
 from pypeapp.deployment import Deployment
 from pypeapp.deployment import DeployException
 
@@ -116,3 +117,50 @@ class TestDeployment(object):
         assert r is False
         r = d._validate_schema(d._read_deployment_file(deploy_file))
         assert r is True
+
+    def test_validate_deployment(self, tmp_path, deploy_file):
+        d = Deployment(os.path.normpath(tmp_path.as_posix()))
+        deploy_test_path = tmp_path / "deploy"
+        deploy_test_path.mkdir()
+        root_path = os.path.abspath('.')
+
+        # copy deploy and schema to temp test dir
+        copyfile(os.path.join(root_path, d._deploy_dir, d._schema_file),
+                 os.path.join(
+                    os.path.normpath(deploy_test_path.as_posix()),
+                    d._schema_file))
+
+        copyfile(os.path.join(root_path, d._deploy_dir, d._deploy_file),
+                 os.path.join(
+                    os.path.normpath(deploy_test_path.as_posix()),
+                    d._deploy_file))
+
+        repo_test_path = tmp_path / "repos"
+        repo_test_path.mkdir()
+
+        # should fail as `repos` is empty
+        with pytest.raises(DeployException) as excinfo:
+            r = d.validate()
+        assert excinfo.match(r"Repo path doesn't exist")
+
+    def test_deployment(self, tmp_path, deploy_file):
+        d = Deployment(os.path.normpath(tmp_path.as_posix()))
+        deploy_test_path = tmp_path / "deploy"
+        deploy_test_path.mkdir()
+        root_path = os.path.abspath('.')
+
+        # copy deploy and schema to temp test dir
+        copyfile(os.path.join(root_path, d._deploy_dir, d._schema_file),
+                 os.path.join(
+                    os.path.normpath(deploy_test_path.as_posix()),
+                    d._schema_file))
+
+        copyfile(os.path.join(root_path, d._deploy_dir, d._deploy_file),
+                 os.path.join(
+                    os.path.normpath(deploy_test_path.as_posix()),
+                    d._deploy_file))
+
+        repo_test_path = tmp_path / "repos"
+        repo_test_path.mkdir()
+
+        d.deploy()

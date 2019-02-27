@@ -46,6 +46,8 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'sphinx.ext.autosummary',
+    'recommonmark'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,7 +57,10 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown'
+}
 
 # The master toctree document.
 master_doc = 'index'
@@ -75,6 +80,10 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
 
+# -- Options for autodoc -----------------------------------------------------
+autodoc_default_flags = ['members']
+autosummary_generate = True
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -87,7 +96,9 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'collapse_navigation': False
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -102,7 +113,7 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# html_sidebars = {}
+# html_sidebars = {'**': ['localtoc.rst']}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

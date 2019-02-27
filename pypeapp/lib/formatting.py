@@ -1,9 +1,9 @@
 import re
 import os
 import platform
-from .logger import Pype_logging
-Logger = Pype_logging()
-log = Logger.getLogger(__name__)
+from .log import PypeLogger
+
+log = PypeLogger().get_logger(__name__)
 
 platform = platform.system().lower()
 

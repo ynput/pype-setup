@@ -1,10 +1,15 @@
+"""
+Handle creation of **venv**.
+
+"""
+
 import venv
 import sys
 import os
-from lib.logger import Pype_logging
-from lib.Terminal import Terminal
+from pypeapp.lib.log import PypeLogger
+from pypeapp.lib.Terminal import Terminal
 
-log = Pype_logging().getLogger(__name__)
+log = PypeLogger().get_logger(__name__)
 t = Terminal()
 
 EX_IOERR = 74  # IO error
@@ -20,6 +25,14 @@ def _create_venv(env_dir, force):
 
 
 def install(force=False):
+    """ Install venv (virtualenv).
+
+        If force specified, existing one will be overwritten.
+
+        :param force: Force **venv** creation.
+        :type force: boolean
+
+    """
     # test path for venv
     pype_env = os.path.normpath(os.environ.get('PYPE_ENV'))
     if pype_env is None:
@@ -34,8 +47,8 @@ def install(force=False):
         if force is False:
             for dirpath, dirnames, files in os.walk(pype_env):
                 if files or dirnames:
-                    m = t.echo("!!! Destination directory is not empty.")
-                    t.echo("Use --force argument to delete content")
+                    t.echo("!!! Destination directory is not empty.")
+                    # t.echo("Use --force argument to delete content")
                     sys.exit(75)
                     break
         # exists but is empty
@@ -44,7 +57,7 @@ def install(force=False):
             t.echo(">>> Creating directory [ {} ]". format(pype_env))
             os.makedirs(pype_env)
         except OSError as e:
-            m = t.echo(
+            t.echo(
                 "!!! Cannot create destination directory [ {0} ].\n{1}".format(
                     pype_env, e.message
                 ))
