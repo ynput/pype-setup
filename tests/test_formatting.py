@@ -50,10 +50,45 @@ def test_dict_to_obj_levels():
 
 
 def test_solve_optional():
-    # TODO: write test for formatting.py/_solve_optional
-    pass
+    template = "{data_A}<_{data_B}>"
+    test_data_1 = {
+        'data_A': "iamrequiredKey",
+        'data_B': "iamoptionalkey"
+    }
+    test_data_2 = {
+        'data_A': "iamrequiredKey"
+    }
+    formatted_with_optional = formatting._solve_optional(template, test_data_1)
+    formatted_no_optional = formatting._solve_optional(template, test_data_2)
+
+    assert formatted_with_optional == "iamrequiredKey_iamoptionalkey"
+    assert formatted_no_optional == "iamrequiredKey"
 
 
 def test_slicing():
-    # TODO: write test for formatting.py/_slicing()
-    pass
+
+    # TODO: improve this test
+    # this should probably be able to handle two keys with slicing within
+    # a single template. I'm not sure we actually need this function though
+
+    template = "{key1[0:1]}"
+
+    sliced_template, pairs = formatting._slicing(template)
+
+    assert sliced_template == "{key1}"
+    assert pairs == [('key1', [0, 1])]
+
+
+def test_format():
+    template = "{dictKey[A][0]}_{dictKey[B][data]}<_{intKey}>_{key3}<_{missingKey}>"
+    test = {
+        'dictKey': {
+            'A': ["first", 25, 80],
+            'B': {'data': 'test'}
+        },
+        'intKey': 10,
+        'key3': "stringKey"
+    }
+    formatted = formatting.format(template, test)
+
+    assert formatted == "first_test_10_stringKey"
