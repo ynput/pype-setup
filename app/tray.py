@@ -65,6 +65,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def show_error(self, msg, title, msg_title=None):
         error_msg = QtWidgets.QMessageBox(self.parent)
         error_msg.setWindowIcon(self.icon)
+        error_msg.setStyleSheet(style.load_stylesheet())
         error_msg.setIcon(QtWidgets.QMessageBox.Critical)
         if msg_title is None:
             error_msg.setText(msg)
