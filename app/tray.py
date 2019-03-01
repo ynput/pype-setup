@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import psutil
 from pype.ftrack.ftrack_run import FtrackRunner
 from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
@@ -126,8 +127,6 @@ class Application(QtWidgets.QApplication):
     # Main app where IconSysTray widget is running
     def __init__(self):
         super(Application, self).__init__(sys.argv)
-        # Allows to close widgets without exiting app
-        self.setQuitOnLastWindowClosed(False)
 
         pype_setup = os.getenv('PYPE_SETUP_ROOT')
         items = [pype_setup, "app", "resources", "splash.png"]
@@ -144,12 +143,26 @@ class Application(QtWidgets.QApplication):
 
         splash.setMask(splash_pix.mask())
         splash.show()
+
+        # Terminate powershell that runs this script
+        powershell_procs = [p for p in psutil.process_iter() if (
+            'powershell.exe' in p.name() and
+            '--tray' in p.cmdline()
+        )]
+        if len(powershell_procs) > 0:
+            for running_proc in powershell_procs:
+                running_proc.terminate()
         self.processEvents()
+
+        # Allows to close widgets without exiting app
+        self.setQuitOnLastWindowClosed(False)
 
         self.main_window = QtWidgets.QMainWindow()
 
         self.trayIcon = SystemTrayIcon(self.main_window)
         self.trayIcon.show()
+
+        splash.finish(self.main_window)
 
 
 def main():

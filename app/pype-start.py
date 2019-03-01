@@ -235,15 +235,6 @@ def main():
             for running_proc in procs:
                 running_proc.terminate()
 
-        # Terminate powershell that runs this script
-        powershell_procs = [p for p in psutil.process_iter() if (
-            'powershell.exe' in p.name() and
-            '--tray' in p.cmdline()
-        )]
-        if len(powershell_procs) > 0:
-            for running_proc in powershell_procs:
-                running_proc.terminate()
-
         args = ["-d", fname]
         if sys.platform.startswith('linux'):
             subprocess.Popen(
