@@ -129,6 +129,23 @@ class Application(QtWidgets.QApplication):
         # Allows to close widgets without exiting app
         self.setQuitOnLastWindowClosed(False)
 
+        pype_setup = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup, "app", "resources", "splash.png"]
+
+        # Create and display the splash screen
+        splash_pix = QtGui.QPixmap(os.path.sep.join(items))
+        splash = QtWidgets.QSplashScreen(
+            splash_pix, QtCore.Qt.WindowStaysOnTopHint
+        )
+        splash.setWindowFlags(
+            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
+        )
+        splash.setEnabled(False)
+
+        splash.setMask(splash_pix.mask())
+        splash.show()
+        self.processEvents()
+
         self.main_window = QtWidgets.QMainWindow()
 
         self.trayIcon = SystemTrayIcon(self.main_window)
