@@ -265,7 +265,10 @@ def main():
 
     elif kwargs.eventserver:
         pype_config = os.getenv('PYPE_STUDIO_CONFIG')
-        items = [pype_config, "pype", "ftrack", "event_server.py"]
+        items = [
+            pype_config, "pype", "ftrack", "ftrack_server",
+            "event_server.py"
+        ]
         fname = os.path.sep.join(items)
 
         returncode = api.forward([
@@ -273,8 +276,11 @@ def main():
         ] + args)
 
     elif kwargs.eventservercli:
-        event_server_path = os.getenv('FTRACK_EVENT_SERVER')
-        items = [event_server_path, "eventServer.py"]
+        pype_config = os.getenv('PYPE_STUDIO_CONFIG')
+        items = [
+            pype_config, "pype", "ftrack", "ftrack_server",
+            "event_server_cli.py"
+        ]
         fname = os.path.sep.join(items)
 
         returncode = api.forward([
