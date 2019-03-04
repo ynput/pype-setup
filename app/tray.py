@@ -8,10 +8,11 @@ from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from avalon import io
 from launcher import lib as launcher_lib, launcher_widget
 from avalon.tools import libraryloader
+from pype.lib import set_io_database
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
-    def __init__(self, parent=None):
+    def __init__(self, app, parent=None):
         pype_setup = os.getenv('PYPE_SETUP_ROOT')
         items = [pype_setup, "app", "resources", "icon.png"]
         fname = os.path.sep.join(items)
@@ -21,29 +22,76 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         # Store parent - QtWidgets.QMainWindow()
         self.parent = parent
+        self.app = app
 
         # Setup menu in Tray
         self.menu = QtWidgets.QMenu()
         self.menu.setStyleSheet(style.load_stylesheet())
 
-        # Add ftrack menu
-        if os.environ.get('FTRACK_SERVER') is not None:
-            self.ftrack = FtrackRunner(self.parent, self)
-            self.menu.addMenu(self.ftrack.trayMenu(self.menu))
-            self.ftrack.validate()
+        self.try_connect()
 
-        # Add Avalon apps submenu
-        self.avalon_app = AvalonApps(self.parent, self)
-        self.avalon_app.tray_menu(self.menu)
+        # Catch activate event
+        self.activated.connect(self.on_systray_activated)
+        # Add menu to Context of SystemTrayIcon
+        self.setContextMenu(self.menu)
+
+    def set_menu(self):
+        self.menu.clear()
+        if self.db_connected:
+            # Add ftrack menu
+            if os.environ.get('FTRACK_SERVER') is not None:
+                self.ftrack = FtrackRunner(self.parent, self)
+                self.menu.addMenu(self.ftrack.trayMenu(self.menu))
+                self.ftrack.validate()
+
+            # Add Avalon apps submenu
+            self.avalon_app = AvalonApps(self.parent, self)
+            self.avalon_app.tray_menu(self.menu)
+        else:
+            aTryAgain = QtWidgets.QAction("Try again", self)
+            aTryAgain.triggered.connect(self.try_connect)
+            self.menu.addAction(aTryAgain)
+            msg_title = 'Can\'t connect to Database!'
+            msg = (
+                'Please contact your Administrator, Supervisor or Coordinator'
+            )
+            title = 'DB connection error'
+            self.show_error(msg, title, msg_title)
 
         # Add Exit action to menu
         aExit = QtWidgets.QAction("Exit", self)
         aExit.triggered.connect(self.exit)
         self.menu.addAction(aExit)
-        # Catch activate event
-        self.activated.connect(self.on_systray_activated)
-        # Add menu to Context of SystemTrayIcon
-        self.setContextMenu(self.menu)
+
+    def show_error(self, msg, title, msg_title=None):
+        error_msg = QtWidgets.QMessageBox(self.parent)
+        error_msg.setWindowIcon(self.icon)
+        error_msg.setStyleSheet(style.load_stylesheet())
+        error_msg.setIcon(QtWidgets.QMessageBox.Critical)
+        if msg_title is None:
+            error_msg.setText(msg)
+        else:
+            error_msg.setText(msg_title)
+            error_msg.setInformativeText(msg)
+        error_msg.setWindowTitle(title)
+        d_height = self.app.desktop().screen().rect().height()
+        d_width = self.app.desktop().screen().rect().width()
+        em_height = error_msg.rect().height()
+        em_width = error_msg.rect().width()
+        ax = d_width/2-em_width/2*3
+        ay = d_height/2-em_height/2*3
+        error_msg.move(ax, ay)
+        error_msg.show()
+
+    def try_connect(self):
+        # Try connect to DB
+        self.db_connected = True
+        try:
+            set_io_database()
+        except IOError:
+            self.db_connected = False
+
+        self.set_menu()
 
     def on_systray_activated(self, reason):
         # show contextMenu if left click
@@ -159,7 +207,7 @@ class Application(QtWidgets.QApplication):
 
         self.main_window = QtWidgets.QMainWindow()
 
-        self.trayIcon = SystemTrayIcon(self.main_window)
+        self.trayIcon = SystemTrayIcon(self, self.main_window)
         self.trayIcon.show()
 
         splash.finish(self.main_window)
