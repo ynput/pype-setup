@@ -41,6 +41,7 @@ import shutil
 import tempfile
 import contextlib
 import subprocess
+import psutil
 
 from app import api
 
@@ -227,6 +228,15 @@ def main():
         items = [pype_setup, "app", "tray.py"]
         fname = os.path.sep.join(items)
 
+        # Terminate already running tray
+        procs = [p for p in psutil.process_iter() if (
+            'python.exe' in p.name() and
+            fname in p.cmdline()
+        )]
+        if len(procs) > 0:
+            for running_proc in procs:
+                running_proc.terminate()
+
         args = ["-d", fname]
         if sys.platform.startswith('linux'):
             subprocess.Popen(
@@ -240,8 +250,7 @@ def main():
                 stderr=None,
                 preexec_fn=os.setpgrp
             )
-
-        if sys.platform == 'win32':
+        elif sys.platform == 'win32':
             subprocess.Popen(
                 args,
                 universal_newlines=True,
@@ -254,6 +263,7 @@ def main():
                 stderr=subprocess.STDOUT,
                 creationflags=DETACHED_PROCESS
             )
+
     elif kwargs.traydebug:
         pype_setup = os.getenv('PYPE_SETUP_ROOT')
         items = [pype_setup, "app", "tray.py"]

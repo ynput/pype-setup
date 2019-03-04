@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import psutil
 from pype.ftrack.ftrack_run import FtrackRunner
 from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
@@ -126,6 +127,33 @@ class Application(QtWidgets.QApplication):
     # Main app where IconSysTray widget is running
     def __init__(self):
         super(Application, self).__init__(sys.argv)
+
+        pype_setup = os.getenv('PYPE_SETUP_ROOT')
+        items = [pype_setup, "app", "resources", "splash.png"]
+
+        # Create and display the splash screen
+        splash_pix = QtGui.QPixmap(os.path.sep.join(items))
+        splash = QtWidgets.QSplashScreen(
+            splash_pix, QtCore.Qt.WindowStaysOnTopHint
+        )
+        splash.setWindowFlags(
+            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
+        )
+        splash.setEnabled(False)
+
+        splash.setMask(splash_pix.mask())
+        splash.show()
+
+        # Terminate powershell that runs this script
+        powershell_procs = [p for p in psutil.process_iter() if (
+            'powershell.exe' in p.name() and
+            '--tray' in p.cmdline()
+        )]
+        if len(powershell_procs) > 0:
+            for running_proc in powershell_procs:
+                running_proc.terminate()
+        self.processEvents()
+
         # Allows to close widgets without exiting app
         self.setQuitOnLastWindowClosed(False)
 
@@ -133,6 +161,8 @@ class Application(QtWidgets.QApplication):
 
         self.trayIcon = SystemTrayIcon(self.main_window)
         self.trayIcon.show()
+
+        splash.finish(self.main_window)
 
 
 def main():
