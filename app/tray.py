@@ -44,7 +44,6 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
                 self.menu.addMenu(self.ftrack.trayMenu(self.menu))
                 self.ftrack.validate()
 
-            os.environ['CLOCKIFY_WORKSPACE'] = 'PypeTimer'
             if os.environ.get('CLOCKIFY_WORKSPACE', None) is not None:
                 from pype.clockify import ClockifyModule
                 self.clockify = ClockifyModule(self.parent, self)
