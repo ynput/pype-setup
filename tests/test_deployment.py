@@ -4,11 +4,14 @@ import json
 from pprint import pprint
 from pathlib import Path
 from shutil import copyfile
+from git import Repo
 from pypeapp.deployment import Deployment
 from pypeapp.deployment import DeployException
 
 
 class TestDeployment(object):
+    """ Test class for Deployment
+    """
 
     @pytest.fixture
     def set_path(self):
@@ -16,6 +19,13 @@ class TestDeployment(object):
 
     @pytest.fixture
     def deploy_file(self, tmp_path):
+        """ Provide valid sample of deployment.json
+
+            :param tmp_path: temporary path provided by pytest fixture
+            :type tmp_path: path
+            :returns: path to json file
+            :rtype: string
+        """
         data = {
             "repositories": [
                 {
@@ -38,6 +48,13 @@ class TestDeployment(object):
 
     @pytest.fixture
     def invalid_deploy_file(self, tmp_path):
+        """ Provide **invalid** sample of deployment.json
+
+            :param tmp_path: temporary path provided by pytest fixture
+            :type tmp_path: path
+            :returns: path to json file
+            :rtype: string
+        """
         # missing required url
         data = {
             "repositories": [
@@ -59,11 +76,21 @@ class TestDeployment(object):
         return json_path.as_posix()
 
     def test_invalid_path_raises_exception(self):
+        """ Tests if invalid path provided to :class:`Deployment` will raise
+            an exception.
+        """
         with pytest.raises(DeployException) as excinfo:
             Deployment('some_invalid_path')
         assert "PYPE_ROOT" in str(excinfo.value)
 
     def test_read_deployment_file(self, set_path, deploy_file):
+        """ Tests if we can read deployment file.
+
+            :param set_path: pype setup root path
+            :type set_path: string
+            :param deploy_file: path to valid temporary deploy file
+            :type deploy_file: string
+        """
         d = Deployment(set_path)
         data = d._read_deployment_file(deploy_file)
         assert data.get('repositories')[0].get('name') == "avalon-core"
@@ -140,10 +167,20 @@ class TestDeployment(object):
 
         # should fail as `repos` is empty
         with pytest.raises(DeployException) as excinfo:
-            r = d.validate()
+            d.validate()
         assert excinfo.match(r"Repo path doesn't exist")
 
-    def test_deployment(self, tmp_path, deploy_file):
+    def _setup_deployment(self, tmp_path):
+        """ Setup environment for deployment test.
+
+            Create temporary **deploy** and **repos** directories with
+            correct **deploy.json** and it's schema.
+
+            :param tmp_path: path to temporary directory
+            :type tmp_path: string
+            :returns: Deployment instance
+            :rtype: :class:`Deployment`
+        """
         d = Deployment(os.path.normpath(tmp_path.as_posix()))
         deploy_test_path = tmp_path / "deploy"
         deploy_test_path.mkdir()
@@ -163,4 +200,84 @@ class TestDeployment(object):
         repo_test_path = tmp_path / "repos"
         repo_test_path.mkdir()
 
+        return d
+
+    def test_deployment_clean(self, tmp_path):
+        d = self._setup_deployment(tmp_path)
+
         d.deploy()
+
+        settings = d._determine_deployment_file()
+        deploy = d._read_deployment_file(settings)
+
+        for d_item in deploy.get('repositories'):
+            path = os.path.join(
+                d._pype_root, "repos", d_item.get('name'))
+
+            assert d._validate_is_directory(path)
+            assert d._validate_is_repo(path)
+            assert d._validate_is_branch(path,
+                                         d_item.get('branch') or
+                                         d_item.get('tag'))
+
+    def test_deployment_empty_dir(self, tmp_path):
+        d = self._setup_deployment(tmp_path)
+        root = Path(d._pype_root)
+        repo_path = root / 'repos'
+        empty_repo = repo_path / 'avalon-core'
+        empty_repo.mkdir()
+
+        d.deploy()
+
+        settings = d._determine_deployment_file()
+        deploy = d._read_deployment_file(settings)
+
+        for d_item in deploy.get('repositories'):
+            path = os.path.join(
+                d._pype_root, "repos", d_item.get('name'))
+
+            assert d._validate_is_directory(path)
+            assert d._validate_is_repo(path)
+            assert d._validate_is_branch(path,
+                                         d_item.get('branch') or
+                                         d_item.get('tag'))
+
+    def test_deployment_invalid_repo(self, tmp_path):
+        """ Test behavior if there is invalid repository present
+
+            :param tmp_path: temporary pype root path
+            :type tmp_path: :class:`Path`
+        """
+        d = self._setup_deployment(tmp_path)
+        root = Path(d._pype_root)
+        repo_path = root / 'repos'
+        invalid_repo_path = repo_path / 'avalon-core'
+        dirty_repo = Repo.init(str(invalid_repo_path))
+        dirty_file_path = invalid_repo_path / "dirt.txt"
+        with open(dirty_file_path.as_posix(), "w") as write_dirty:
+            write_dirty.write("dirt")
+
+        dirty_repo.index.add(['dirt.txt'])
+        print("dirt path - {}".format(dirty_file_path.as_posix()))
+        assert dirty_repo.is_dirty() is True
+
+        # now we have dirty repository so without force=True we should raise
+        # exception
+        with pytest.raises(DeployException):
+            d.deploy()
+
+        # with force=True, invalid repository should be forcefully replaced
+        d.deploy(force=True)
+
+        settings = d._determine_deployment_file()
+        deploy = d._read_deployment_file(settings)
+
+        for d_item in deploy.get('repositories'):
+            path = os.path.join(
+                d._pype_root, "repos", d_item.get('name'))
+
+            assert d._validate_is_directory(path)
+            assert d._validate_is_repo(path)
+            assert d._validate_is_branch(path,
+                                         d_item.get('branch') or
+                                         d_item.get('tag'))

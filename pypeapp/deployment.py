@@ -391,7 +391,8 @@ class Deployment(object):
             :rtype: boolean
         """
         repo = git.Repo(path)
-        return repo.bare
+        print('!-! dirty {}'.format(repo.is_dirty()))
+        return repo.is_dirty()
 
     def _validate_is_branch(self, path, branch):
         """ Validate if directory is git repository with active branch.
@@ -404,11 +405,12 @@ class Deployment(object):
             :rtype: boolean
         """
         repo = git.Repo(path)
-        if repo.active_branch != branch:
+        if str(repo.active_branch) != str(branch):
+            print("{} != {}".format(repo.active_branch, branch))
             return False
         return True
 
-    def _validate_origin(self, path, origin):
+    def _validate_origin(self, path: str, origin: str) -> bool:
         """ Validate if directory is git repository remote origin.
 
             :param path: string path to test
@@ -419,9 +421,45 @@ class Deployment(object):
             :rtype: boolean
         """
         repo = git.Repo(path)
-        if repo.remotes.origin.url != origin:
+
+        # if there is no origin, repo has no remotes possibly and is invalid
+        try:
+            if repo.remotes.origin.url != origin:
+                return False
+        except AttributeError:
             return False
         return True
+
+    def _recreate_repository(self, path, repo):
+        """ Recreate (remove and clone) repository on specifed path.
+
+            :param path: string path to repository
+            :type path: string
+            :param repo: dict representing item from deployment file
+            :type repo: dict
+            :raises: :class:`DeployException`
+        """
+        try:
+            shutil.rmtree(path)
+        except OSError as e:
+            raise DeployException(("Cannot remove existing non"
+                                   " git repository.{}".format(e))
+                                  ) from e
+        else:
+            # clone repo
+            try:
+                git.Repo.clone_from(
+                    repo.get('url'),
+                    path,
+                    progress=_GitProgress(),
+                    env=None,
+                    b=repo.get('branch') or repo.get('tag')
+                )
+            except git.exc.GitCommandError as e:
+                raise DeployException(
+                    "Git clone failed for {}".format(
+                        repo.get("url"))
+                ) from e
 
     def deploy(self, force=False):
         """ Do repositories deployment and install python dependencies.
@@ -453,37 +491,27 @@ class Deployment(object):
                 # is it repository?
                 if not self._validate_is_repo(path):
                     # no, remove dir no matter of content
-                    term.echo("  - removing existing directory ...")
-                    try:
-                        shutil.rmtree(path)
-                    except OSError as e:
-                        raise DeployException(("Cannot remove existing non"
-                                               " git repository.{}".format(e))
-                                              ) from e
-                    else:
-                        # clone repo
-                        try:
-                            git.Repo.clone_from(
-                                ritem.get('url'),
-                                path,
-                                progress=_GitProgress(),
-                                env=None,
-                                b=ritem.get('branch') or ritem.get('tag')
-                            )
-                        except git.exc.GitCommandError as e:
-                            raise DeployException(
-                                "Git clone failed for {}".format(
-                                    ritem.get("url"))
-                            ) from e
+                    term.echo("  - removing existing directory and cloning...")
+                    self._recreate_repository(path, ritem)
                 else:
                     # dir is repository
                     repo = git.Repo(path)
                     # is it right one?
-                    if self._validate_origin(path, ritem.get('url')):
-                        if self._validate_is_dirty is True and force is False:
-                            raise DeployException(
-                                ("Repo on path [ {} ] has dirty"
-                                 " worktree").format(path), 300)
+                    if not self._validate_origin(path, str(ritem.get('url'))):
+                        # repository has different origin then specified
+                        term.echo("!!! repository has different origin. ")
+                        if (self._validate_is_dirty(path) is True and
+                           force is False):
+                            raise DeployException(('Invalid repository on '
+                                                   'path {}'.format(path)))
+                        term.echo(" -> recreating repository. ")
+                        self._recreate_repository(path, ritem)
+                        pass
+                    if (self._validate_is_dirty(path) is True and
+                       force is False):
+                        raise DeployException(
+                            ("Repo on path [ {} ] has dirty"
+                             " worktree").format(path), 300)
 
                     # are we on correct branch?
                     if not self._validate_is_branch(path,
