@@ -51,7 +51,9 @@ class PypeLauncher(object):
     _args = None
 
     def __init__(self):
+        # TODO: make PYTHONPATH management better
         sys.path.append(os.path.join(os.getenv('PYPE_ROOT'), 'vendor', 'acre'))
+        sys.path.append(os.path.join(os.getenv('PYPE_ROOT'), 'repos', 'pype'))
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--install", help="Install environment",
@@ -100,14 +102,12 @@ class PypeLauncher(object):
                             action="store_true")
         self._kwargs, self._args = parser.parse_known_args()
 
-        pprint(self._kwargs)
+        # pprint(self._kwargs)
 
         if self._kwargs.tray or self._kwargs.traydebug:
 
             if self._kwargs.traydebug:
-
                 os.environ['PYPE_DEBUG'] = '3'
-                print('setdebug {}'.format(os.getenv('PYPE_DEBUG')))
 
             self._launch_tray(debug=self._kwargs.traydebug)
 
@@ -135,7 +135,6 @@ class PypeLauncher(object):
         api = Api()
 
         if debug:
-            print(">>> debug {}".format(os.environ['PYPE_DEBUG']))
             pype_setup = os.getenv('PYPE_ROOT')
             items = [pype_setup, "pypeapp", "tray.py"]
             fname = os.path.sep.join(items)

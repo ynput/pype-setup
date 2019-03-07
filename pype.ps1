@@ -78,11 +78,11 @@ function Check-Environment {
   if (Compare-Object -ReferenceObject $p -DifferenceObject $r) {
     # environment differs from requirements.txt
     Write-Color -Text "FAILED" -Color Yellow
-    Write-Color -Text "*** ", "Environment dependencies inconsistent, fixing ... " -Color Yellow, Gray -NoNewLine
+    Write-Color -Text "*** ", "Environment dependencies inconsistent, fixing ... " -Color Yellow, Gray
     if ($offline -ne $true) {
-      Start-Progress {& pip install -r pypeapp\requirements.txt | out-null}
+      & pip install -r pypeapp\requirements.txt
     } else {
-      Start-Progress {& pip install -r pypeapp\requirements.txt -f vendor\packages | out-null}
+      & pip install -r pypeapp\requirements.txt -f vendor\packages
     }
   } else {
     Write-Color -Text "OK" -Color Green
