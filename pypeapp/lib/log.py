@@ -2,7 +2,6 @@ import logging
 import os
 import datetime
 import time
-from sys import stdout
 
 from logging.handlers import TimedRotatingFileHandler
 from .Terminal import Terminal
@@ -125,7 +124,8 @@ class PypeLogger:
     def __init__(self):
         pass
 
-    def _get_file_path(self, host):
+    @staticmethod
+    def get_file_path(host='pype'):
 
         ts = time.time()
         log_name = datetime.datetime.fromtimestamp(ts).strftime(
@@ -148,7 +148,7 @@ class PypeLogger:
         return logger_file_path
 
     def _get_file_handler(self, host):
-        logger_file_path = self._get_file_path(host)
+        logger_file_path = PypeLogger.get_file_path(host)
 
         formatter = PypeFormatter(self.FORMAT_FILE)
 

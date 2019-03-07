@@ -391,7 +391,6 @@ class Deployment(object):
             :rtype: boolean
         """
         repo = git.Repo(path)
-        print('!-! dirty {}'.format(repo.is_dirty()))
         return repo.is_dirty()
 
     def _validate_is_branch(self, path, branch):
