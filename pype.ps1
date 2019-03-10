@@ -27,6 +27,33 @@ if (-not (Get-Module -ListAvailable -Name "PSWriteColor")) {
   Install-Module -Name "PSWriteColor" -Scope CurrentUser
 }
 
+# Display spinner for running job
+function Start-Progress {
+  param(
+    [ScriptBlock]
+    $code
+  )
+  $scroll = "/-\|/-\|"
+  $idx = 0
+  $origpos = $host.UI.RawUI.CursorPosition
+  $newPowerShell = [PowerShell]::Create().AddScript($code)
+  $handle = $newPowerShell.BeginInvoke()
+  while ($handle.IsCompleted -eq $false) {
+    $host.UI.RawUI.CursorPosition = $origpos
+    Write-Host $scroll[$idx] -NoNewline
+    $idx++
+    if($idx -ge $scroll.Length)
+    {
+      $idx = 0
+    }
+    Start-Sleep -Milliseconds 100
+  }
+  Write-Host ''
+  $newPowerShell.EndInvoke($handle)
+  $newPowerShell.Runspace.Close()
+  $newPowerShell.Dispose()
+}
+
 function Activate-Venv {
   param(
     [string]$Environment
@@ -51,7 +78,7 @@ function Check-Environment {
   if (Compare-Object -ReferenceObject $p -DifferenceObject $r) {
     # environment differs from requirements.txt
     Write-Color -Text "FAILED" -Color Yellow
-    Write-Color -Text "*** ", "Environment dependencies inconsistent, fixing ..." -Color Yellow, Gray
+    Write-Color -Text "*** ", "Environment dependencies inconsistent, fixing ... " -Color Yellow, Gray
     if ($offline -ne $true) {
       & pip install -r pypeapp\requirements.txt
     } else {
@@ -66,13 +93,19 @@ function Bootstrap-Pype {
   # ensure latest pip version
   if ($offline -ne $true)
   {
-    & python -m pip install --upgrade pip
+    Write-Color -Text ">>> ", "Bootstrapping Pype ... " -Color Green, Gray -NoNewLine
+    Start-Progress {& python -m pip install --upgrade pip | out-null}
 
     # install essential dependecies
+    Write-Color -Text "  - ", "Installing dependencies ... " -Color Cyan, Gray
     & pip install -r pypeapp/requirements.txt
+    if ($LASTEXITCODE -ne 0) {
+      Write-Color -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
+    }
   } else {
     # in offline mode, install all from vendor
-    & pip install -r pypeapp/requirements.txt -f vendor/packages
+    Write-Color -Text ">>> ", "Downloading dependencies ... " -Color Green, Gray -NoNewLine
+    Start-Progress {& pip install -r pypeapp/requirements.txt -f vendor/packages | out-null}
   }
 }
 
@@ -200,7 +233,7 @@ if ($download -eq $true) {
   & pip download -r pypeapp\requirements.txt -d vendor\packages --platform any
   Write-Color -Text "<-- ", "Deactivating environment ..." -Color Cyan, Gray
   deactivate
-  Write-Color -Text "xxx ", "Terminating ..." -Color Magenta, Gray
+  Write-Color -Text "+++ ", "Terminating ..." -Color Magenta, Gray
   exit
 }
 
@@ -258,4 +291,9 @@ if ($LASTEXITCODE -ne 0) {
     Write-Color -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
   }
 }
+if ($intall -eq $true) {
+    Write-Color -Text "*** ", "Installation complete. ", "Have a nice day!" -Color Green, White, Gray
+    exit 0
+}
 Write-Color -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
+& python -m "pypeapp" @arguments

@@ -38,7 +38,7 @@
     {
       "name": "pype-config",
       "url": "git@bitbucket.org:pypeclub/pype-templates.git",
-      "branch": "develop"
+      "branch": "feature/2.0/PYPE-217-prepare-new-pype-config"
     }
 	],
   "pip": [
