@@ -7,7 +7,7 @@ for /d %%d in ( %~dp0repos\*) do (
 echo adding path %%d
 set PYTHONPATH=%%d;!PYTHONPATH!
 )
-pytest --ignore=%~dp0repos
+pytest --ignore=%~dp0repos --ignore=%~dp0vendor %*
 
 set PYTHONPATH=%_OLD_PYTHONPATH%
 call "C:\Users\Public\pype_env2\Scripts\deactivate.bat"

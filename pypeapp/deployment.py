@@ -79,13 +79,13 @@ class _GitProgress(git.remote.RemoteProgress):
             self._t.close()
             self._t = None
 
-    def _check_mask(self, opcode):
+    def _check_mask(self, opcode: int) -> bool:
         """" Add meaningful description to **GitPython** opcodes.
 
             :param opcode: OP_MASK opcode
             :type opcode: int
             :return: String description of opcode
-            :rtype: string
+            :rtype: str
 
             .. seealso:: For opcodes look at :class:`git.RemoteProgress`
 
@@ -116,8 +116,6 @@ stable/reference.html#git.objects.submodule.base.Submodule.update>`_
         """
         code = self._check_mask(op_code)
         if self._current_status != code or self._current_max != max_count:
-            # print("{}-{} | {}-{}".format(code, self._current_status,
-            #                              max_count, self._current_max))
             self._current_max = max_count
             self._current_status = code
             self._detroy_tqdm()
@@ -146,7 +144,7 @@ class Deployment(object):
         location. It will normalize path.
 
         :param pype_root: Path to Pype setup
-        :type pype_root: string
+        :type pype_root: str
         :raises: :class:`DeployException`
 
         """
@@ -162,7 +160,7 @@ class Deployment(object):
         """ Just reads deployment file as a json
 
             :param file: path to json file
-            :type file: string
+            :type file: str
             :return: parsed json
             :rtype: dict
 
@@ -175,7 +173,7 @@ class Deployment(object):
         """ Reads json schema from file
 
             :param file: path to schema json
-            :type file: string
+            :type file: str
             :return: parsed json schema
             :rtype: dict
             :raises: :class:`DeployException`
@@ -197,7 +195,7 @@ class Deployment(object):
             one will take priority.
 
             :return: Path to deployment file
-            :rtype: string
+            :rtype: str
             :raises: :class:`DeployException`
 
             .. note::
@@ -228,7 +226,7 @@ class Deployment(object):
             :param settings: Deployment settings from parsed json
             :type settings: dict
             :return: True if validated, False if not
-            :rtype: boolean
+            :rtype: bool
 
             .. seealso::
                 :func:`Deployment._read_schema`
@@ -264,10 +262,10 @@ class Deployment(object):
             :param skip:    if True skip if directory not exists. Used during
                             installation where some directories will be
                             installed nevertheless.
-            :type skip: boolean
+            :type skip: bool
 
             :return: True if validated, otherwise throw exception
-            :rtype: boolean
+            :rtype: bool
             :raises: :class:`DeployException` With info on what is wrong
 
         """
@@ -282,88 +280,91 @@ class Deployment(object):
             test_path = os.path.join(
                 self._pype_root, "repos", ritem.get('name'))
             # does repo directory exist?
-            if not os.path.exists(test_path):
+            if not self._validate_is_directory(test_path):
                 if skip:
                     continue
                 raise DeployException(
                     "Repo path doesn't exist [ {} ]".format(test_path), 130)
-            try:
-                repo = git.Repo(test_path)
-            except git.exc.InvalidGitRepositoryError as e:
+
+            if not self._validate_is_repo(test_path):
                 raise DeployException(
                     "Path {} exists but it is not valid repository".format(
-                        test_path)) from e
+                        test_path))
 
             # bare repo isn't allowed
-            if repo.bare is True:
+            if self._validate_is_bare(test_path):
                 raise DeployException(
                     "Repo on path [ {} ] is bare".format(test_path), 300)
 
-            head = repo.heads[0]
+            # check origin
+            if not self._validate_origin(test_path, ritem.get('url')):
+                raise DeployException(
+                    "Repo {} origin {} should be {}.".format(
+                        test_path,
+                        git.Repo(test_path).remotes.origin.url,
+                        ritem.get('url')
+                    ), 300)
+
             # check we are on branch
             if ritem.get('branch'):
-                if head.name != ritem.get('branch'):
+                if not self._validate_is_branch(test_path,
+                                                ritem.get('branch')):
                     raise DeployException(
                         'repo {0} head is not on {1}(!={2}) branch'.format(
                             ritem.get('name'),
                             ritem.get('branch'),
-                            head.name
+                            git.Repo(test_path).heads[0].name
                         ), 210)
-            commit = head.commit
+
             # check we are on ref
             if ritem.get('ref'):
-                if not commit.hexsha.startswith(ritem.get('ref')):
+                if not self._validate_is_ref(test_path, ritem.get('ref')):
                     raise DeployException(
                         'repo {0} head is not on {1}(!={2}) ref'.format(
                             ritem.get('name'),
                             ritem.get('ref'),
-                            commit.hexsha
+                            git.Repo(test_path).heads[0].commit.hexsha
                         ), 220)
             # check tag
             if ritem.get('tag'):
-                tag = next(
-                    rtag for rtag in head.tags
-                    if rtag["tag"] == ritem.get('tag'))
-                if tag.commit.hexsha != commit.hexsha:
+                if self._validate_is_tag(test_path, ritem.get('tag')):
                     raise DeployException(
-                        'repo {0} head is not on {1}(!={2}) tag {3}'.format(
+                        'repo {0} head is not on tag {1}'.format(
                             ritem.get('name'),
-                            tag.commit.hexsha,
-                            commit.hexsha,
                             ritem.get('tag')
                         ), 230)
 
         return True
 
-    def _validate_is_directory(self, path):
+    def _validate_is_directory(self, path: str) -> bool:
         """ Validate if path is directory.
 
             :param path: string path to test
-            :type path: string
+            :type path: str
             :return: is dir
-            :rtype: boolean
+            :rtype: bool
         """
         return os.path.isdir(path)
 
-    def _validate_is_empty(self, path):
+    def _validate_is_empty(self, path: str) -> bool:
         """ Validate if directory is empty.
 
             :param path: string path to test
-            :type path: string
+            :type path: str
             :return: is empty
-            :rtype: boolean
+            :rtype: bool
         """
         if any(os.scandir(path)):
             return False
         return True
 
-    def _validate_is_repo(self, path):
+    def _validate_is_repo(self, path: str) -> bool:
         """ Validate if directory is git repository.
 
             :param path: string path to test
-            :type path: string
+            :type path: str
             :return: is repo
-            :rtype: boolean
+            :rtype: bool
         """
         try:
             git.Repo(path)
@@ -371,37 +372,37 @@ class Deployment(object):
             return False
         return True
 
-    def _validate_is_bare(self, path):
+    def _validate_is_bare(self, path: str) -> bool:
         """ Validate if directory is bare git repository.
 
             :param path: string path to test
-            :type path: string
+            :type path: str
             :return: is bare
-            :rtype: boolean
+            :rtype: bool
         """
         repo = git.Repo(path)
         return repo.bare
 
-    def _validate_is_dirty(self, path):
+    def _validate_is_dirty(self, path: str) -> bool:
         """ Validate if directory is git repository with dirty worktree.
 
             :param path: string path to test
-            :type path: string
+            :type path: str
             :return: is dirty
-            :rtype: boolean
+            :rtype: bool
         """
         repo = git.Repo(path)
         return repo.is_dirty()
 
-    def _validate_is_branch(self, path, branch):
+    def _validate_is_branch(self, path: str, branch: str) -> bool:
         """ Validate if directory is git repository with active branch.
 
             :param path: string path to test
-            :type path: string
+            :type path: str
             :param branch: name of branch
-            :type branch: string
-            :return: is dir
-            :rtype: boolean
+            :type branch: str
+            :return: is branch
+            :rtype: bool
         """
         repo = git.Repo(path)
         if str(repo.active_branch) != str(branch):
@@ -409,15 +410,51 @@ class Deployment(object):
             return False
         return True
 
+    def _validate_is_ref(self, path: str, ref: str) -> bool:
+        """ Validate if repository on given path is on specified ref.
+
+            :param path: string path to test
+            :type path: str
+            :param branch: hash of reference
+            :type branch: str
+            :return: if is on reference
+            :rtype: bool
+        """
+        repo = git.Repo(path)
+        head = repo.heads[0]
+        commit = head.commit
+        return commit.hexsha.startswith(ref)
+
+    def _validate_is_tag(self, path: str, tag: str) -> bool:
+        """ Validate if repository head reference specified tag.
+
+             :param path: string path to test
+             :type path: str
+             :param branch: tag name
+             :type branch: str
+             :return: if is on tag
+             :rtype: bool
+        """
+        # get tag
+        head = git.Repo(path).heads[0]
+        tags = head.tags
+        tag = next(
+            rtag for rtag in tags
+            if rtag["tag"] == tag)
+        if tag.commit.hexsha != head.commit.hexsha:
+            return False
+
+        return True
+
     def _validate_origin(self, path: str, origin: str) -> bool:
         """ Validate if directory is git repository remote origin.
 
             :param path: string path to test
-            :type path: string
+            :type path: str
             :param origin: url of remote origin
-            :type branch: string
+            :type branch: str
             :return: is origin
-            :rtype: boolean
+            :rtype: bool
         """
         repo = git.Repo(path)
 
@@ -429,7 +466,7 @@ class Deployment(object):
             return False
         return True
 
-    def _recreate_repository(self, path, repo):
+    def _recreate_repository(self, path: str, repo: dict):
         """ Recreate (remove and clone) repository on specifed path.
 
             :param path: string path to repository
@@ -440,7 +477,7 @@ class Deployment(object):
         """
         try:
             shutil.rmtree(path)
-        except OSError as e:
+        except (OSError, PermissionError) as e:
             raise DeployException(("Cannot remove existing non"
                                    " git repository.{}".format(e))
                                   ) from e
@@ -468,7 +505,7 @@ class Deployment(object):
 
             :param force:   overwrite existng repos if it's working tree is
                             dirty.
-            :type force: boolean
+            :type force: bool
             :raises: :class:`DeployException`
 
         """
@@ -571,3 +608,19 @@ class Deployment(object):
         with open(r_path, 'w') as r_write:
             r_write.write(out)
         pass
+
+    def get_deployment_paths(self) -> list:
+        """ Return paths from **deploy.json** for later use.
+
+            :returns: list of paths ``[str, str, ...]``
+            :rtype: list
+        """
+        settings = self._determine_deployment_file()
+        deploy = self._read_deployment_file(settings)
+
+        dirs = []
+        for ritem in deploy.get('repositories'):
+            path = os.path.join(
+                self._pype_root, "repos", ritem.get('name'))
+            dirs.append(path)
+        return dirs
