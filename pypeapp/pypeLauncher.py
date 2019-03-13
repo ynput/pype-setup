@@ -133,6 +133,8 @@ class PypeLauncher(object):
         # log = Logger().get_logger('launcher')
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         paths = d.get_deployment_paths()
+        # add self
+        paths.append(os.environ.get('PYPE_ROOT'))
 
         # additional vendor packages
         vendor_path = os.path.join(os.getenv('PYPE_ROOT'), 'vendor', 'python')
