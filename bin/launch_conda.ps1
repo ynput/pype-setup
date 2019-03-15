@@ -81,16 +81,16 @@ function Check-EnvMatch {
   Write-Color -Text ">>> ", "Checking difference between local and remote env (this can take a momet) ..." -Color Green, Gray
   $local = Get-ChildItem -Recurse -Path $env:LOCAL_ENV_DIR
   $remote = Get-ChildItem -Recurse -Path $env:REMOTE_ENV_DIR
-  $same = false
+  $same = $false
 
   if (!$local -Or !$remote) {
-    $same = false
+    $same = $false
   }
   else {
     if (Compare-Object $local $remote) {
-      $same = false
+      $same = $false
     } else {
-      $same = true
+      $same = $true
     }
   }
 
@@ -215,10 +215,10 @@ Checksum file must be present in environment. Either remote environment is inval
 or sync didn't finish properly. Check remote environment, delete it if necessary and run installer again.
 '@
   }
-  $invalid = false
+  $invalid = $false
   $checksum = Compute-LocalChecksum $env:LOCAL_ENV_DIR
   if (Compare-Object -ReferenceObject $checksum -DifferenceObject $(Get-Content "$($env:LOCAL_ENV_DIR)\checksum")) {
-      $invalid = true
+      $invalid = $true
   }
 
   if ($invalid) {
