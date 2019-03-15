@@ -1,7 +1,7 @@
 import argparse
 import os
 import sys
-from pprint import pprint
+# from pprint import pprint
 
 
 class PypeLauncher(object):
@@ -32,7 +32,7 @@ class PypeLauncher(object):
           - **skip**: is implemented on shell side but to that flag will skip
             installation of environmen at all.
 
-        - **deploy**: will deploy repositories set in ""deploy/deploy.json""
+        - **deploy**: will deploy repositories set in ``deploy/deploy.json``
           or in it's override directory. It will deploy git repositories and
           install additional python dependencies via pip.
 
@@ -40,7 +40,7 @@ class PypeLauncher(object):
             git to overwrite all existing repositories already in path.
 
         - **validate**: will validate Pype deployment, comparing it to
-          ""deploy/deploy.json"" or it override.
+          ``deploy/deploy.json`` or it override.
 
           - **skipmissing**: will skip validation of missing repositories.
             used during installation stage.
@@ -51,9 +51,7 @@ class PypeLauncher(object):
     _args = None
 
     def __init__(self):
-        # TODO: make PYTHONPATH management better
-        sys.path.append(os.path.join(os.getenv('PYPE_ROOT'), 'vendor', 'acre'))
-        sys.path.append(os.path.join(os.getenv('PYPE_ROOT'), 'repos', 'pype'))
+        self._add_modules()
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--install", help="Install environment",
@@ -119,6 +117,46 @@ class PypeLauncher(object):
 
         elif self._kwargs.deploy:
             self._deploy()
+
+    def _add_modules(self):
+        """ Include in **PYTHONPATH** all necessary packages.
+
+            This will add all paths to deployed repos and also everything
+            in ""vendor/python"". It will add it to :class:`sys.path` and to
+            **PYTHONPATH** environment variable.
+
+            .. note:: This will append, not overwrite existing paths
+        """
+        from deployment import Deployment
+        # from pypeapp import Logger
+
+        # log = Logger().get_logger('launcher')
+        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        paths = d.get_deployment_paths()
+        # add self
+        paths.append(os.environ.get('PYPE_ROOT'))
+
+        # additional vendor packages
+        vendor_path = os.path.join(os.getenv('PYPE_ROOT'), 'vendor', 'python')
+
+        with os.scandir(vendor_path) as vp:
+            for entry in vp:
+                if entry.is_dir():
+                    paths.append(entry.path)
+
+        if (os.environ.get('PYTHONPATH')):
+            python_paths = os.environ.get('PYTHONPATH').split(os.pathsep)
+        else:
+            python_paths = []
+
+        # add only if not already present
+        for p in paths:
+            sys.path.append(p)
+            if p not in python_paths:
+                os.environ['PYTHONPATH'] += os.pathsep + p
+            if p not in sys.path:
+                sys.path.append(p)
+        pass
 
     def _launch_tray(self, debug=False):
         """ Method will launch tray.py
