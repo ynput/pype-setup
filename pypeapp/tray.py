@@ -1,20 +1,16 @@
 import os
 import sys
-import argparse
-from pype.ftrack.ftrack_run import FtrackRunner
-from pypeapp import style
-from pypeapp.vendor.Qt import QtCore, QtGui, QtWidgets
-from avalon import io
-from launcher import lib as launcher_lib, launcher_widget
-from avalon.tools import libraryloader
+from pypeapp import style, Logger
+from Qt import QtCore, QtGui, QtWidgets
+from pypeapp.lib.config import get_presets
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def __init__(self, parent=None):
-        pype_setup = os.getenv('PYPE_SETUP_ROOT')
-        items = [pype_setup, "app", "resources", "icon.png"]
-        fname = os.path.sep.join(items)
-        self.icon = QtGui.QIcon(fname)
+        # TODO: Better way to get icon
+        pathname = os.path.dirname(sys.argv[0])
+        items = [pathname, "resources", "icon.png"]
+        self.icon = QtGui.QIcon(os.path.sep.join(items))
 
         QtWidgets.QSystemTrayIcon.__init__(self, self.icon, parent)
 
@@ -25,20 +21,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.menu = QtWidgets.QMenu()
         self.menu.setStyleSheet(style.load_stylesheet())
 
-        # Add ftrack menu
-        if os.environ.get('FTRACK_SERVER') is not None:
-            self.ftrack = FtrackRunner(self.parent, self)
-            self.menu.addMenu(self.ftrack.trayMenu(self.menu))
-            self.ftrack.validate()
+        # Set modules
+        self.tray_man = TrayManager(self, self.parent)
+        self.tray_man.process_presets()
 
-        # Add Avalon apps submenu
-        self.avalon_app = AvalonApps(self.parent, self)
-        self.avalon_app.tray_menu(self.menu)
-
-        # Add Exit action to menu
-        aExit = QtWidgets.QAction("Exit", self)
-        aExit.triggered.connect(self.exit)
-        self.menu.addAction(aExit)
         # Catch activate event
         self.activated.connect(self.on_systray_activated)
         # Add menu to Context of SystemTrayIcon
@@ -47,7 +33,6 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
-            # get position of cursor
             position = QtGui.QCursor().pos()
             self.contextMenu().popup(position)
 
@@ -57,69 +42,121 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         QtCore.QCoreApplication.exit()
 
 
-class AvalonApps:
-    from app.api import Logger
-    log = Logger.getLogger(__name__)
+class TrayManager:
+    modules = {}
+    errors = []
+    items = get_presets().get('tray', {}).get('menu_items', [])
+    available_sourcetypes = ['python', 'file']
+    def __init__(self, tray_widget, main_window):
+        self.tray_widget = tray_widget
+        self.main_window = main_window
+        self.log = Logger().get_logger(self.__class__.__name__)
 
-    def __init__(self, main_parent=None, parent=None):
+    def process_presets(self):
+        self.process_items(self.items, self.tray_widget.menu)
 
-        self.main_parent = main_parent
-        self.parent = parent
-        self.app_launcher = None
+        # Add Exit action to menu
+        aExit = QtWidgets.QAction("&Exit", self.tray_widget)
+        aExit.triggered.connect(self.tray_widget.exit)
+        self.tray_widget.menu.addAction(aExit)
 
-    # Definition of Tray menu
-    def tray_menu(self, parent_menu=None):
-        # Actions
-        if parent_menu is None:
-            if self.parent is None:
-                self.log.warning('Parent menu is not set')
-                return
-            elif self.parent.hasattr('menu'):
-                parent_menu = self.parent.menu
-            else:
-                self.log.warning('Parent menu is not set')
-                return
+    def process_items(self, items, parent_menu):
+        for item in items:
+            i_type = item.get('type', None)
+            result = False
+            if i_type is None:
+                continue
+            elif i_type == 'module':
+                result = self.add_module(item, parent_menu)
+            elif i_type == 'action':
+                result = self.add_action(item, parent_menu)
+            elif i_type == 'menu':
+                result = self.add_menu(item, parent_menu)
+            elif i_type == 'separator':
+                result = self.add_separator(parent_menu)
 
-        avalon_launcher_icon = launcher_lib.resource("icon", "main.png")
-        aShowLauncher = QtWidgets.QAction(
-            QtGui.QIcon(avalon_launcher_icon), "&Launcher", parent_menu
-        )
+            if result is False:
+                self.errors.append(item)
 
-        aLibraryLoader = QtWidgets.QAction("Library", parent_menu)
-
-        parent_menu.addAction(aShowLauncher)
-        parent_menu.addAction(aLibraryLoader)
-
-        aShowLauncher.triggered.connect(self.show_launcher)
-        aLibraryLoader.triggered.connect(self.show_library_loader)
-
-        return
-
-    def show_launcher(self):
-        # if app_launcher don't exist create it/otherwise only show main window
-        if self.app_launcher is None:
-            parser = argparse.ArgumentParser()
-            parser.add_argument("--demo", action="store_true")
-            parser.add_argument(
-                "--root", default=os.environ["AVALON_PROJECTS"]
+    def add_module(self, item, parent_menu):
+        import_path = item.get('import_path', None)
+        title = item.get('title', import_path)
+        fromlist = item.get('fromlist', [])
+        try:
+            module = __import__(
+                "{}".format(import_path),
+                fromlist=fromlist
             )
-            kwargs = parser.parse_args()
+            self.modules[title] = module.tray_init(
+                self.tray_widget, self.main_window, parent_menu
+            )
+        except ImportError as ie:
+            self.log.warning(
+                "{} - Module import Error: {}".format(title, str(ie))
+            )
+            return False
+        return True
 
-            root = kwargs.root
-            root = os.path.realpath(root)
-            io.install()
-            APP_PATH = launcher_lib.resource("qml", "main.qml")
-            self.app_launcher = launcher_widget.Launcher(root, APP_PATH)
+    def add_action(self, item, parent_menu):
+        sourcetype = item.get('sourcetype', None)
+        command = item.get('command', None)
+        title = item.get('title', '*ERROR*')
+        tooltip = item.get('tooltip', None)
 
-        self.app_launcher.window.show()
+        if sourcetype not in self.available_sourcetypes:
+            self.log.error('item "{}" has invalid sourcetype'.format(title))
+            return False
+        if command is None or command.strip() == '':
+            self.log.error('item "{}" has invalid command'.format(title))
+            return False
 
-    def show_library_loader(self):
-        libraryloader.show(
-            parent=self.main_parent,
-            icon=self.parent.icon,
-            show_projects=True,
-            show_libraries=True
-        )
+        new_action = QtWidgets.QAction(title, parent_menu)
+        if tooltip is not None and tooltip.strip() != '':
+            new_action.setToolTip(tooltip)
+
+        if sourcetype == 'python':
+            new_action.triggered.connect(
+                lambda: exec(command)
+            )
+        elif sourcetype == 'file':
+            command = os.path.normpath(command)
+            if '$' in command:
+                command_items = command.split(os.path.sep)
+                for i in range(len(command_items)):
+                    if command_items[i].startswith('$'):
+                        # TODO: raise error if environment was not found?
+                        command_items[i] = os.environ.get(
+                            command_items[i].replace('$', ''), command_items[i]
+                        )
+                command = os.path.sep.join(command_items)
+
+            new_action.triggered.connect(
+                lambda: exec(open(command).read(), globals())
+            )
+
+        parent_menu.addAction(new_action)
+
+    def add_menu(self, item, parent_menu):
+        try:
+            title = item.get('title', None)
+            if title is None or title.strip() == '':
+                self.log.error('Missing title in menu from presets')
+                return False
+            new_menu = QtWidgets.QMenu(title, parent_menu)
+            new_menu.setProperty('submenu', 'on')
+            parent_menu.addMenu(new_menu)
+
+            self.process_items(item.get('items', []), new_menu)
+            return True
+        except Exception:
+            return False
+
+    def add_separator(self, parent_menu):
+        try:
+            parent_menu.addSeparator()
+            return True
+        except Exception:
+            return False
 
 
 class Application(QtWidgets.QApplication):
