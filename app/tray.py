@@ -2,7 +2,6 @@ import os
 import sys
 import argparse
 import psutil
-from pype.ftrack.ftrack_run import FtrackRunner
 from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from avalon import io
@@ -40,10 +39,16 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         if self.db_connected:
             # Add ftrack menu
             if os.environ.get('FTRACK_SERVER') is not None:
+                from pype.ftrack.ftrack_run import FtrackRunner
                 self.ftrack = FtrackRunner(self.parent, self)
                 self.menu.addMenu(self.ftrack.trayMenu(self.menu))
                 self.ftrack.validate()
 
+            if os.environ.get('CLOCKIFY_WORKSPACE', None) is not None:
+                from pype.clockify import ClockifyModule
+                self.clockify = ClockifyModule(self.parent, self)
+                self.menu.addMenu(self.clockify.tray_menu(self.menu))
+                self.clockify.start_up()
             # Add Avalon apps submenu
             self.avalon_app = AvalonApps(self.parent, self)
             self.avalon_app.tray_menu(self.menu)
