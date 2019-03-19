@@ -3,14 +3,12 @@ import sys
 from pypeapp import style, Logger
 from Qt import QtCore, QtGui, QtWidgets
 from pypeapp.lib.config import get_presets
+from pypeapp.resources import get_resource
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def __init__(self, parent=None):
-        # TODO: Better way to get icon
-        pathname = os.path.dirname(sys.argv[0])
-        items = [pathname, "resources", "icon.png"]
-        self.icon = QtGui.QIcon(os.path.sep.join(items))
+        self.icon = QtGui.QIcon(get_resource('icon.png'))
 
         QtWidgets.QSystemTrayIcon.__init__(self, self.icon, parent)
 
@@ -51,6 +49,10 @@ class TrayManager:
         self.tray_widget = tray_widget
         self.main_window = main_window
         self.log = Logger().get_logger(self.__class__.__name__)
+
+        self.icon_run = QtGui.QIcon(get_resource('circle_green.png'))
+        self.icon_stay = QtGui.QIcon(get_resource('circle_orange.png'))
+        self.icon_failed = QtGui.QIcon(get_resource('circle_red.png'))
 
     def process_presets(self):
         self.process_items(self.items, self.tray_widget.menu)
