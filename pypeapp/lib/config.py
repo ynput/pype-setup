@@ -18,8 +18,14 @@ def collect_json_path(input_path):
             else:
                 basename, ext = os.path.splitext(os.path.basename(file))
                 if ext == '.json':
-                    with open(full_path, "r") as f:
-                        output[basename] = json.load(f)
+                    try:
+                        with open(full_path, "r") as f:
+                            output[basename] = json.load(f)
+                    except json.decoder.JSONDecodeError:
+                        log.warning(
+                            'File "{}" has .json syntax error'.format(file)
+                        )
+                        output[basename] = {}
     else:
         basename, ext = os.path.splitext(os.path.basename(input_path))
         if ext == '.json':
