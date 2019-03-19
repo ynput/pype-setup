@@ -74,6 +74,8 @@ class TrayManager:
         aExit = QtWidgets.QAction("&Exit", self.tray_widget)
         aExit.triggered.connect(self.tray_widget.exit)
         self.tray_widget.menu.addAction(aExit)
+        # Tell each module which modules were imported
+        self.connect_modules()
 
     def process_items(self, items, parent_menu):
         for item in items:
@@ -183,6 +185,10 @@ class TrayManager:
         except Exception:
             return False
 
+    def connect_modules(self):
+        for name, obj in self.modules.items():
+            if hasattr(obj, 'process_modules'):
+                obj.process_modules(self.modules)
 
     def check_services_status(self):
         for service, action in self.services.items():
