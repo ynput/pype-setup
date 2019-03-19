@@ -42,9 +42,13 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
 class TrayManager:
     modules = {}
+    services = {}
+    services_submenu = None
+
     errors = []
     items = get_presets().get('tray', {}).get('menu_items', [])
     available_sourcetypes = ['python', 'file']
+
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
@@ -56,7 +60,8 @@ class TrayManager:
 
     def process_presets(self):
         self.process_items(self.items, self.tray_widget.menu)
-
+        # Add separator
+        self.add_separator(self.tray_widget.menu)
         # Add Exit action to menu
         aExit = QtWidgets.QAction("&Exit", self.tray_widget)
         aExit.triggered.connect(self.tray_widget.exit)
@@ -89,9 +94,19 @@ class TrayManager:
                 "{}".format(import_path),
                 fromlist=fromlist
             )
-            self.modules[title] = module.tray_init(
-                self.tray_widget, self.main_window, parent_menu
-            )
+            obj = module.tray_init(self.tray_widget, self.main_window)
+            if hasattr(obj, 'tray_menu'):
+                obj.tray_menu(parent_menu)
+            else:
+                if self.services_submenu is None:
+                    self.services_submenu = QtWidgets.QMenu(
+                        'Services', self.tray_widget.menu
+                    )
+                action = QtWidgets.QAction(title, self.services_submenu)
+                self.services_submenu.addAction(action)
+                self.services[title] = action
+            self.modules[title] = obj
+            self.log.info("{} - Module imported".format(title))
         except ImportError as ie:
             self.log.warning(
                 "{} - Module import Error: {}".format(title, str(ie))
