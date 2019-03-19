@@ -43,7 +43,6 @@
     }
   ],
   "pip": [
-    "ftrack-python-api",
     "colorama",
     "six",
     "toml",
