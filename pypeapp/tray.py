@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from pypeapp import style, Logger
 from Qt import QtCore, QtGui, QtWidgets
 from pypeapp.lib.config import get_presets
@@ -58,8 +59,15 @@ class TrayManager:
         self.icon_stay = QtGui.QIcon(get_resource('circle_orange.png'))
         self.icon_failed = QtGui.QIcon(get_resource('circle_red.png'))
 
+        self.services_thread = None
+
     def process_presets(self):
         self.process_items(self.items, self.tray_widget.menu)
+        # Add services if they are
+        if self.services_submenu is not None:
+            self.tray_widget.menu.addMenu(self.services_submenu)
+            self.services_thread = ServicesThread(self)
+            self.services_thread.start()
         # Add separator
         self.add_separator(self.tray_widget.menu)
         # Add Exit action to menu
@@ -174,6 +182,32 @@ class TrayManager:
             return True
         except Exception:
             return False
+
+
+    def check_services_status(self):
+        for service, action in self.services.items():
+            obj = self.modules[service]
+            if not obj:
+                action.setIcon(self.icon_failed)
+            if obj.is_running:
+                action.setIcon(self.icon_run)
+            else:
+                action.setIcon(self.icon_stay)
+
+
+class ServicesThread(QtCore.QThread):
+    def __init__(self, manager):
+        QtCore.QThread.__init__(self)
+        self.manager = manager
+        self.is_running = True
+
+    def stop(self):
+        self.is_running = False
+
+    def run(self):
+        while self.is_running:
+            self.manager.check_services_status()
+            time.sleep(3)
 
 
 class Application(QtWidgets.QApplication):
