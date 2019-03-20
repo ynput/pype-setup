@@ -68,8 +68,22 @@ def get_presets(project_name=None):
     if not os.path.isdir(config_path):
         log.error('Preset path was not found: "{}"'.format(config_path))
         return None
+    default_data = collect_json_from_path(config_path)
 
-    return collect_json_path(config_path)
+    if project_name is None:
+        return default_data
+
+    project_configs_path = os.path.normpath(os.environ['PYPE_PROJECT_CONFIGS'])
+    project_config_items = [project_configs_path, project_name]
+    project_config_path = os.path.sep.join(project_config_items)
+    if not os.path.isdir(project_config_path):
+        log.error('Preset path for project {} not found: "{}"'.format(
+            project_name, config_path
+        ))
+        return default_data
+    project_data = collect_json_from_path(project_config_path)
+
+    return update_dict(default_data, project_data)
 
 
 def update_dict(main_dict, enhance_dict):
