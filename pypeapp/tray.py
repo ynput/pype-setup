@@ -105,6 +105,7 @@ class TrayManager:
                 fromlist=fromlist
             )
             obj = module.tray_init(self.tray_widget, self.main_window)
+            name = obj.__class__.__name__
             if hasattr(obj, 'tray_menu'):
                 obj.tray_menu(parent_menu)
             else:
@@ -114,8 +115,8 @@ class TrayManager:
                     )
                 action = QtWidgets.QAction(title, self.services_submenu)
                 self.services_submenu.addAction(action)
-                self.services[title] = action
-            self.modules[title] = obj
+                self.services[name] = action
+            self.modules[name] = obj
             self.log.info("{} - Module imported".format(title))
         except ImportError as ie:
             self.log.warning(
