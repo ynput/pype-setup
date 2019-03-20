@@ -29,28 +29,28 @@ def collect_json_path(input_path):
     return output
 
 
-def get_presets(*args):
-    '''
-    *args specify folder or file in presets to load
-    EXAMPLE:
-    get_presets('ftrack', 'ftrack_config')
-    1.) checks if path "{config_path}/presets/ftrack/ftrack_config" is dir
-        and loops through all folders/files and load all jsons into dict
-    2.) if path is not dir then checks if exists file:
-        "{config_path}/presets/ftrack/ftrack_config.json"
-        and returns data from this json
-    3.) else return None
-    '''
-    # config_path should be set from environments?
-    config_path = os.environ['PYPE_STUDIO_CONFIG']
+def get_presets(project_name=None):
+    """ Loads preset files with usage of 'collect_json_from_path'
+    Default preset path is set to: "{PYPE_STUDIO_CONFIG}/presets"
+    Project preset path is set to: "{PYPE_PROJECT_CONFIGS}/*project_name*"
+    - environment variable PYPE_STUDIO_CONFIG is required
+    - PYPE_STUDIO_CONFIGS only if want to use overrides per project
 
+    Return:
+    - None
+        - if default path does not exist
+    - default presets (dict)
+        - if project_name is not set
+        - if project's presets folder does not exist
+    - project presets (dict)
+        - if project_name is set and include override data
+    """
+    # config_path should be set from environments?
+    config_path = os.path.normpath(os.environ['PYPE_STUDIO_CONFIG'])
     preset_items = [config_path, 'presets']
-    preset_items.extend(args)
     config_path = os.path.sep.join(preset_items)
     if not os.path.isdir(config_path):
-        config_path += '.json'
-        if not os.path.exists(config_path):
-            log.error('Preset path was not found: "{}"'.format(config_path))
-            return None
+        log.error('Preset path was not found: "{}"'.format(config_path))
+        return None
 
     return collect_json_path(config_path)
