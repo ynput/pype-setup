@@ -1,7 +1,7 @@
 import argparse
 import os
 import sys
-# from pprint import pprint
+from pprint import pprint
 
 
 class PypeLauncher(object):
@@ -50,9 +50,37 @@ class PypeLauncher(object):
     _kwargs = None
     _args = None
 
-    def __init__(self):
-        self._add_modules()
+    def __init__(self, args=None):
+        """ Constructor will parse arguments and then execute different modes
+            of pype app.
 
+            :param args: If supplied, used instead commandline arguments. If
+                         set None, then commandline arguments will be used.
+            :type args: List or None
+        """
+        parser = self._parse_args()
+        self._kwargs, self._args = parser.parse_known_args(args)
+
+        if self._kwargs.tray or self._kwargs.traydebug:
+            if self._kwargs.traydebug:
+                os.environ['PYPE_DEBUG'] = '3'
+            self._launch_tray(debug=self._kwargs.traydebug)
+
+        elif self._kwargs.install:
+            self._install()
+
+        elif self._kwargs.validate:
+            self._validate()
+
+        elif self._kwargs.deploy:
+            self._deploy()
+
+    def _parse_args(self):
+        """ Create argument parser.
+
+            :returns: argument parser
+            :rtype: :class:`ArgumentParser`
+        """
         parser = argparse.ArgumentParser()
         parser.add_argument("--install", help="Install environment",
                             action="store_true")
@@ -98,25 +126,8 @@ class PypeLauncher(object):
         parser.add_argument("--eventserver",
                             help="Launch Pype ftrack event server",
                             action="store_true")
-        self._kwargs, self._args = parser.parse_known_args()
 
-        # pprint(self._kwargs)
-
-        if self._kwargs.tray or self._kwargs.traydebug:
-
-            if self._kwargs.traydebug:
-                os.environ['PYPE_DEBUG'] = '3'
-
-            self._launch_tray(debug=self._kwargs.traydebug)
-
-        elif self._kwargs.install:
-            self._install()
-
-        elif self._kwargs.validate:
-            self._validate()
-
-        elif self._kwargs.deploy:
-            self._deploy()
+        return parser
 
     def _add_modules(self):
         """ Include in **PYTHONPATH** all necessary packages.
@@ -151,11 +162,29 @@ class PypeLauncher(object):
 
         # add only if not already present
         for p in paths:
-            sys.path.append(p)
             if p not in python_paths:
                 os.environ['PYTHONPATH'] += os.pathsep + p
             if p not in sys.path:
                 sys.path.append(p)
+        pass
+
+    def _load_default_environments(self):
+        """ Load and apply default environment files. """
+
+        from deployment import Deployment
+        import acre
+        import json
+        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        files = d.get_environment_paths()
+        for f in files:
+            if os.path.exists(f):
+                with open(f, 'r') as env_file:
+                    env = acre.parse(json.load(env_file))
+                env = acre.compute(env)
+                env = acre.merge(env, os.environ)
+
+                os.environ.update(env)
+        pprint(os.environ)
         pass
 
     def _launch_tray(self, debug=False):
@@ -170,6 +199,8 @@ class PypeLauncher(object):
         from api import Api
         from pypeapp import Logger
 
+        self._add_modules()
+        self._load_default_environments()
         api = Api()
 
         if debug:

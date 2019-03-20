@@ -614,13 +614,42 @@ class Deployment(object):
 
             :returns: list of paths ``[str, str, ...]``
             :rtype: list
+            :raises: :class:`DeployException` on invalid deploy file
         """
         settings = self._determine_deployment_file()
         deploy = self._read_deployment_file(settings)
+        if (not self._validate_schema(deploy)):
+            raise DeployException(
+                "Invalid deployment file [ {} ]".format(settings), 200)
 
         dirs = []
         for ritem in deploy.get('repositories'):
             path = os.path.join(
                 self._pype_root, "repos", ritem.get('name'))
             dirs.append(path)
+        return dirs
+
+    def get_environment_paths(self) -> list:
+        """ Return solved paths from **deploy.json** to load default
+            environments.
+
+            :returns: list of paths ``[str, str, ...]``
+            :rtype: list
+            :raises: :class:`DeployException` on invalid deploy file
+        """
+        settings = self._determine_deployment_file()
+        deploy = self._read_deployment_file(settings)
+        if (not self._validate_schema(deploy)):
+            raise DeployException(
+                "Invalid deployment file [ {} ]".format(settings), 200)
+
+        dirs = []
+        config_path = deploy.get('PYPE_CONFIG').format(
+            PYPE_ROOT=self._pype_root)
+        for f in deploy.get('init_env'):
+            dirs.append(
+                os.path.normpath(os.path.join(config_path,
+                                              'environments',
+                                              f + '.json'))
+                )
         return dirs
