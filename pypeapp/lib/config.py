@@ -5,14 +5,24 @@ from .log import PypeLogger
 log = PypeLogger().get_logger(__name__)
 
 
-def collect_json_path(input_path):
+def collect_json_from_path(input_path):
+    """Json collector
+    iterate through all subfolders and json files in input_path
+    EXAMPLE:
+        "{input_path}/path/to/file.json" will return dictionary
+        {'path':
+            {'to':
+                {'file': {*file.json data*}}
+            }
+        }
+    """
     output = None
     if os.path.isdir(input_path):
         output = {}
         for file in os.listdir(input_path):
             full_path = os.path.sep.join([input_path, file])
             if os.path.isdir(full_path):
-                loaded = collect_json_path(full_path)
+                loaded = collect_json_from_path(full_path)
                 if loaded:
                     output[file] = loaded
             else:
