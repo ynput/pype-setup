@@ -311,6 +311,28 @@ class ServicesThread(QtCore.QThread):
             time.sleep(3)
 
 
+class TrayMainWindow(QtWidgets.QMainWindow):
+    def __init__(self, app):
+        super().__init__()
+        self.app = app
+        splash_pix = QtGui.QPixmap(get_resource('splash.png'))
+        self.splash = QtWidgets.QSplashScreen(
+            splash_pix, QtCore.Qt.WindowStaysOnTopHint
+        )
+        self.splash.setMask(splash_pix.mask())
+        self.splash.setEnabled(False)
+        self.splash.setWindowFlags(
+            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
+        )
+
+    def show_splash(self):
+        self.splash.show()
+        self.app.processEvents()
+
+    def hide_splash(self):
+        self.splash.hide()
+
+
 class Application(QtWidgets.QApplication):
     """Main Qt app where IconSysTray widget is running
     - contains main_window which should be used for showing GUIs
@@ -320,10 +342,13 @@ class Application(QtWidgets.QApplication):
         # Allows to close widgets without exiting app
         self.setQuitOnLastWindowClosed(False)
 
-        self.main_window = QtWidgets.QMainWindow()
+        self.main_window = TrayMainWindow(self)
+        self.main_window.show_splash()
 
         self.trayIcon = SystemTrayIcon(self.main_window)
         self.trayIcon.show()
+
+        self.main_window.hide_splash()
 
 
 def main():
