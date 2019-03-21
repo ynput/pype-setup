@@ -8,7 +8,8 @@ from pypeapp.resources import get_resource
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
-    """Tray widget
+    """Tray widget.
+
     :param parent: Main widget that cares about all GUIs
     :type parent: QtWidgets.QMainWindow
     """
@@ -40,8 +41,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self.contextMenu().popup(position)
 
     def exit(self):
-        """ Kill whole app
-        Icon won't stay in tray after exit
+        """ Exit whole application.
+
+        - Icon won't stay in tray after exit.
         """
         self.hide()
         QtCore.QCoreApplication.exit()
@@ -49,7 +51,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
 class TrayManager:
     """Cares about context of application.
-    Load tray's context_menu submenus, actions, separators and modules.
+
+    Load submenus, actions, separators and modules into tray's context.
     """
     modules = {}
     services = {}
@@ -89,7 +92,8 @@ class TrayManager:
         self.connect_modules()
 
     def process_items(self, items, parent_menu):
-        """ Loop through items and add them to parent_menu
+        """ Loop through items and add them to parent_menu.
+
         :param items: contains dictionary objects representing each item
         :type items: list
         :param parent_menu: menu where items will be add
@@ -113,28 +117,30 @@ class TrayManager:
                 self.errors.append(item)
 
     def add_module(self, item, parent_menu):
-        """Inicialize object of module and add it to context
+        """Inicialize object of module and add it to context.
+
         :param item: item from presets containing information about module
-        :type item: dictionary
+        :type item: dict
         :param parent_menu: menu where module's submenus/actions will be add
         :type parent_menu: QtWidgets.QMenu
         :returns: success of module implementation
         :rtype: bool
 
-            Module is added as service if object does not have tray_menu method
-            item keys structure:
-                REQUIRED:
-                    'import_path' (str)
-                        - full import path
-                            e.g.: "path.to.module"
-                    'fromlist' (list)
-                        - subparts of import_path (as from is used)
-                            e.g.: ["path", "to"]
-                OPTIONAL:
-                    'title' (str)
-                        - not used at all if module is not a service
-                        - represents label shown in services menu
-                        - import_path is used if not set
+        REQUIRED KEYS (item):
+            :import_path (*str*):
+                - full import path as python's import
+                - e.g. *"path.to.module"*
+            :fromlist (*list*):
+                - subparts of import_path (as from is used)
+                - e.g. *["path", "to"]*
+        OPTIONAL KEYS (item):
+            :title (*str*):
+                - represents label shown in services menu
+                - import_path is used if title is not set
+                - title is not used at all if module is not a service
+        .. note::
+            Module is added as **service** if object does not have
+            *tray_menu* method.
         """
         import_path = item.get('import_path', None)
         title = item.get('title', import_path)
@@ -166,7 +172,8 @@ class TrayManager:
         return True
 
     def add_action(self, item, parent_menu):
-        """Adds action to parent_menu
+        """Adds action to parent_menu.
+
         :param item: item from presets containing information about action
         :type item: dictionary
         :param parent_menu: menu where action will be added
@@ -174,19 +181,17 @@ class TrayManager:
         :returns: success of adding item to parent_menu
         :rtype: bool
 
-            item keys structure:
-                REQUIRED:
-                    'title' (str)
-                        - represents label shown in menu
-                    'sourcetype' (str)
-                        - type of action enum['file', 'python']
-                    'command' (str)
-                        - filepath to script if sourcetype is 'file'
-                        - python code as string
-                OPTIONAL:
-                    'tooltip' (str)
-                        - will be shown when hovering over action
-
+        REQUIRED KEYS (item):
+            :title (*str*):
+                - represents label shown in menu
+            :sourcetype (*str*):
+                - type of action *enum["file", "python"]*
+            :command (*str*):
+                - filepath to script *(sourcetype=="file")*
+                - python code as string *(sourcetype=="python")*
+        OPTIONAL KEYS (item):
+            :tooltip (*str*):
+                - will be shown when hover over action
         """
         sourcetype = item.get('sourcetype', None)
         command = item.get('command', None)
@@ -227,7 +232,8 @@ class TrayManager:
         parent_menu.addAction(new_action)
 
     def add_menu(self, item, parent_menu):
-        """ Adds submenu to parent_menu
+        """ Adds submenu to parent_menu.
+
         :param item: item from presets containing information about menu
         :type item: dictionary
         :param parent_menu: menu where submenu will be added
@@ -235,12 +241,11 @@ class TrayManager:
         :returns: success of adding item to parent_menu
         :rtype: bool
 
-            item keys structure:
-                REQUIRED:
-                    'title'
-                        - represents label shown in menu
-                    'items'
-                        - list of submenus/actions/separators/modules
+        REQUIRED KEYS (item):
+            :title (*str*):
+                - represents label shown in menu
+            :items (*list*):
+                - list of submenus / actions / separators / modules *(dict)*
         """
         try:
             title = item.get('title', None)
@@ -257,7 +262,8 @@ class TrayManager:
             return False
 
     def add_separator(self, parent_menu):
-        """ Adds separator to parent_menu
+        """ Adds separator to parent_menu.
+
         :param parent_menu: menu where submenu will be added
         :type parent_menu: QtWidgets.QMenu
         :returns: success of adding item to parent_menu
@@ -270,16 +276,17 @@ class TrayManager:
             return False
 
     def connect_modules(self):
-        """Sends all imported modules
-        to imported modules which have process_modules method
+        """Sends all imported modules to imported modules
+        which have process_modules method.
         """
         for name, obj in self.modules.items():
             if hasattr(obj, 'process_modules'):
                 obj.process_modules(self.modules)
 
     def check_services_status(self):
-        """Checking services activity.
-        Changes icons based on service activity
+        """Check services activity.
+
+        *Changing service's icon based on service activity.*
         """
         for service, action in self.services.items():
             obj = self.modules[service]
@@ -293,7 +300,8 @@ class TrayManager:
 
 
 class ServicesThread(QtCore.QThread):
-    """Thread triggers checking services activity each 3 sec in manager
+    """Triggers checking services activity in manager every 3 sec.
+
     :param manager: object where check will be triggered
     :type manager: TrayManager
     """
@@ -312,7 +320,8 @@ class ServicesThread(QtCore.QThread):
 
 
 class TrayMainWindow(QtWidgets.QMainWindow):
-    """Modified MainWindow with ability to show splash
+    """Modified MainWindow with ability to show splash.
+
     :param app: Qt app that hold all Qt widgets
     :type app: QtWidgets.QApplication
     """
@@ -338,8 +347,10 @@ class TrayMainWindow(QtWidgets.QMainWindow):
 
 
 class Application(QtWidgets.QApplication):
-    """Main Qt app where IconSysTray widget is running
-    - contains main_window which should be used for showing GUIs
+    """Main Qt application almost all pipeline widgets are running underneath.
+
+    .. note::
+        Contains *main_window* which should be used as parent for showing GUIs.
     """
     def __init__(self):
         super(Application, self).__init__(sys.argv)
