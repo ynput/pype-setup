@@ -312,6 +312,10 @@ class ServicesThread(QtCore.QThread):
 
 
 class TrayMainWindow(QtWidgets.QMainWindow):
+    """Modified MainWindow with ability to show splash
+    :param app: Qt app that hold all Qt widgets
+    :type app: QtWidgets.QApplication
+    """
     def __init__(self, app):
         super().__init__()
         self.app = app
