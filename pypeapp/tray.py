@@ -8,7 +8,11 @@ from pypeapp.resources import get_resource
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
-    def __init__(self, parent=None):
+    """Tray widget
+    :param parent: Main widget that cares about all GUIs
+    :type parent: QtWidgets.QMainWindow
+    """
+    def __init__(self, parent):
         self.icon = QtGui.QIcon(get_resource('icon.png'))
 
         QtWidgets.QSystemTrayIcon.__init__(self, self.icon, parent)
@@ -36,12 +40,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self.contextMenu().popup(position)
 
     def exit(self):
-        # icon won't stay in tray after exit
+        """ Kill whole app
+        Icon won't stay in tray after exit
+        """
         self.hide()
         QtCore.QCoreApplication.exit()
 
 
 class TrayManager:
+    """Cares about context of application.
+    Load tray's context_menu submenus, actions, separators and modules.
+    """
     modules = {}
     services = {}
     services_submenu = None
@@ -62,6 +71,8 @@ class TrayManager:
         self.services_thread = None
 
     def process_presets(self):
+        """Start up method for TrayManager
+        """
         self.process_items(self.items, self.tray_widget.menu)
         # Add services if they are
         if self.services_submenu is not None:
@@ -78,6 +89,12 @@ class TrayManager:
         self.connect_modules()
 
     def process_items(self, items, parent_menu):
+        """ Loop through items and add them to parent_menu
+        :param items: contains dictionary objects representing each item
+        :type items: list
+        :param parent_menu: menu where items will be add
+        :type parent_menu: QtWidgets.QMenu
+        """
         for item in items:
             i_type = item.get('type', None)
             result = False
@@ -96,6 +113,29 @@ class TrayManager:
                 self.errors.append(item)
 
     def add_module(self, item, parent_menu):
+        """Inicialize object of module and add it to context
+        :param item: item from presets containing information about module
+        :type item: dictionary
+        :param parent_menu: menu where module's submenus/actions will be add
+        :type parent_menu: QtWidgets.QMenu
+        :returns: success of module implementation
+        :rtype: bool
+
+            Module is added as service if object does not have tray_menu method
+            item keys structure:
+                REQUIRED:
+                    'import_path' (str)
+                        - full import path
+                            e.g.: "path.to.module"
+                    'fromlist' (list)
+                        - subparts of import_path (as from is used)
+                            e.g.: ["path", "to"]
+                OPTIONAL:
+                    'title' (str)
+                        - not used at all if module is not a service
+                        - represents label shown in services menu
+                        - import_path is used if not set
+        """
         import_path = item.get('import_path', None)
         title = item.get('title', import_path)
         fromlist = item.get('fromlist', [])
@@ -126,6 +166,28 @@ class TrayManager:
         return True
 
     def add_action(self, item, parent_menu):
+        """Adds action to parent_menu
+        :param item: item from presets containing information about action
+        :type item: dictionary
+        :param parent_menu: menu where action will be added
+        :type parent_menu: QtWidgets.QMenu
+        :returns: success of adding item to parent_menu
+        :rtype: bool
+
+            item keys structure:
+                REQUIRED:
+                    'title' (str)
+                        - represents label shown in menu
+                    'sourcetype' (str)
+                        - type of action enum['file', 'python']
+                    'command' (str)
+                        - filepath to script if sourcetype is 'file'
+                        - python code as string
+                OPTIONAL:
+                    'tooltip' (str)
+                        - will be shown when hovering over action
+
+        """
         sourcetype = item.get('sourcetype', None)
         command = item.get('command', None)
         title = item.get('title', '*ERROR*')
@@ -165,6 +227,21 @@ class TrayManager:
         parent_menu.addAction(new_action)
 
     def add_menu(self, item, parent_menu):
+        """ Adds submenu to parent_menu
+        :param item: item from presets containing information about menu
+        :type item: dictionary
+        :param parent_menu: menu where submenu will be added
+        :type parent_menu: QtWidgets.QMenu
+        :returns: success of adding item to parent_menu
+        :rtype: bool
+
+            item keys structure:
+                REQUIRED:
+                    'title'
+                        - represents label shown in menu
+                    'items'
+                        - list of submenus/actions/separators/modules
+        """
         try:
             title = item.get('title', None)
             if title is None or title.strip() == '':
@@ -180,6 +257,12 @@ class TrayManager:
             return False
 
     def add_separator(self, parent_menu):
+        """ Adds separator to parent_menu
+        :param parent_menu: menu where submenu will be added
+        :type parent_menu: QtWidgets.QMenu
+        :returns: success of adding item to parent_menu
+        :rtype: bool
+        """
         try:
             parent_menu.addSeparator()
             return True
@@ -187,13 +270,20 @@ class TrayManager:
             return False
 
     def connect_modules(self):
+        """Sends all imported modules
+        to imported modules which have process_modules method
+        """
         for name, obj in self.modules.items():
             if hasattr(obj, 'process_modules'):
                 obj.process_modules(self.modules)
 
     def check_services_status(self):
+        """Checking services activity.
+        Changes icons based on service activity
+        """
         for service, action in self.services.items():
             obj = self.modules[service]
+            # TODO: how to recognize that service failed?
             if not obj:
                 action.setIcon(self.icon_failed)
             if obj.is_running:
@@ -203,6 +293,10 @@ class TrayManager:
 
 
 class ServicesThread(QtCore.QThread):
+    """Thread triggers checking services activity each 3 sec in manager
+    :param manager: object where check will be triggered
+    :type manager: TrayManager
+    """
     def __init__(self, manager):
         QtCore.QThread.__init__(self)
         self.manager = manager
@@ -218,7 +312,9 @@ class ServicesThread(QtCore.QThread):
 
 
 class Application(QtWidgets.QApplication):
-    # Main app where IconSysTray widget is running
+    """Main Qt app where IconSysTray widget is running
+    - contains main_window which should be used for showing GUIs
+    """
     def __init__(self):
         super(Application, self).__init__(sys.argv)
         # Allows to close widgets without exiting app
