@@ -320,7 +320,6 @@ class ServicesThread(QtCore.QThread):
 
 
 class TrayMainWindow(QtWidgets.QMainWindow):
-    """Modified MainWindow with ability to show splash.
 
     :param app: Qt app that hold all Qt widgets
     :type app: QtWidgets.QApplication
@@ -328,22 +327,10 @@ class TrayMainWindow(QtWidgets.QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
-        splash_pix = QtGui.QPixmap(get_resource('splash.png'))
-        self.splash = QtWidgets.QSplashScreen(
-            splash_pix, QtCore.Qt.WindowStaysOnTopHint
-        )
-        self.splash.setMask(splash_pix.mask())
-        self.splash.setEnabled(False)
-        self.splash.setWindowFlags(
-            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
-        )
 
-    def show_splash(self):
-        self.splash.show()
-        self.app.processEvents()
 
-    def hide_splash(self):
-        self.splash.hide()
+        self.trayIcon = SystemTrayIcon(self)
+        self.trayIcon.show()
 
 
 class Application(QtWidgets.QApplication):
@@ -356,14 +343,22 @@ class Application(QtWidgets.QApplication):
         super(Application, self).__init__(sys.argv)
         # Allows to close widgets without exiting app
         self.setQuitOnLastWindowClosed(False)
+        # Sets up splash
+        self.set_splash()
 
+        self.splash.show()
+        self.processEvents()
         self.main_window = TrayMainWindow(self)
-        self.main_window.show_splash()
+        self.splash.hide()
 
-        self.trayIcon = SystemTrayIcon(self.main_window)
-        self.trayIcon.show()
-
-        self.main_window.hide_splash()
+    def set_splash(self):
+        splash_pix = QtGui.QPixmap(get_resource('splash.png'))
+        self.splash = QtWidgets.QSplashScreen(splash_pix)
+        self.splash.setMask(splash_pix.mask())
+        self.splash.setEnabled(False)
+        self.splash.setWindowFlags(
+            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
+        )
 
 
 def main():
