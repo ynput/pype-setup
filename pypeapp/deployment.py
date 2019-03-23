@@ -643,13 +643,10 @@ class Deployment(object):
             raise DeployException(
                 "Invalid deployment file [ {} ]".format(settings), 200)
 
-        dirs = []
         config_path = deploy.get('PYPE_CONFIG').format(
             PYPE_ROOT=self._pype_root)
-        for f in deploy.get('init_env'):
-            dirs.append(
-                os.path.normpath(os.path.join(config_path,
-                                              'environments',
-                                              f + '.json'))
-                )
-        return dirs
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+        return deploy.get('init_env')

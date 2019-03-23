@@ -173,18 +173,14 @@ class PypeLauncher(object):
 
         from deployment import Deployment
         import acre
-        import json
+
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         files = d.get_environment_paths()
-        for f in files:
-            if os.path.exists(f):
-                with open(f, 'r') as env_file:
-                    env = acre.parse(json.load(env_file))
-                env = acre.compute(env)
-                env = acre.merge(env, os.environ)
-
-                os.environ.update(env)
-        pprint(os.environ)
+        tools_env = acre.get_tools(files)
+        env = acre.compute(dict(tools_env))
+        env = acre.merge(env, dict(os.environ))
+        os.environ = acre.append(dict(os.environ), env)
+        os.environ = acre.compute(os.environ)
         pass
 
     def _launch_tray(self, debug=False):
