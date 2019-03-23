@@ -42,7 +42,7 @@ def get_presets(*args):
     3.) else return None
     '''
     # config_path should be set from environments?
-    config_path = os.environ['PYPE_STUDIO_CONFIG']
+    config_path = os.environ['PYPE_CONFIG']
 
     preset_items = [config_path, 'presets']
     preset_items.extend(args)
