@@ -95,7 +95,7 @@ def update_dict(main_dict, enhance_dict):
     for key, value in enhance_dict.items():
         if key not in main_dict:
             main_dict[key] = value
-        elif isinstance(value, dict):
+        elif isinstance(value, dict) and isinstance(main_dict[key], dict):
             main_dict[key] = update_dict(main_dict[key], value)
         else:
             main_dict[key] = value
