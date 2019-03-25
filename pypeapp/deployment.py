@@ -614,9 +614,13 @@ class Deployment(object):
 
             :returns: list of paths ``[str, str, ...]``
             :rtype: list
+            :raises: :class:`DeployException` on invalid deploy file
         """
         settings = self._determine_deployment_file()
         deploy = self._read_deployment_file(settings)
+        if (not self._validate_schema(deploy)):
+            raise DeployException(
+                "Invalid deployment file [ {} ]".format(settings), 200)
 
         dirs = []
         for ritem in deploy.get('repositories'):
@@ -624,3 +628,19 @@ class Deployment(object):
                 self._pype_root, "repos", ritem.get('name'))
             dirs.append(path)
         return dirs
+
+    def get_environment_data(self):
+        """ Returns list of environments from **deploy.json** to load as
+            default and a path to PYPE_CONFIG folder.
+
+            :returns: list of envs ``[str, str, ...]``, config_path ``str``
+            :rtype: list,str
+        """
+        settings = self._determine_deployment_file()
+        deploy = self._read_deployment_file(settings)
+
+        files = deploy.get("init_env")
+        config_path = deploy.get('PYPE_CONFIG').format(
+            PYPE_ROOT=self._pype_root)
+
+        return files, config_path
