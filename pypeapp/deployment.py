@@ -629,24 +629,18 @@ class Deployment(object):
             dirs.append(path)
         return dirs
 
-    def get_environment_paths(self) -> list:
-        """ Return solved paths from **deploy.json** to load default
-            environments.
+    def get_environment_data(self):
+        """ Returns list of environments from **deploy.json** to load as
+            default and a path to PYPE_CONFIG folder.
 
-            :returns: list of paths ``[str, str, ...]``
-            :rtype: list
-            :raises: :class:`DeployException` on invalid deploy file
+            :returns: list of envs ``[str, str, ...]``, config_path ``str``
+            :rtype: list,str
         """
         settings = self._determine_deployment_file()
         deploy = self._read_deployment_file(settings)
-        if (not self._validate_schema(deploy)):
-            raise DeployException(
-                "Invalid deployment file [ {} ]".format(settings), 200)
 
+        files = deploy.get("init_env")
         config_path = deploy.get('PYPE_CONFIG').format(
             PYPE_ROOT=self._pype_root)
 
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-        return deploy.get('init_env')
+        return files, config_path

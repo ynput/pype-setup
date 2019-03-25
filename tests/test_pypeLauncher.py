@@ -9,4 +9,5 @@ class TestPypeLauncher():
         monkeypatch.setitem(os.environ, 'PYPE_ROOT', os.path.abspath('.'))
 
         PypeLauncher(['--traydebug'])
+
         assert os.environ.get('PYPE_DEBUG') == '3'

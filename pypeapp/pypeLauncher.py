@@ -138,7 +138,7 @@ class PypeLauncher(object):
 
             .. note:: This will append, not overwrite existing paths
         """
-        from deployment import Deployment
+        from pypeapp.deployment import Deployment
         # from pypeapp import Logger
 
         # log = Logger().get_logger('launcher')
@@ -171,11 +171,17 @@ class PypeLauncher(object):
     def _load_default_environments(self):
         """ Load and apply default environment files. """
 
-        from deployment import Deployment
+        from pypeapp.deployment import Deployment
         import acre
 
         d = Deployment(os.environ.get('PYPE_ROOT', None))
-        files = d.get_environment_paths()
+
+        files, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+
         tools_env = acre.get_tools(files)
         env = acre.compute(dict(tools_env))
         env = acre.merge(env, dict(os.environ))
@@ -192,7 +198,7 @@ class PypeLauncher(object):
             .. seealso:: :func:`subprocess.Popen`
         """
         import subprocess
-        from api import Api
+        from pypeapp.api import Api
         from pypeapp import Logger
 
         self._add_modules()
@@ -270,7 +276,7 @@ class PypeLauncher(object):
 
             .. seealso:: :func:`Deployment.validate`
         """
-        from deployment import Deployment, DeployException
+        from pypeapp.deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
             d.validate(self._kwargs.skipmissing)
@@ -286,7 +292,7 @@ class PypeLauncher(object):
         .. seealso:: :func:`Deployment.deploy`
 
         """
-        from deployment import Deployment, DeployException
+        from pypeapp.deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
             d.deploy(self._kwargs.force)
