@@ -1,9 +1,33 @@
 import re
 
 
-class Anatomy(object):
+
+class PartialDict(dict):
+    ''' Modified dict class as helper.
+
+    If is used as input data for string formatting
+    missing keys won't change in string.
+
+    .. code-block:: python
+        data = PartialDict({
+            'project': 'Turtle King'
+        })
+        string = '{project} will raise on {date}'
+        result = string.format(data)
+        __
+        result >> 'Turtle King will raise on {date}'
     '''
-    Needs docstring
+    def __getitem__(self, item):
+        out = super().__getitem__(item)
+        if isinstance(out, dict):
+            return '{'+item+'}'
+        return out
+
+    def __missing__(self, key):
+        return '{'+key+'}'
+
+
+class Anatomy:
     '''
 
     def _discover(self):
