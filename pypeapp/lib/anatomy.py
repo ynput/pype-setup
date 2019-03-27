@@ -1,5 +1,8 @@
+import os
 import re
 
+from pypeapp.config import update_dict
+from pyyaml.lib3 import yaml
 
 
 class PartialDict(dict):
@@ -31,12 +34,40 @@ class Anatomy:
     '''
 
     def _discover(self):
-        '''
-        arg:
+        ''' Loads anatomy from yaml.
+        Default anatomy is loaded all the time.
+        TODO: if project_name is set also tries to find project's
+        anatomy overrides.
 
-        find and load anatomy templates
+        :rtype: dictionary
         '''
+        # TODO: right way to get templates path
+        path = r'{PYPE_APP_ROOT}\repos\pype-templates\anatomy\default.yaml'
+        path = path.format(**os.environ)
+        with open(path, 'r') as stream:
+            try:
+                anatomy = yaml.load(stream, Loader=yaml.loader.Loader)
+            except yaml.YAMLError as exc:
+                print(exc)
 
+        if self.project_name is not None:
+            project_configs_path = os.path.normpath(
+                os.environ['PYPE_PROJECT_CONFIGS']
+            )
+            project_config_items = [
+                project_configs_path, project_name, 'anatomy', 'default.yaml'
+            ]
+            project_anatomy_path = os.path.sep.join(project_config_items)
+            proj_anatomy = {}
+            if os.path.exists(project_anatomy_path):
+                with open(project_anatomy_path, 'r') as stream:
+                    try:
+                        proj_anatomy = yaml.load(
+                            stream, Loader=yaml.loader.Loader
+                        )
+                    except yaml.YAMLError as exc:
+                        print(exc)
+            anatomy = update_dict(anatomy, proj_anatomy)
         return anatomy
 
     def _solve_optional(self, template, data):
