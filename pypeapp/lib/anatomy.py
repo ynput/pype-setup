@@ -31,7 +31,23 @@ class PartialDict(dict):
 
 
 class Anatomy:
+    ''' Anatomy module help get anatomy and format anatomy with entered data.
+    TODO: should be able to load Project specific anatomy.
+    Anatomy string Example:
+        "{$APP_PATH}/{project[code]}_{task}_v{version:0>3}<_{comment}>
+        - $APP_PATH: environment variable
+        - project[code]: dictionary fill {'project':{'code': 'PROJECT_CODE'}}
+        - task, version: basic string format 'TASK_NAME', 1
+        - comment: optional key, if not entered '<_{comment}>' will be removed
+
+
+    :param project_name: Project name to look on project's anatomy overrides.
+    :type project_name: str
     '''
+    anatomy = None
+
+    def __init__(self, project_name=None):
+        self.project_name = project_name
 
     def _discover(self):
         ''' Loads anatomy from yaml.
