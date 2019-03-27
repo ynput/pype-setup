@@ -86,16 +86,18 @@ class Anatomy:
             anatomy = update_dict(anatomy, proj_anatomy)
         return anatomy
 
-    def _solve_optional(self, template, data):
+    def _solve_with_optional(self, template, data):
         """
         Solving optional elements in template string regarding to available
-        keys in used data object
+        keys in used data object.
 
-        Arguments:
-            template (string): value from toml templates
-            data (obj): containing keys to be filled into template
+        :param template: Anatomy template which will be formatted.
+        :type template: str
+        :param data: Containing keys to be filled into template.
+        :type data: PartialDict
+        :rtype: str
         """
-        # print(template)
+
         # Remove optional missing keys
         pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
         invalid_optionals = []
@@ -107,26 +109,18 @@ class Anatomy:
         for group in invalid_optionals:
             template = template.replace(group, "")
 
-        try:
-            solved = template.format(**data)
+        solved = template.format_map(data)
 
-            # solving after format optional in second round
-            for catch in re.compile(r"(<.*?[^{0]*>)[^0-9]*?").findall(solved):
-                if "{" in catch:
-                    # remove all optional
-                    solved = solved.replace(catch, "")
-                else:
-                    # Remove optional symbols
-                    solved = solved.replace(catch, catch[1:-1])
+        # solving after format optional in second round
+        for catch in re.compile(r"(<.*?[^{0]*>)[^0-9]*?").findall(solved):
+            if "{" in catch:
+                # remove all optional
+                solved = solved.replace(catch, "")
+            else:
+                # Remove optional symbols
+                solved = solved.replace(catch, catch[1:-1])
 
-            return solved
-        except KeyError as e:
-            print("_solve_optional: {},"
-                  "`template`: {}".format(e, template))
-            return template
-        except ValueError as e:
-            print("Error in _solve_optional: {},"
-                  "`template`: {}".format(e, template))
+        return solved
 
     def _format(self, template, data):
         '''
@@ -136,4 +130,3 @@ class Anatomy:
 
         solved = self._solve_optional(template, data)
 
-        return solved
