@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+#     ____________  ____      ____  ____________  ____________
+#   / \           \/\   \    /\   \/\           \/\           \
+#   \  \      ---  \ \   \___\_\   \ \      ---  \ \     ------\
+#    \  \     _____/  \____     ____\ \     _____/  \    \___\
+#     \  \    \__/  \____/ \    \__/\  \    \__/  \  \    -------\
+#      \  \____\         \  \____\   \  \____\     \  \___________\
+#       \/____/           \/____/     \/____/       \/___________/
+#
+#                    ...  █░░ --=[ CLuB ]]=-- ░░█ ...
+
+# Full path of the current script
+THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
+# The directory where current script resides
+DIR=`dirname "${THIS}"`
+# Set python interpreter name
+PYTHON="python"
+# Set path to environment if not set
+export PYPE_ENV=${PYPE_ENV:="/tmp/pype_env2"}
+# Set debug level if not set
+export PYPE_DEBUG=${PYPE_DEBUG:=0}
+# Passed arguments
+ARGS=$@
+# Set PYPE_ROOT to path to this script
+export PYPE_ROOT="$(cd $DIR; pwd)"
+# Add PYPE_ROOT to PYTHONPATH if missing
+export PYTHONPATH=${PYTHONPATH:="$PYPE_ROOT/pypeapp"}
+if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT/pypeapp:"* ]]; then
+  export PYTHONPATH="$PYPE_ROOT/pypeapp:$PYTHONPATH"
+fi
+
+echo $PYTHONPATH
+
+# Load colors definitions for easy output coloring
+source "$PYPE_ROOT/pypeapp/colors.sh"
+
+# Print help if something is missing
+print_dependency_help () {
+  art
+  cat <<-EOF
+    Pype needs few system tools already installed.
+    We need git, python and mongo (if you need to run local mongodb server).
+    Please refer to your system's user guide how to install them.
+    Additional system dependecies may be needed with different features enabled.
+EOF
+}
+
+# Print Pype ascii art :)
+art () {
+  cat <<-EOF
+ ____________  ____      ____  ____________  ____________
+/ \\           \\/\\   \\    /\\   \\/\\           \\/\\           \\
+\\  \\      ---  \\ \\   \\___\\_\\   \\ \\      ---  \\ \\     ------\\
+ \\  \\     _____/  \\____     ____\\ \\     _____/  \\    \\___\\
+  \\  \\    \\__/  \\____/ \\    \\__/\\  \\    \\__/  \\  \\    -------\\
+   \\  \\____\\         \\  \\____\\   \\  \\____\\     \\  \\___________\\
+    \\/____/           \\/____/     \\/____/       \\/___________/
+
+EOF
+}
+
+# Print welcome message
+welcome_message () {
+  echo -e "${IGreen}>>>${RST} ${BIWhite}Welcome to Pype Club${RST}"
+  echo -e "${IGreen}------------------------${RST}"
+}
+
+# Detect needed commands
+detect () {
+  echo -e "${IGreen}>>>${RST} Checking for dependencies ..."
+  # Git
+  echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ git ]${RST} ... \c"
+  command -v git >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; return 1; }
+  echo -e "${BIGreen}OK${RST}"
+  # Python
+  echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ python ]${RST} ... \c"
+  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; return 1; }
+  # Parse version string
+  version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
+  python_version="$(python <<< ${version_command})"
+  oIFS="$IFS"
+  IFS=.
+  set -- $python_version
+  IFS="$oIFS"
+  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
+    echo -e "${BIGreen}$1.$2${RST}"
+  else
+    # Python is old, but maybe we have newer just not symlinked to `python`
+    command -v python3.6 >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    # If so, change python interpreter name
+    PYTHON="python3.6"
+    echo -e "${BIGreen}3.6${RST}"
+  fi
+  # detect mongo only if running server
+  if [ "$ARGS" = "--local-mongodb" ] ; then
+    echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ mongo ]${RST} ... \c"
+    command -v mongo >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; return 1; }
+    echo -e "${BIGreen}OK${RST}"
+  fi
+}
+
+# Main function
+main () {
+  welcome_message
+  detect
+  if [ $? = 1 ] ; then return 1 ; fi
+
+  # detect environment
+  echo -e "${IGreen}>>>${RST} Detecting environment ... \c"
+  needToInstall="0"
+  if [ -d "$PYPE_ENV" ] ; then
+    # we have env dir
+    if [ ! "$(ls -A $PYPE_ENV)" ] ; then
+      # but it is empty
+      needToInstall="1"
+    fi
+  else
+    # We done have env dir
+    needToInstall="1"
+  fi
+  if [ "$ARGS" = "--install" ] ; then
+    # install flag is set
+    needToInstall="1"
+  fi
+
+  if [ $needToInstall -eq "1" ] ; then
+      if [ "$ARGS" = "--install" ] ; then
+        echo -e "${BIYellow}WILL BE INSTALLED${RST}"
+      else
+        echo -e "${BIYellow}NOT FOUND${RST}"
+      fi
+  fi
+
+  echo -e "${IGreen}>>>${RST} Installing environment to [ ${BIWhite}$PYPE_ENV${RST} ] ..."
+  if [ ! "$ARGS" = "--skip" ] ; then
+    echo -e "${ICyan}===${RST} $PYTHONPATH"
+    if [ "$ARGS" = "--force" ] ; then
+      install_command="$PYTHON -m pypeapp --install --force"
+      ${install_command}
+    else
+      install_command="$PYTHON -m pypeapp --install"
+      ${install_command}
+    fi
+    if [ $? -ne 0 ] ; then
+      if [ $? -eq 75 ] ; then
+        echo -e "${BIYellow}  -${RST} If environment already exist, you can use ${BIWhite}--skip${RST} argument to ignore it."
+      else
+        echo -e "${BIRed}!!!${RST} Installation failed (${BIYellow}$?${RST})"
+      fi
+      return 1
+    fi
+  else
+    echo -e "${BIYellow}!!!${RST} Installation skipped, assuming environment is [ ${BIYellow}$PYPE_ENV${RST} ]"
+  fi
+  
+}
+
+main "$@"
+return $?
