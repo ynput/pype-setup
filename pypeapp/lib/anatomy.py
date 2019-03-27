@@ -235,3 +235,14 @@ class Anatomy:
             self.anatomy = self._discover()
         return self.solve_dict(self.anatomy, data, only_keys)
 
+    def format(self, data, only_keys=True):
+        ''' Solves anatomy based on entered data.
+        :param data: Containing keys to be filled into template.
+        :type data: dict
+        :param only_keys: Decides if environ will be used to fill anatomy
+        or only keys in data.
+        :type only_keys: bool
+        :rtype: dictionary
+        Returnes only solved
+        '''
+        return self.format_all(data, only_keys)['solved']
