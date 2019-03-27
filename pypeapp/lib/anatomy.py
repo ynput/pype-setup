@@ -123,10 +123,40 @@ class Anatomy:
         return solved
 
     def _format(self, template, data):
+        ''' Figure out with whole formatting.
+        Separate advanced keys (*Like '{project[name]}') from string which must
+        be formatted separatelly in case of missing or incomplete keys in data.
+
+        :param template: Anatomy template which will be formatted.
+        :type template: str
+        :param data: Containing keys to be filled into template.
+        :type data: dict
+        :rtype: str
         '''
 
-        return solved, unsolved, partial
-        '''
+        partial_data = PartialDict(data)
 
-        solved = self._solve_optional(template, data)
+        # remove subdict items from string (like 'project[name]')
+        subdict = PartialDict()
+        count = 1
+        store_pattern = 5*'_'+'{:0>3}'
+        regex_patern = '\{\w*\[[^\}]*\]\}'
+        matches = re.findall(regex_patern, template)
+
+        for match in matches:
+            key = store_pattern.format(count)
+            subdict[key] = match
+            template = template.replace(match, '{'+key+'}')
+            count += 1
+        # solve fillind keys with optional keys
+        solved = self._solve_with_optional(template, partial_data)
+        # try to solve subdict and replace them back to string
+        for k, v in subdict.items():
+            try:
+                v = v.format_map(data)
+            except (KeyError, TypeError):
+                pass
+            subdict[k] = v
+
+        return solved.format_map(subdict)
 
