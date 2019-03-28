@@ -62,7 +62,7 @@ def get_presets(project_name=None):
         - if project_name is set and include override data
     """
     # config_path should be set from environments?
-    config_path = os.path.normpath(os.environ['PYPE_STUDIO_CONFIG'])
+    config_path = os.path.normpath(os.environ['PYPE_CONFIG'])
     preset_items = [config_path, 'presets']
     config_path = os.path.sep.join(preset_items)
     if not os.path.isdir(config_path):
@@ -73,7 +73,7 @@ def get_presets(project_name=None):
     if project_name is None:
         return default_data
 
-    project_configs_path = os.path.normpath(os.environ['PYPE_PROJECT_CONFIGS'])
+    project_configs_path = os.path.normpath(os.environ['PYPE_PROJECT_CONFIGs'])
     project_config_items = [project_configs_path, project_name]
     project_config_path = os.path.sep.join(project_config_items)
     if not os.path.isdir(project_config_path):

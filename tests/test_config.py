@@ -1,8 +1,8 @@
 import pytest
-from pypeapp.lib.config import update_dict
+from pypeapp.lib import config
 
 
-test_data_main = {
+source_data = {
     'A01': {
         'A01/B01': {
             'A01/B01/C01': 'A01/B01/C01/D01',
@@ -17,7 +17,7 @@ test_data_main = {
 }
 
 
-test_data = {
+new_data = {
     'A01': {
         'A01/B01': {
             'A01/B01/C02': 'test_output_1'
@@ -44,4 +44,7 @@ result = {
     'A03': 'A03/B01'
 }
 
-assert result == update_dict(test_data_main, test_data)
+
+def test_update_dict():
+
+    assert result == config.update_dict(source_data, new_data)
