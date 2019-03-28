@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-from pprint import pprint
 
 
 class PypeLauncher(object):
@@ -200,9 +199,11 @@ class PypeLauncher(object):
         import subprocess
         from pypeapp.api import Api
         from pypeapp import Logger
+        from pypeapp.storage import Storage
 
         self._add_modules()
         self._load_default_environments()
+        Storage().update_environment()
         api = Api()
 
         if debug:
