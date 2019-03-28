@@ -47,7 +47,7 @@ def collect_json_from_path(input_path):
 
 def get_presets(project_name=None):
     """ Loads preset files with usage of 'collect_json_from_path'
-    Default preset path is set to: "{PYPE_STUDIO_CONFIG}/presets"
+    Default preset path is set to: "{PYPE_CONFIG}/presets"
     Project preset path is set to: "{PYPE_PROJECT_CONFIGS}/*project_name*"
     - environment variable PYPE_STUDIO_CONFIG is required
     - PYPE_STUDIO_CONFIGS only if want to use overrides per project

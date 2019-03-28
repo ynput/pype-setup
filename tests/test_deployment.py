@@ -14,6 +14,8 @@ class TestDeployment(object):
     """
 
     _valid_deploy_data = {
+        "PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+        "init_env": ["global"],
         "repositories": [
             {
                 "name": "avalon-core",
@@ -30,6 +32,8 @@ class TestDeployment(object):
 
     # missing required url
     _invalid_deploy_data = {
+        "PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+        "init_env": ["global"],
         "repositories": [
             {
                 "name": "avalon-core",
@@ -170,7 +174,7 @@ class TestDeployment(object):
             d.validate()
         assert excinfo.match(r"Repo path doesn't exist")
 
-    def _setup_deployment(self, tmp_path, deploy_json=None):
+    def setup_deployment(self, tmp_path, deploy_json=None):
         """ Setup environment for deployment test.
 
             Create temporary **deploy** and **repos** directories with
@@ -211,7 +215,7 @@ class TestDeployment(object):
         return d
 
     def test_get_deployment_paths(self, tmp_path):
-        d = self._setup_deployment(tmp_path, self._valid_deploy_data)
+        d = self.setup_deployment(tmp_path, self._valid_deploy_data)
         paths = d.get_deployment_paths()
         data = self._valid_deploy_data
         for item in data.get('repositories'):
@@ -219,8 +223,20 @@ class TestDeployment(object):
                 d._pype_root, "repos", item.get('name'))
             assert any(path in p for p in paths)
 
+    def test_get_environment_paths(self, tmp_path, monkeypatch):
+        d = self.setup_deployment(tmp_path, self._valid_deploy_data)
+        paths = d.get_environment_paths()
+        data = self._valid_deploy_data
+        monkeypatch.setitem(os.environ, 'PYPE_ROOT', d._pype_root)
+        pype_config = data.get('PYPE_CONFIG').format(PYPE_ROOT=d._pype_root)
+        for item in data.get('init_env'):
+            path = os.path.join(
+                pype_config, "environments", item + '.json')
+            path = os.path.normpath(path)
+            assert any(path in p for p in paths)
+
     def test_deployment_clean(self, tmp_path):
-        d = self._setup_deployment(tmp_path)
+        d = self.setup_deployment(tmp_path)
 
         d.deploy()
 
@@ -238,7 +254,7 @@ class TestDeployment(object):
                                          d_item.get('tag'))
 
     def test_deployment_empty_dir(self, tmp_path):
-        d = self._setup_deployment(tmp_path)
+        d = self.setup_deployment(tmp_path)
         root = Path(d._pype_root)
         repo_path = root / 'repos'
         empty_repo = repo_path / 'avalon-core'
@@ -265,7 +281,7 @@ class TestDeployment(object):
             :param tmp_path: temporary pype root path
             :type tmp_path: :class:`Path`
         """
-        d = self._setup_deployment(tmp_path)
+        d = self.setup_deployment(tmp_path)
         root = Path(d._pype_root)
         repo_path = root / 'repos'
         invalid_repo_path = repo_path / 'avalon-core'
