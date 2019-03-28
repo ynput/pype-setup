@@ -1,7 +1,7 @@
 import os
 import re
 
-from pypeapp.config import update_dict
+from . import config
 from pyyaml.lib3 import yaml
 
 
@@ -83,7 +83,7 @@ class Anatomy:
                         )
                     except yaml.YAMLError as exc:
                         print(exc)
-            anatomy = update_dict(anatomy, proj_anatomy)
+            anatomy = config.update_dict(anatomy, proj_anatomy)
         return anatomy
 
     def _solve_with_optional(self, template, data):
