@@ -1,10 +1,11 @@
 {
-	"repositories": [
-		{
-			"name": "avalon-core",
-			"url": "git@github.com:pypeclub/avalon-core.git",
-			"branch": "develop"
-		},
+	"PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+  "init_env": ["global", "avalon", "ftrack", "deadline"],
+  "repositories": [{
+      "name": "avalon-core",
+      "url": "git@github.com:pypeclub/avalon-core.git",
+      "branch": "develop"
+    },
     {
       "name": "avalon-launcher",
       "url": "git@github.com:pypeclub/avalon-launcher.git",
@@ -12,7 +13,7 @@
     },
     {
       "name": "pyblish-base",
-      "url": "https://github.com/pyblish/pyblish.git",
+      "url": "https://github.com/pyblish/pyblish-base.git",
       "branch": "master"
     },
     {
@@ -38,11 +39,10 @@
     {
       "name": "pype-config",
       "url": "git@bitbucket.org:pypeclub/pype-templates.git",
-      "branch": "feature/2.0/PYPE-217-prepare-new-pype-config"
+      "branch": "feature/2.0/develop"
     }
-	],
+  ],
   "pip": [
-    "ftrack-python-api",
     "colorama",
     "six",
     "toml",

@@ -13,6 +13,40 @@ class TestDeployment(object):
     """ Test class for Deployment
     """
 
+    _valid_deploy_data = {
+        "PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+        "init_env": ["global"],
+        "repositories": [
+            {
+                "name": "avalon-core",
+                "url": "git@github.com:pypeclub/avalon-core.git",
+                "branch": "develop"
+            },
+            {
+                "name": "avalon-launcher",
+                "url": "git@github.com:pypeclub/avalon-launcher.git",
+                "branch": "develop"
+            }
+        ]
+    }
+
+    # missing required url
+    _invalid_deploy_data = {
+        "PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+        "init_env": ["global"],
+        "repositories": [
+            {
+                "name": "avalon-core",
+                "branch": "develop"
+            },
+            {
+                "name": "avalon-launcher",
+                "url": "git@github.com:pypeclub/avalon-launcher.git",
+                "branch": "develop"
+            }
+        ]
+    }
+
     @pytest.fixture
     def set_path(self):
         return os.path.abspath('.')
@@ -26,24 +60,9 @@ class TestDeployment(object):
             :returns: path to json file
             :rtype: string
         """
-        data = {
-            "repositories": [
-                {
-                    "name": "avalon-core",
-                    "url": "git@github.com:pypeclub/avalon-core.git",
-                    "branch": "develop"
-                },
-                {
-                    "name": "avalon-launcher",
-                    "url": "git@github.com:pypeclub/avalon-launcher.git",
-                    "branch": "develop"
-                }
-            ]
-        }
-        # json_path = tmpdir_factory.mktemp("deploy").join("valid-deploy.json")
         json_path = tmp_path / "valid-deploy.json"
         with open(json_path.as_posix(), "w") as write_json:
-            json.dump(data, write_json)
+            json.dump(self._valid_deploy_data, write_json)
         return json_path.as_posix()
 
     @pytest.fixture
@@ -55,24 +74,9 @@ class TestDeployment(object):
             :returns: path to json file
             :rtype: string
         """
-        # missing required url
-        data = {
-            "repositories": [
-                {
-                    "name": "avalon-core",
-                    "branch": "develop"
-                },
-                {
-                    "name": "avalon-launcher",
-                    "url": "git@github.com:pypeclub/avalon-launcher.git",
-                    "branch": "develop"
-                }
-            ]
-        }
-        # json_path = tmpdir_factory.mktemp("deploy").join("valid-deploy.json")
         json_path = tmp_path / "invalid-deploy.json"
         with open(json_path.as_posix(), "w") as write_json:
-            json.dump(data, write_json)
+            json.dump(self._invalid_deploy_data, write_json)
         return json_path.as_posix()
 
     def test_invalid_path_raises_exception(self):
@@ -170,7 +174,7 @@ class TestDeployment(object):
             d.validate()
         assert excinfo.match(r"Repo path doesn't exist")
 
-    def _setup_deployment(self, tmp_path):
+    def setup_deployment(self, tmp_path, deploy_json=None):
         """ Setup environment for deployment test.
 
             Create temporary **deploy** and **repos** directories with
@@ -178,6 +182,8 @@ class TestDeployment(object):
 
             :param tmp_path: path to temporary directory
             :type tmp_path: string
+            :param deploy_json: provide optional content for **deploy.json**
+            :type deploy_json: str
             :returns: Deployment instance
             :rtype: :class:`Deployment`
         """
@@ -192,18 +198,45 @@ class TestDeployment(object):
                     os.path.normpath(deploy_test_path.as_posix()),
                     d._schema_file))
 
-        copyfile(os.path.join(root_path, d._deploy_dir, d._deploy_file),
-                 os.path.join(
-                    os.path.normpath(deploy_test_path.as_posix()),
-                    d._deploy_file))
+        if deploy_json is not None:
+            with open(os.path.join(
+               os.path.normpath(deploy_test_path.as_posix()),
+               d._deploy_file), "w") as dfile:
+                json.dump(deploy_json, dfile)
+        else:
+            copyfile(os.path.join(root_path, d._deploy_dir, d._deploy_file),
+                     os.path.join(
+                        os.path.normpath(deploy_test_path.as_posix()),
+                        d._deploy_file))
 
         repo_test_path = tmp_path / "repos"
         repo_test_path.mkdir()
 
         return d
 
+    def test_get_deployment_paths(self, tmp_path):
+        d = self.setup_deployment(tmp_path, self._valid_deploy_data)
+        paths = d.get_deployment_paths()
+        data = self._valid_deploy_data
+        for item in data.get('repositories'):
+            path = os.path.join(
+                d._pype_root, "repos", item.get('name'))
+            assert any(path in p for p in paths)
+
+    def test_get_environment_paths(self, tmp_path, monkeypatch):
+        d = self.setup_deployment(tmp_path, self._valid_deploy_data)
+        paths = d.get_environment_paths()
+        data = self._valid_deploy_data
+        monkeypatch.setitem(os.environ, 'PYPE_ROOT', d._pype_root)
+        pype_config = data.get('PYPE_CONFIG').format(PYPE_ROOT=d._pype_root)
+        for item in data.get('init_env'):
+            path = os.path.join(
+                pype_config, "environments", item + '.json')
+            path = os.path.normpath(path)
+            assert any(path in p for p in paths)
+
     def test_deployment_clean(self, tmp_path):
-        d = self._setup_deployment(tmp_path)
+        d = self.setup_deployment(tmp_path)
 
         d.deploy()
 
@@ -221,7 +254,7 @@ class TestDeployment(object):
                                          d_item.get('tag'))
 
     def test_deployment_empty_dir(self, tmp_path):
-        d = self._setup_deployment(tmp_path)
+        d = self.setup_deployment(tmp_path)
         root = Path(d._pype_root)
         repo_path = root / 'repos'
         empty_repo = repo_path / 'avalon-core'
@@ -248,7 +281,7 @@ class TestDeployment(object):
             :param tmp_path: temporary pype root path
             :type tmp_path: :class:`Path`
         """
-        d = self._setup_deployment(tmp_path)
+        d = self.setup_deployment(tmp_path)
         root = Path(d._pype_root)
         repo_path = root / 'repos'
         invalid_repo_path = repo_path / 'avalon-core'

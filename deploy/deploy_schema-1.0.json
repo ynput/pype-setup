@@ -6,6 +6,17 @@
   "type": "object",
 
   "properties": {
+    "PYPE_CONFIG": {
+      "description": "Env variable pointing to current pype config repo",
+      "type": "string"
+    },
+    "init_env": {
+      "description": "Environment files in PYPE_CONFIG to load by default.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "repositories": {
       "description": "Array of repositories used for Pype",
       "type": "array",
@@ -52,5 +63,5 @@
       "type": "array"
     }
   },
-  "required": ["repositories"]
+  "required": ["repositories", "PYPE_CONFIG", "init_env"]
 }
