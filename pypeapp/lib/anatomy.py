@@ -2,7 +2,7 @@ import os
 import re
 
 from . import config
-from pyyaml.lib3 import yaml
+import yaml
 
 
 class PartialDict(dict):
@@ -58,8 +58,8 @@ class Anatomy:
         :rtype: dictionary
         '''
         # TODO: right way to get templates path
-        path = r'{PYPE_APP_ROOT}\repos\pype-templates\anatomy\default.yaml'
-        path = path.format(**os.environ)
+        path = r'{PYPE_ROOT}\repos\pype-templates\anatomy\default.yaml'
+        path = os.path.normpath(path.format(**os.environ))
         with open(path, 'r') as stream:
             try:
                 anatomy = yaml.load(stream, Loader=yaml.loader.Loader)
@@ -140,7 +140,7 @@ class Anatomy:
         subdict = PartialDict()
         count = 1
         store_pattern = 5*'_'+'{:0>3}'
-        regex_patern = '\{\w*\[[^\}]*\]\}'
+        regex_patern = "\{\w*\[[^\}]*\]\}"
         matches = re.findall(regex_patern, template)
 
         for match in matches:
