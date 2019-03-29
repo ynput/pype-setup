@@ -1,0 +1,292 @@
+#!/usr/bin/env bash
+#     ____________  ____      ____  ____________  ____________
+#   / \           \/\   \    /\   \/\           \/\           \
+#   \  \      ---  \ \   \___\_\   \ \      ---  \ \     ------\
+#    \  \     _____/  \____     ____\ \     _____/  \    \___\
+#     \  \    \__/  \____/ \    \__/\  \    \__/  \  \    -------\
+#      \  \____\         \  \____\   \  \____\     \  \___________\
+#       \/____/           \/____/     \/____/       \/___________/
+#
+#                    ...  █░░ --=[ CLuB ]]=-- ░░█ ...
+
+# Full path of the current script
+THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
+# The directory where current script resides
+DIR=`dirname "${THIS}"`
+# Set python interpreter name
+PYTHON="python"
+# Set path to environment if not set
+export PYPE_ENV=${PYPE_ENV:="/tmp/pype_env2"}
+# Set debug level if not set
+export PYPE_DEBUG=${PYPE_DEBUG:=0}
+# Passed arguments
+ARGS=$@
+# Set PYPE_ROOT to path to this script
+export PYPE_ROOT="$(cd $DIR; pwd)"
+# Add PYPE_ROOT to PYTHONPATH if missing
+export PYTHONPATH=${PYTHONPATH:="$PYPE_ROOT/pypeapp"}
+if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT/pypeapp:"* ]]; then
+  export PYTHONPATH="$PYPE_ROOT/pypeapp:$PYTHONPATH"
+fi
+
+# Load colors definitions for easy output coloring
+source "$PYPE_ROOT/pypeapp/colors.sh"
+
+# Print help if something is missing
+print_dependency_help () {
+  art
+  cat <<-EOF
+    Pype needs few system tools already installed.
+    We need git, python and mongo (if you need to run local mongodb server).
+    Please refer to your system's user guide how to install them.
+    Additional system dependecies may be needed with different features enabled.
+EOF
+}
+
+# Print Pype ascii art :)
+art () {
+  cat <<-EOF
+ ____________  ____      ____  ____________  ____________
+/ \\           \\/\\   \\    /\\   \\/\\           \\/\\           \\
+\\  \\      ---  \\ \\   \\___\\_\\   \\ \\      ---  \\ \\     ------\\
+ \\  \\     _____/  \\____     ____\\ \\     _____/  \\    \\___\\
+  \\  \\    \\__/  \\____/ \\    \\__/\\  \\    \\__/  \\  \\    -------\\
+   \\  \\____\\         \\  \\____\\   \\  \\____\\     \\  \\___________\\
+    \\/____/           \\/____/     \\/____/       \\/___________/
+
+EOF
+}
+
+# Print welcome message
+welcome_message () {
+  echo -e "${IGreen}>>>${RST} ${BIWhite}Welcome to Pype Club${RST}"
+  echo -e "${IGreen}------------------------${RST}"
+}
+
+# Detect needed commands
+detect () {
+  echo -e "${IGreen}>>>${RST} Checking for dependencies ..."
+  # Git
+  echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ git ]${RST} ... \c"
+  command -v git >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; return 1; }
+  echo -e "${BIGreen}OK${RST}"
+  # Python
+  echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ python ]${RST} ... \c"
+  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; return 1; }
+  # Parse version string
+  local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
+  local python_version="$(python <<< ${version_command})"
+  oIFS="$IFS"
+  IFS=.
+  set -- $python_version
+  IFS="$oIFS"
+  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
+    echo -e "${BIGreen}$1.$2${RST}"
+  else
+    # Python is old, but maybe we have newer just not symlinked to `python`
+    PYTHON="python3.6"
+    command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    # If so, change python interpreter name
+    local python_version="$($PYTHON <<< ${version_command})"
+    oIFS="$IFS"
+    IFS=.
+    set -- $python_version
+    IFS="$oIFS"
+    echo -e "${BIGreen}$1.$2${RST}"
+  fi
+  # detect mongo only if running server
+  if [ "$ARGS" = "--local-mongodb" ] ; then
+    echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ mongo ]${RST} ... \c"
+    command -v mongo >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; return 1; }
+    echo -e "${BIGreen}OK${RST}"
+  fi
+}
+
+environment () {
+  # detect environment
+  echo -e "${IGreen}>>>${RST} Detecting environment ... \c"
+  needToInstall="0"
+  if [ -d "$PYPE_ENV" ] ; then
+    # we have env dir
+    if [ ! "$(ls -A $PYPE_ENV)" ] ; then
+      # but it is empty
+      needToInstall="1"
+    fi
+  else
+    # We done have env dir
+    needToInstall="1"
+  fi
+  if [ "$ARGS" = "--install" ] ; then
+    # install flag is set
+    needToInstall="1"
+  fi
+
+  if [ $needToInstall -eq "1" ] ; then
+      if [ "$ARGS" = "--install" ] ; then
+        echo -e "${BIYellow}WILL BE INSTALLED${RST}"
+      else
+        echo -e "${BIYellow}NOT FOUND${RST}"
+      fi
+  else
+    echo -e "${BIGreen}FOUND${RST} - [${BIWhite} $PYPE_ENV ${RST}]"
+  fi
+}
+
+environment_install () {
+  echo -e "${IGreen}>>>${RST} Installing environment to [${BIWhite} $PYPE_ENV ${RST}] ..."
+  if [ ! "$ARGS" = "--skip" ] ; then
+    echo -e "${ICyan}===${RST} $PYTHONPATH"
+    if [ "$ARGS" = "--force" ] ; then
+      local install_command="$PYTHON -m pypeapp --install --force"
+      ${install_command}
+    else
+      local install_command="$PYTHON -m pypeapp --install"
+      ${install_command}
+    fi
+    if [ $? -ne 0 ] ; then
+      if [ $? -eq 75 ] ; then
+        echo -e "${BIYellow}  -${RST} If environment already exist, you can use ${BIWhite}--skip${RST} argument to ignore it."
+      else
+        echo -e "${BIRed}!!!${RST} Installation failed (${BIYellow}$?${RST})"
+      fi
+      return 1
+    fi
+  else
+    echo -e "${BIYellow}!!!${RST} Installation skipped, assuming environment is [ ${BIYellow}$PYPE_ENV${RST} ]"
+  fi
+}
+
+activate () {
+  echo -e "${BICyan}-->${RST} Activating environment [${BIWhite} $PYPE_ENV ${RST}]"
+  source "$PYPE_ENV/bin/activate"
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Failed to activate."
+    return 1
+  fi
+}
+
+bootstrap () {
+  if [ ! "$ARGS" = "--offline" ] ; then
+    echo -e "${BIGreen}>>>${RST} Bootstrapping Pype ..."
+    pip install --upgrade pip > /dev/null
+    echo -e "${BICyan}  -${RST} Installing dependecies ..."
+    pip install -r pypeapp/requirements.txt
+    if [ $? -ne 0 ] ; then
+      echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
+      return 1
+    fi
+  else
+    echo -e "${BIGreen}>>>${RST} Downloading dependecies ... \c"
+    pip install -r pypeapp/requirements.txt -f vendor/packages > /dev/null
+    if [ $? -ne 0 ] ; then
+      echo -e "${BIRed}!!!${RST} Download ${BIRed}FAILED${RST}"
+      return 1
+    fi
+  fi
+}
+
+environment_check () {
+  echo -e "${IGreen}>>>${RST} Validating environment dependencies... \c"
+  diff pypeapp/requirements.txt <(pip freeze) < /dev/null
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIYellow}FAILED${RST}"
+    echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
+    bootstrap
+  else
+    echo -e "${BIGreen}OK${RST}"
+  fi
+}
+
+validate () {
+  echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
+  if [ "$ARGS" = "--install" ] || [ "$ARGS" = "--deploy" ] || [ "$ARGS" = "--skip" ] ; then
+    python -m pypeapp --validate --skipmissing
+  else
+    python -m pypeapp --validate --skip
+  fi
+  if [ $? -ne 0 ] ; then
+    return 1
+  fi
+}
+
+download () {
+  echo -e "${IGreen}>>>${RST} Downloading packages for offline installation ..."
+  python -m pip download -r pypeapp/requirements.txt -d vendor/packages --platform any
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIYellow}!!!${RST} Download failed"
+    return 1
+  fi
+  echo -e "${ICyan}<--${RST} Deactivating environment ..."
+  deactivate
+  echo -e "${IPurple}xxx${RST} Terminating ..."
+  exit 0
+}
+
+deploy () {
+  echo -e "${IGreen}>>>${RST} Deploying ${BIWhite}Pype${RST} ..."
+  if [ $ARGS = "--force" ] ; then
+    python -m pypeapp --deploy --force
+  else
+    python -m pypeapp --deploy
+  fi
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Deployment ${BIRed}FAILED${RST}"
+    return 1
+  fi
+}
+
+# Main function
+main () {
+  welcome_message
+  detect || return 1
+  environment || return 1
+  if [ $needToInstall -eq "1" ] ; then
+    environment_install || return 1
+    activate || return 1
+    if [ ! "$ARGS" = "--skip" ] ; then
+      bootstrap || return 1
+    fi
+  else
+    activate || return 1
+    environment_check || return 1
+  fi
+  if [ "$ARGS" = "--download" ] ; then
+    download || return 1
+  fi
+  validate
+  if [ $? -ne 0 ] ; then
+    if [ "$ARGS" = "--force" ] ; then
+      echo -e "${BIYellow}!!!${RST} Deployment is ${BIYellow}INVALID${RST} - forcing re-deployment"
+      deploy || return 1
+      validate || return 1
+    else
+      if [ ! "$ARGS" = "--ignore" ] ; then
+        echo -e "${BIRed}!!!${RST} Deployment is ${BIRed}INVALID${RST}"
+        echo -e "${BIRed}!!!${RST} Pype deployment is invalid. Use --force to re-deploy".
+        echo -e "${BIRed}!!!${RST} Use --ignore if you want to run Pype nevertheless at your own risk."
+        return 1
+      else
+        echo -e "${BIYellow}!!!${RST} Deployment is ${BIRed}INVALID${RST} - forced to ignore"
+      fi
+    fi
+  else
+    if [ "$ARGS" = "--deploy" ] || [ "$ARGS" = "--install" ] ; then
+      deploy || return 1
+      validate || return 1
+    else
+        echo -e "${IGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+    fi
+  fi
+  if [ "$ARGS" = "--install" ] ; then
+    echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
+    exit 0
+  fi
+  echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
+  python -m pypeapp $@
+  echo -e "${ICyan}<--${RST} Deactivating environment ..."
+  deactivate
+  echo -e "${IPurple}xxx${RST} Finishing up. ${IWhite}Have a nice day!${RST}"
+}
+
+main "$@"
+return $?
