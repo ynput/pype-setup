@@ -44,10 +44,16 @@ class Anatomy:
     :param project_name: Project name to look on project's anatomy overrides.
     :type project_name: str
     '''
-    anatomy = None
+    _anatomy = None
 
     def __init__(self, project_name=None):
         self.project_name = project_name
+
+    @property
+    def anatomy(self):
+        if self._anatomy is None:
+            self._anatomy = self._discover()
+        return self._anatomy
 
     def _discover(self):
         ''' Loads anatomy from yaml.
@@ -231,8 +237,6 @@ class Anatomy:
         if only_keys is False:
             for k, v in os.environ.items():
                 data['$'+k] = v
-        if self.anatomy is None:
-            self.anatomy = self._discover()
         return self.solve_dict(self.anatomy, data, only_keys)
 
     def format(self, data, only_keys=True):
