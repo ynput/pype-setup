@@ -225,7 +225,7 @@ class TestDeployment(object):
 
     def test_get_environment_paths(self, tmp_path, monkeypatch):
         d = self.setup_deployment(tmp_path, self._valid_deploy_data)
-        paths = d.get_environment_paths()
+        paths = d.get_environment_data()
         data = self._valid_deploy_data
         monkeypatch.setitem(os.environ, 'PYPE_ROOT', d._pype_root)
         pype_config = data.get('PYPE_CONFIG').format(PYPE_ROOT=d._pype_root)
