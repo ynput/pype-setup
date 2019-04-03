@@ -12,13 +12,14 @@ class PartialDict(dict):
     missing keys won't change in string.
 
     .. code-block:: python
-        data = PartialDict({
+
+       data = PartialDict({
             'project': 'Turtle King'
-        })
-        string = '{project} will raise on {date}'
-        result = string.format(data)
-        __
-        result >> 'Turtle King will raise on {date}'
+       })
+       string = '{project} will raise on {date}'
+       result = string.format(data)
+
+       result >> 'Turtle King will raise on {date}'
     '''
     def __getitem__(self, item):
         out = super().__getitem__(item)
@@ -32,14 +33,16 @@ class PartialDict(dict):
 
 class Anatomy:
     ''' Anatomy module help get anatomy and format anatomy with entered data.
-    TODO: should be able to load Project specific anatomy.
-    Anatomy string Example:
-        "{$APP_PATH}/{project[code]}_{task}_v{version:0>3}<_{comment}>
-        - $APP_PATH: environment variable
-        - project[code]: dictionary fill {'project':{'code': 'PROJECT_CODE'}}
-        - task, version: basic string format 'TASK_NAME', 1
-        - comment: optional key, if not entered '<_{comment}>' will be removed
 
+    .. todo:: should be able to load Project specific anatomy.
+
+    Anatomy string Example:
+    ``{$APP_PATH}/{project[code]}_{task}_v{version:0>3}<_{comment}>``
+    - ``$APP_PATH``: environment variable
+    - ``project[code]``: dictionary
+    fill ``{'project':{'code': 'PROJECT_CODE'}}``
+    - task, version: basic string format ``'TASK_NAME', 1``
+    - comment: optional key, if not entered ``'<_{comment}>'`` will be removed
 
     :param project_name: Project name to look on project's anatomy overrides.
     :type project_name: str
@@ -178,7 +181,7 @@ class Anatomy:
         :param data: Containing keys to be filled into template.
         :type data: dict
         :param only_keys: Decides if environ will be used to fill anatomy
-        or only keys in data.
+                          or only keys in data.
         :type only_keys: bool
         :rtype: dictionary
         '''

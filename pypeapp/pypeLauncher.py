@@ -137,7 +137,7 @@ class PypeLauncher(object):
 
             .. note:: This will append, not overwrite existing paths
         """
-        from pypeapp.deployment import Deployment
+        from . import Deployment
         # from pypeapp import Logger
 
         # log = Logger().get_logger('launcher')
@@ -170,7 +170,7 @@ class PypeLauncher(object):
     def _load_default_environments(self):
         """ Load and apply default environment files. """
 
-        from pypeapp.deployment import Deployment
+        from .deployment import Deployment
         import acre
 
         d = Deployment(os.environ.get('PYPE_ROOT', None))
@@ -197,21 +197,20 @@ class PypeLauncher(object):
             .. seealso:: :func:`subprocess.Popen`
         """
         import subprocess
-        from pypeapp.api import Api
-        from pypeapp import Logger
-        from pypeapp.storage import Storage
+        from . import Logger
+        from . import Storage
+        from . import execute
 
         self._add_modules()
         self._load_default_environments()
         Storage().update_environment()
-        api = Api()
 
         if debug:
             pype_setup = os.getenv('PYPE_ROOT')
             items = [pype_setup, "pypeapp", "tray.py"]
             fname = os.path.sep.join(items)
 
-            api.execute([
+            execute([
                 sys.executable,
                 "-u",
                 fname
@@ -277,7 +276,7 @@ class PypeLauncher(object):
 
             .. seealso:: :func:`Deployment.validate`
         """
-        from pypeapp.deployment import Deployment, DeployException
+        from .deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
             d.validate(self._kwargs.skipmissing)
@@ -293,7 +292,7 @@ class PypeLauncher(object):
         .. seealso:: :func:`Deployment.deploy`
 
         """
-        from pypeapp.deployment import Deployment, DeployException
+        from .deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
             d.deploy(self._kwargs.force)

@@ -6,15 +6,20 @@ log = PypeLogger().get_logger(__name__)
 
 
 def collect_json_from_path(input_path):
-    """Json collector
-    iterate through all subfolders and json files in input_path
-    EXAMPLE:
-        "{input_path}/path/to/file.json" will return dictionary
+    r""" Json collector
+    iterate through all subfolders and json files in *input_path*
+
+    Example:
+    ``{input_path}/path/to/file.json`` will return dictionary
+
+    .. code-block:: none
+
         {'path':
             {'to':
-                {'file': {*file.json data*}}
+                {'file': {file.json data}
             }
         }
+
     """
     output = None
     if os.path.isdir(input_path):
@@ -47,19 +52,25 @@ def collect_json_from_path(input_path):
 
 def get_presets(project_name=None):
     """ Loads preset files with usage of 'collect_json_from_path'
-    Default preset path is set to: "{PYPE_CONFIG}/presets"
-    Project preset path is set to: "{PYPE_PROJECT_CONFIGS}/*project_name*"
-    - environment variable PYPE_STUDIO_CONFIG is required
-    - PYPE_STUDIO_CONFIGS only if want to use overrides per project
+    Default preset path is set to: ``{PYPE_CONFIG}/presets``
+    Project preset path is set to: ``{PYPE_PROJECT_CONFIGS}/*project_name*``
+    - environment variable **PYPE_STUDIO_CONFIG** is required
+    - **PYPE_STUDIO_CONFIGS** only if want to use overrides per project
 
-    Return:
+    Returns:
     - None
-        - if default path does not exist
+
+      - if default path does not exist
+
     - default presets (dict)
-        - if project_name is not set
-        - if project's presets folder does not exist
+
+      - if project_name is not set
+      - if project's presets folder does not exist
+
     - project presets (dict)
-        - if project_name is set and include override data
+
+      - if project_name is set and include override data
+
     """
     # config_path should be set from environments?
     config_path = os.path.normpath(os.environ['PYPE_CONFIG'])
@@ -89,8 +100,9 @@ def get_presets(project_name=None):
 def update_dict(main_dict, enhance_dict):
     """ Merges dictionaries by keys.
     Function call itself if value on key is again dictionary
-        - does not overrides whole value on first found key
-        but only values differences from enhance_dict
+
+    .. note:: does not overrides whole value on first found key
+              but only values differences from enhance_dict
     """
     for key, value in enhance_dict.items():
         if key not in main_dict:

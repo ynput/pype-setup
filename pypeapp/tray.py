@@ -138,6 +138,7 @@ class TrayManager:
                 - represents label shown in services menu
                 - import_path is used if title is not set
                 - title is not used at all if module is not a service
+
         .. note::
             Module is added as **service** if object does not have
             *tray_menu* method.
@@ -331,9 +332,9 @@ class TrayMainWindow(QtWidgets.QMainWindow):
     .. note::
         *TrayMainWindow* has ability to show **working** widget.
         Calling methods:
-            - ``show_working()``
-            - ``hide_working()``
-        TODO: Hide working widget if idle is too long
+        - ``show_working()``
+        - ``hide_working()``
+    .. todo:: Hide working widget if idle is too long
     """
     def __init__(self, app):
         super().__init__()

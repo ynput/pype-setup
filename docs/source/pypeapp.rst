@@ -11,19 +11,13 @@ Subpackages
 
 .. toctree::
 
+    pypeapp.lib
+    pypeapp.resources
     pypeapp.style
     pypeapp.widgets
 
 Submodules
 ----------
-
-pypeapp.api module
-------------------
-
-.. automodule:: pypeapp.api
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 pypeapp.deployment module
 -------------------------
@@ -53,14 +47,6 @@ pypeapp.storage module
 ----------------------
 
 .. automodule:: pypeapp.storage
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pypeapp.templates module
-------------------------
-
-.. automodule:: pypeapp.templates
     :members:
     :undoc-members:
     :show-inheritance:
