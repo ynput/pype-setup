@@ -2,7 +2,39 @@ import os
 import re
 
 from . import config
-import yaml
+import ruamel.yaml as yaml
+
+"""''.format_map() in Python 2.x"""
+
+try:
+    ''.format_map({})
+except AttributeError: # Python < 3.2
+    import string
+    def format_map(format_string, mapping, _format=string.Formatter().vformat):
+        return _format(format_string, None, mapping)
+    del string
+
+    #XXX works on CPython 2.6
+    # http://stackoverflow.com/questions/2444680/how-do-i-add-my-own-custom-attributes-to-existing-built-in-python-types-like-a/2450942#2450942
+    import ctypes as c
+
+    class PyObject_HEAD(c.Structure):
+        _fields_ = [
+            ('HEAD', c.c_ubyte * (object.__basicsize__ -  c.sizeof(c.c_void_p))),
+            ('ob_type', c.c_void_p)
+        ]
+
+    _get_dict = c.pythonapi._PyObject_GetDictPtr
+    _get_dict.restype = c.POINTER(c.py_object)
+    _get_dict.argtypes = [c.py_object]
+
+    def get_dict(object):
+        return _get_dict(object).contents.value
+
+    get_dict(str)['format_map'] = format_map
+else: # Python 3.2+
+    def format_map(format_string, mapping):
+        return format_string.format_map(mapping)
 
 
 class PartialDict(dict):
@@ -22,7 +54,7 @@ class PartialDict(dict):
        result >> 'Turtle King will raise on {date}'
     '''
     def __getitem__(self, item):
-        out = super().__getitem__(item)
+        out = super(PartialDict, self).__getitem__(item)
         if isinstance(out, dict):
             return '{'+item+'}'
         return out
@@ -118,7 +150,7 @@ class Anatomy:
         for group in invalid_optionals:
             template = template.replace(group, "")
 
-        solved = template.format_map(data)
+        solved = format_map(template, data)
 
         # solving after format optional in second round
         for catch in re.compile(r"(<.*?[^{0]*>)[^0-9]*?").findall(solved):
@@ -162,12 +194,12 @@ class Anatomy:
         # try to solve subdict and replace them back to string
         for k, v in subdict.items():
             try:
-                v = v.format_map(data)
+                v = format_map(v,data)
             except (KeyError, TypeError):
                 pass
             subdict[k] = v
 
-        return solved.format_map(subdict)
+        return format_map(solved, subdict)
 
     def solve_dict(self, input, data, only_keys=True):
         ''' Solves anatomy and split results into:
