@@ -67,7 +67,7 @@ class Anatomy:
         :rtype: dictionary
         '''
         # TODO: right way to get templates path
-        path = r'{PYPE_ROOT}\repos\pype-templates\anatomy\default.yaml'
+        path = r'{PYPE_ROOT}\repos\pype-config\anatomy\default.yaml'
         path = os.path.normpath(path.format(**os.environ))
         with open(path, 'r') as stream:
             try:
@@ -77,10 +77,10 @@ class Anatomy:
 
         if self.project_name is not None:
             project_configs_path = os.path.normpath(
-                os.environ['PYPE_PROJECT_CONFIGS']
+                os.environ.get('PYPE_PROJECT_CONFIGS', "")
             )
             project_config_items = [
-                project_configs_path, project_name, 'anatomy', 'default.yaml'
+                project_configs_path, self.project_name, 'anatomy', 'default.yaml'
             ]
             project_anatomy_path = os.path.sep.join(project_config_items)
             proj_anatomy = {}
