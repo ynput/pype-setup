@@ -21,11 +21,9 @@ class PypeStreamHandler(logging.StreamHandler):
     """ StreamHandler class designed to handle utf errors in python 2.x hosts.
 
     """
-    def __init__(self, stream=None):
-        logging.StreamHandler.__init__(self, stream)
 
-    def __init(self, args, kwargs):
-        super(PypeStreamHandler, self).__init(*args, **kwargs)
+    def __init__(self, stream=None):
+        super(PypeStreamHandler, self).__init__(stream)
         self.enabled = True
 
     def enable(self):
@@ -82,7 +80,7 @@ class PypeFormatter(logging.Formatter):
     default_formatter = logging.Formatter(DFT)
 
     def __init__(self, formats):
-        super().__init__()
+        super(PypeFormatter, self).__init__(formats)
         self.formatters = {}
         for loglevel in formats:
             self.formatters[loglevel] = logging.Formatter(formats[loglevel])
@@ -94,7 +92,7 @@ class PypeFormatter(logging.Formatter):
 
 class PypeLogger:
 
-    PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
+    PYPE_DEBUG = 0
 
     DFT = '%(levelname)s >>> { %(name)s }: [ %(message)s ] '
     DBG = "  - { %(name)s }: [ %(message)s ] "
@@ -122,7 +120,7 @@ class PypeLogger:
     }
 
     def __init__(self):
-        pass
+        self.PYPE_DEBUG = int(os.environ.get("PYPE_DEBUG", "0"))
 
     @staticmethod
     def get_file_path(host='pype'):
@@ -173,11 +171,10 @@ class PypeLogger:
         host_name = host or 'pype'
         logger = logging.getLogger(name or '__main__')
 
-        console_handler = PypeStreamHandler()
-        if PYPE_DEBUG == 1:
-            console_handler.setLevel(logging.DEBUG)
+        if self.PYPE_DEBUG > 1:
+            logger.setLevel(logging.DEBUG)
         else:
-            console_handler.setLevel(logging.INFO)
+            logger.setLevel(logging.INFO)
 
         logger.addHandler(self._get_file_handler(host_name))
         logger.addHandler(self._get_console_handler())
