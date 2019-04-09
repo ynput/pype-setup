@@ -137,7 +137,7 @@ class PypeLauncher(object):
 
             .. note:: This will append, not overwrite existing paths
         """
-        from . import Deployment
+        from pypeapp.deployment import Deployment
         # from pypeapp import Logger
 
         # log = Logger().get_logger('launcher')
@@ -167,25 +167,17 @@ class PypeLauncher(object):
                 sys.path.append(p)
         pass
 
-    def _load_default_environments(self):
+    def _load_default_environments(self, tools):
         """ Load and apply default environment files. """
 
-        from .deployment import Deployment
         import acre
-
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
-
-        files, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-
-        tools_env = acre.get_tools(files)
+        from pprint import pprint
+        tools_env = acre.get_tools(tools)
         env = acre.compute(dict(tools_env))
         env = acre.merge(env, dict(os.environ))
         os.environ = acre.append(dict(os.environ), env)
         os.environ = acre.compute(os.environ)
+        pprint(dict(os.environ))
         pass
 
     def _launch_tray(self, debug=False):
@@ -197,13 +189,22 @@ class PypeLauncher(object):
             .. seealso:: :func:`subprocess.Popen`
         """
         import subprocess
-        from . import Logger
-        from . import Storage
-        from . import execute
+        from pypeapp import Logger
+        from pypeapp.storage import Storage
+        from pypeapp import execute
+        from pypeapp.deployment import Deployment
+
+        d = Deployment(os.environ.get('PYPE_ROOT', None))
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
 
         self._add_modules()
-        self._load_default_environments()
         Storage().update_environment()
+        self._load_default_environments(tools=tools)
 
         if debug:
             pype_setup = os.getenv('PYPE_ROOT')
@@ -276,7 +277,7 @@ class PypeLauncher(object):
 
             .. seealso:: :func:`Deployment.validate`
         """
-        from .deployment import Deployment, DeployException
+        from pypeapp.deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
             d.validate(self._kwargs.skipmissing)
@@ -292,7 +293,7 @@ class PypeLauncher(object):
         .. seealso:: :func:`Deployment.deploy`
 
         """
-        from .deployment import Deployment, DeployException
+        from pypeapp.deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
             d.deploy(self._kwargs.force)
