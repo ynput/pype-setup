@@ -461,7 +461,8 @@ class Templates(Dict_to_obj):
                                 'AVALON_EXAMPLES',
                                 'PYPE_STUDIO_TEMPLATES',
                                 'PYPE_STUDIO_CONFIG',
-                                'PYPE_STUDIO_PROJECTS']
+                                'PYPE_STUDIO_PROJECTS',
+                                'PYTHON_QT5']
 
                 tested = [r for r in environ_list
                           if r in environ]
