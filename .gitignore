@@ -5,3 +5,4 @@ __pycache__/
 *.py[cod]
 bin/python
 repos/
+qt5/
