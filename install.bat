@@ -1,2 +1,6 @@
 @echo off
-powershell -noexit -nologo -executionpolicy bypass -File install.ps1 %*
+
+setlocal
+cd /d %~dp0
+
+call powershell -noexit -nologo -executionpolicy bypass -File install.ps1 %*
