@@ -50,7 +50,7 @@ def anatomy_file(tmp_path):
         :rtype: string
     """
 
-    yaml_path = tmp_path / "repos" / "pype-templates" / "anatomy"
+    yaml_path = tmp_path / "repos" / "pype-config" / "anatomy"
     os.makedirs(yaml_path)
     yaml_file = yaml_path / "default.yaml"
     with open(yaml_file.as_posix(), "w") as write_yaml:
