@@ -50,7 +50,7 @@ def collect_json_from_path(input_path):
     return output
 
 
-def get_presets(project_name=None):
+def get_presets(project=None):
     """ Loads preset files with usage of 'collect_json_from_path'
     Default preset path is set to: ``{PYPE_CONFIG}/presets``
     Project preset path is set to: ``{PYPE_PROJECT_CONFIGS}/*project_name*``
@@ -81,15 +81,23 @@ def get_presets(project_name=None):
         return None
     default_data = collect_json_from_path(config_path)
 
-    if project_name is None:
+    if not project:
+        project = os.environ.get('AVALON_PROJECT', None)
+
+    if not project:
         return default_data
 
-    project_configs_path = os.path.normpath(os.environ['PYPE_PROJECT_CONFIGs'])
-    project_config_items = [project_configs_path, project_name]
+    project_configs_path = os.environ.get('PYPE_PROJECT_CONFIGS')
+    if not project_configs_path:
+        return default_data
+
+    project_configs_path = os.path.normpath(project_configs_path)
+    project_config_items = [project_configs_path, project]
     project_config_path = os.path.sep.join(project_config_items)
+
     if not os.path.isdir(project_config_path):
         log.error('Preset path for project {} not found: "{}"'.format(
-            project_name, config_path
+            project, config_path
         ))
         return default_data
     project_data = collect_json_from_path(project_config_path)

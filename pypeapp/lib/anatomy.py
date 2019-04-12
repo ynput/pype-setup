@@ -2,7 +2,10 @@ import os
 import re
 
 from . import config
-import ruamel.yaml as yaml
+try:
+    import ruamel.yaml as yaml
+except ImportError:
+    print("yaml module wasn't found, skipping anatomy")
 
 """''.format_map() in Python 2.x"""
 
@@ -81,11 +84,13 @@ class Anatomy:
     '''
     _anatomy = None
 
-    def __init__(self, project_name=None):
-        self.project_name = project_name
+    def __init__(self, project=None):
+        if not project:
+            project = os.environ.get('AVALON_PROJECT', None)
+        self.project_name = project
 
     @property
-    def anatomy(self):
+    def templates(self):
         if self._anatomy is None:
             self._anatomy = self._discover()
         return self._anatomy
@@ -272,7 +277,7 @@ class Anatomy:
         if only_keys is False:
             for k, v in os.environ.items():
                 data['$'+k] = v
-        return self.solve_dict(self.anatomy, data, only_keys)
+        return self.solve_dict(self.templates, data, only_keys)
 
     def format(self, data, only_keys=True):
         ''' Solves anatomy based on entered data.
