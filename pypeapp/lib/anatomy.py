@@ -2,7 +2,10 @@ import os
 import re
 
 from . import config
-import ruamel.yaml as yaml
+try:
+    import ruamel.yaml as yaml
+except ImportError:
+    print("yaml module wasn't found, skipping anatomy")
 
 """''.format_map() in Python 2.x"""
 
