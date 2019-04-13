@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import platform
 
 
 class PypeLauncher(object):
@@ -171,13 +172,12 @@ class PypeLauncher(object):
         """ Load and apply default environment files. """
 
         import acre
-        from pprint import pprint
+        os.environ['PLATFORM'] = platform.system().lower()
         tools_env = acre.get_tools(tools)
         env = acre.compute(dict(tools_env))
         env = acre.merge(env, dict(os.environ))
         os.environ = acre.append(dict(os.environ), env)
         os.environ = acre.compute(os.environ)
-        pprint(dict(os.environ))
         pass
 
     def _launch_tray(self, debug=False):
