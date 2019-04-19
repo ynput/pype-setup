@@ -90,6 +90,7 @@ class TrayManager:
         self.tray_widget.menu.addAction(aExit)
         # Tell each module which modules were imported
         self.connect_modules()
+        self.start_modules()
 
     def process_items(self, items, parent_menu):
         """ Loop through items and add them to parent_menu.
@@ -287,9 +288,18 @@ class TrayManager:
         """Sends all imported modules to imported modules
         which have process_modules method.
         """
-        for name, obj in self.modules.items():
+        for obj in self.modules.values():
             if hasattr(obj, 'process_modules'):
                 obj.process_modules(self.modules)
+
+    def start_modules(self):
+        """Modules which can be modified by another modules and
+        must be launched after *connect_modules* should have tray_start
+        to start their process afterwards. (e.g. Ftrack actions)
+        """
+        for obj in self.modules.values():
+            if hasattr(obj, 'tray_start'):
+                obj.tray_start()
 
     def check_services_status(self):
         """Check services activity.
