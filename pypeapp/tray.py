@@ -309,12 +309,14 @@ class TrayManager:
         for service, action in self.services.items():
             obj = self.modules[service]
             # TODO: how to recognize that service failed?
-            if not obj:
-                action.setIcon(self.icon_failed)
-            if obj.is_running:
-                action.setIcon(self.icon_run)
+            if not obj or obj.failed:
+                icon = self.icon_failed
+            elif obj.is_running:
+                icon = self.icon_run
             else:
-                action.setIcon(self.icon_stay)
+                icon = self.icon_stay
+            if icon != action.icon():
+                action.setIcon(icon)
 
 
 class ServicesThread(QtCore.QThread):
