@@ -33,12 +33,12 @@
     },
     {
       "name": "pype",
-      "url": "git@bitbucket.org:pypeclub/pype-config.git",
+      "url": "git@bitbucket.org:pypeclub/pype.git",
       "branch": "2.0/develop"
     },
     {
       "name": "pype-config",
-      "url": "git@bitbucket.org:pypeclub/pype-templates.git",
+      "url": "git@bitbucket.org:pypeclub/pype-config.git",
       "branch": "feature/2.0/develop"
     }
   ],
