@@ -80,7 +80,7 @@ class PypeFormatter(logging.Formatter):
     default_formatter = logging.Formatter(DFT)
 
     def __init__(self, formats):
-        super(PypeFormatter, self).__init__(formats)
+        super(PypeFormatter, self).__init__()
         self.formatters = {}
         for loglevel in formats:
             self.formatters[loglevel] = logging.Formatter(formats[loglevel])
