@@ -20,35 +20,35 @@ class TestLogger():
         printer("testing critical level")
         logger.critical("CRITICAL TEST")
         cap = capsys.readouterr()
-        cri_regex = re.compile(r'\x1b\[1m\x1b\[31m!!! \x1b\[0mCRI: .* \x1b\[1m\x1b\[32m>>> \x1b\[0m\x1b\[1m\x1b\[92m{ test_output }\x1b\[0m:\x1b\[1m\x1b\[92m \[ \x1b\[0mCRITICAL TEST\x1b\[1m\x1b\[92m \]\x1b\[0m \x1b\[0m\n')  # noqa: E501
+        cri_regex = re.compile(r'\x1b\[1m\x1b\[31m!!! CRI: \x1b\[0m.* \x1b\[1m\x1b\[32m>>> \x1b\[0m\x1b\[92m{ test_output }\x1b\[0m: \x1b\[1m\x1b\[92m\[ \x1b\[0mCRITICAL TEST \x1b\[1m\x1b\[92m]\x1b\[0m \x1b\[0m\n')  # noqa: E501
         assert cri_regex.match(cap[1])
 
         # error
         printer("testing error level")
         logger.error("ERROR TEST")
         cap = capsys.readouterr()
-        err_regex = re.compile(r'\x1b\[1m\x1b\[36m--- \x1b\[0mERR: .* \x1b\[1m\x1b\[32m>>> \x1b\[0m\x1b\[1m\x1b\[92m{ test_output }\x1b\[0m:\x1b\[1m\x1b\[92m \[ \x1b\[0mERROR TEST\x1b\[1m\x1b\[92m \]\x1b\[0m \x1b\[0m\n')  # noqa: E501
+        err_regex = re.compile(r'\x1b\[1m\x1b\[91m!!! ERR: \x1b\[0m.* \x1b\[1m\x1b\[32m>>> \x1b\[0m\x1b\[92m{ test_output }\x1b\[0m: \x1b\[1m\x1b\[92m\[ \x1b\[0m\x1b\[1m\x1b\[91mERROR\x1b\[0m TEST \x1b\[1m\x1b\[92m]\x1b\[0m \x1b\[0m\n')  # noqa: E501
         assert err_regex.match(cap[1])
 
         # warn
         printer("testing warning level")
         logger.warning("WARNING TEST")
         cap = capsys.readouterr()
-        warn_regex = re.compile(r'\x1b\[1m\x1b\[95m\*\*\* \x1b\[0mWRN: \x1b\[1m\x1b\[32m>>> \x1b\[0m\x1b\[1m\x1b\[92m{ test_output }\x1b\[0m:\x1b\[1m\x1b\[92m \[ \x1b\[0mWARNING TEST\x1b\[1m\x1b\[92m \]\x1b\[0m \x1b\[0m\n')  # noqa: E501
+        warn_regex = re.compile(r'\x1b\[1m\x1b\[93m\*\*\* WRN\x1b\[0m: \x1b\[1m\x1b\[32m>>> \x1b\[0m\x1b\[92m{ test_output }\x1b\[0m: \x1b\[1m\x1b\[92m\[ \x1b\[0mWARNING TEST \x1b\[1m\x1b\[92m]\x1b\[0m \x1b\[0m\n')  # noqa: E501
         assert warn_regex.match(cap[1])
 
         # info
         printer("testing info level")
         logger.info("INFO TEST")
         cap = capsys.readouterr()
-        info_regex = re.compile(r'\x1b\[1m\x1b\[32m>>> \x1b\[0m\[ INFO TEST\x1b\[1m\x1b\[92m \]\x1b\[0m \x1b\[0m\n')  # noqa: E501
+        info_regex = re.compile(r'\x1b\[1m\x1b\[32m>>> \x1b\[0m\x1b\[1m\x1b\[92m\[ \x1b\[0mINFO TEST \x1b\[1m\x1b\[92m]\x1b\[0m \x1b\[0m\n')  # noqa: E501
         assert info_regex.match(cap[1])
 
         # debug
         printer("testing debug level")
         logger.debug("DEBUG TEST")
         cap = capsys.readouterr()
-        debug_regex = re.compile(r'\x1b\[1m\x1b\[33m  - \x1b\[0m\x1b\[1m\x1b\[92m{ test_output }\x1b\[0m:\x1b\[1m\x1b\[92m \[ \x1b\[0mDEBUG TEST\x1b\[1m\x1b\[92m \]\x1b\[0m \x1b\[0m\n')  # noqa: E501
+        debug_regex = re.compile(r'\x1b\[1m\x1b\[33m  - \x1b\[0m\x1b\[92m{ test_output }\x1b\[0m: \x1b\[1m\x1b\[92m\[ \x1b\[0mDEBUG TEST \x1b\[1m\x1b\[92m]\x1b\[0m \x1b\[0m\n')  # noqa: E501
         assert debug_regex.match(cap[1])
 
     @pytest.mark.skip(reason="got --- Logging error ---, disabling for now")
