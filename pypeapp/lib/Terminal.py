@@ -10,9 +10,10 @@
 #
 import re
 import os
+import sys
 noColorama = False
 try:
-    from colorama import Fore, Style, init
+    from colorama import Fore, Style, init, ansitowin32
 except ImportError:
     noColorama = True
 
@@ -37,6 +38,7 @@ class Terminal:
         _LG = Fore.LIGHTGREEN_EX
         _LB = Fore.LIGHTBLUE_EX
         _LM = Fore.LIGHTMAGENTA_EX
+        _LY = Fore.LIGHTYELLOW_EX
         _R = Fore.RED
         _G = Fore.GREEN
         _B = Fore.BLUE
@@ -47,27 +49,32 @@ class Terminal:
     # dictionary replacing string sequences with colorized one
     _sdict = {
 
-        r">>> ":
-            _SB + _G + r">>> " + _RST,
-        r"!!! ":
-            _SB + _R + r"!!! " + _RST,
-        r"--- ": _SB + _C + r"--- " + _RST,
-        r"*** ": _SB + _LM + r"*** " + _RST,
-        r"  - ": _SB + _Y + r"  - " + _RST,
-        r" [ ": _SB + _LG + r" [ " + _RST,
-        r" ]": _SB + _LG + r" ]" + _RST,
-        r"{ %(name)s }": _SB + _LG + r"{ %(name)s }" + _RST,
-        r"!!! ERR: %(asctime)s >>> { %(name)s }: ":
-            _SB + _LR + r"!!! ERR: %(asctime)s >>> { %(name)s }: " + _RST,
-        r"!!! CRI: %(asctime)s >>> { %(name)s }: ":
-            _SB + _R + r"!!! CRI: %(asctime)s >>> { %(name)s }: " + _RST
+        r">>> ": _SB + _G + r">>> " + _RST,
+        r"!!!(?!\sCRI|\sERR)": _SB + _R + r"!!! " + _RST,
+        r"\-\-\- ": _SB + _C + r"--- " + _RST,
+        r"\*\*\*(?!\sWRN)": _SB + _LM + r"***" + _RST,
+        r"\*\*\* WRN": _SB + _LY + r"*** WRN" + _RST,
+        r"  \- ": _SB + _Y + r"  - " + _RST,
+        r"\[ ": _SB + _LG + r"[ " + _RST,
+        r"\]": _SB + _LG + r"]" + _RST,
+        r"{":  _LG + r"{",
+        r"}":  r"}" + _RST,
+        r"\(": _LY + r"(",
+        r"\)": r")" + _RST,
+        r"!!! ERR: ":
+            _SB + _LR + r"!!! ERR: " + _RST,
+        r"!!! CRI: ":
+            _SB + _R + r"!!! CRI: " + _RST,
+        r"(?i)failed": _SB + _LR + "FAILED" + _RST,
+        r"(?i)error": _SB + _LR + "ERROR" + _RST
     }
 
     def __init__(self):
         if not noColorama:
             init()
 
-    def _multiple_replace(self, text, adict):
+    @staticmethod
+    def _multiple_replace(text, adict):
         """ Replace multiple tokens defined in dict
 
             Find and replace all occurances of strings defined in dict is
@@ -81,15 +88,13 @@ class Terminal:
             :rtype: string
 
         """
-        # type: (str, dict) -> str
-        rx = re.compile('|'.join(map(re.escape, adict)))
+        for r, v in adict.items():
+            text = re.sub(r, v, text)
 
-        def one_xlat(match):
-            return adict[match.group(0)]
+        return text
 
-        return rx.sub(one_xlat, text)
-
-    def echo(self, message, debug=False):
+    @staticmethod
+    def echo(message, debug=False):
         """ Print colorized message to stdout.
 
             :param message: message to be colorized
@@ -98,12 +103,15 @@ class Terminal:
             :rtype: string
 
         """
-        colorized = self.log(message)
+        if not isinstance(sys.stdout, ansitowin32.StreamWrapper):
+            init()
+        colorized = Terminal.log(message)
         print(colorized)
 
         return colorized
 
-    def log(self, message):
+    @staticmethod
+    def log(message):
         """ Return color formatted message.
 
             If environment variable ``PYPE_LOG_NO_COLORS`` is set to
@@ -115,10 +123,11 @@ class Terminal:
             :rtype: string
 
         """
+        T = Terminal
         # if we dont want colors, just print raw message
         if os.environ.get('PYPE_LOG_NO_COLORS', None) is not None:
-            message = re.sub(r'\[(.*)\]', '[ ' + self._SB + self._W +
-                             r'\1' + self._RST + ' ]', message)
-        message = self._multiple_replace(message + self._RST, self._sdict)
+            message = re.sub(r'\[(.*)\]', '[ ' + T._SB + T._W +
+                             r'\1' + T._RST + ' ]', message)
+        message = T._multiple_replace(message + T._RST, T._sdict)
 
         return message

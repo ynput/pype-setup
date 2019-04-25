@@ -46,6 +46,7 @@ class PypeStreamHandler(logging.StreamHandler):
             return
         try:
             msg = self.format(record)
+            msg = Terminal.log(msg)
             stream = self.stream
             fs = "%s\n"
             if not _unicode:  # if no unicode support...
@@ -71,12 +72,13 @@ class PypeStreamHandler(logging.StreamHandler):
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception:
+            print(repr(record))
             self.handleError(record)
 
 
 class PypeFormatter(logging.Formatter):
 
-    DFT = '%(levelname)s >>> { %(name)s }: [ %(message)s ] '
+    DFT = '%(levelname)s >>> { %(name)s }: [ %(message)s ]'
     default_formatter = logging.Formatter(DFT)
 
     def __init__(self, formats):
@@ -98,18 +100,8 @@ class PypeLogger:
     DBG = "  - { %(name)s }: [ %(message)s ] "
     INF = ">>> [ %(message)s ] "
     WRN = "*** WRN: >>> { %(name)s }: [ %(message)s ] "
-    ERR = "--- ERR: %(asctime)s >>> { %(name)s }: [ %(message)s ] "
+    ERR = "!!! ERR: %(asctime)s >>> { %(name)s }: [ %(message)s ] "
     CRI = "!!! CRI: %(asctime)s >>> { %(name)s }: [ %(message)s ] "
-
-    terminal = Terminal()
-
-    FORMAT_TERMINAL = {
-        logging.INFO: terminal.log(INF),
-        logging.DEBUG: terminal.log(DBG),
-        logging.WARNING: terminal.log(WRN),
-        logging.ERROR: terminal.log(ERR),
-        logging.CRITICAL: terminal.log(CRI),
-    }
 
     FORMAT_FILE = {
         logging.INFO: INF,
@@ -160,7 +152,7 @@ class PypeLogger:
 
     def _get_console_handler(self):
 
-        formatter = PypeFormatter(self.FORMAT_TERMINAL)
+        formatter = PypeFormatter(self.FORMAT_FILE)
         console_handler = PypeStreamHandler()
 
         console_handler.set_name("PypeStreamHandler")
@@ -176,7 +168,14 @@ class PypeLogger:
         else:
             logger.setLevel(logging.INFO)
 
-        logger.addHandler(self._get_file_handler(host_name))
-        logger.addHandler(self._get_console_handler())
+        if len(logger.handlers) > 0:
+            for handler in logger.handlers:
+                if (not isinstance(handler, TimedRotatingFileHandler)
+                   and not isinstance(handler, PypeStreamHandler)):
+                    logger.addHandler(self._get_file_handler(host_name))
+                    logger.addHandler(self._get_console_handler())
+        else:
+            logger.addHandler(self._get_file_handler(host_name))
+            logger.addHandler(self._get_console_handler())
 
         return logger
