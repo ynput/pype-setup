@@ -22,7 +22,7 @@ $env:PYPE_STUDIO_TEMPLATES = "$($env:PYPE_SETUP_ROOT)\repos\pype-templates"
 $env:PYPE_SETUP_GIT_URL="git@bitbucket.org:pypeclub/pype-setup.git"
 $env:PYPE_SETUP_GIT_BRANCH="master"
 $env:PYPE_STUDIO_TEMPLATES_NAME="pype-templates"
-$env:PYPE_STUDIO_TEMPLATES_URL="git@bitbucket.org:pypeclub/pype-templates.git"
+$env:PYPE_STUDIO_TEMPLATES_URL="git@bitbucket.org:pypeclub/pype-config.git"
 $env:PYPE_STUDIO_TEMPLATES_SUBM="repos"
 $env:PYPE_STUDIO_TEMPLATES_BRANCH="master"
 
