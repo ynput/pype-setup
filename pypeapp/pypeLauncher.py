@@ -126,6 +126,9 @@ class PypeLauncher(object):
         parser.add_argument("--eventserver",
                             help="Launch Pype ftrack event server",
                             action="store_true")
+        parser.add_argument("--eventservercli",
+                            help="Launch Pype ftrack event server headless",
+                            action="store_true")
 
         return parser
 
@@ -258,8 +261,60 @@ class PypeLauncher(object):
 
     def _launch_eventserver(self):
         """ This will run standalone ftrack eventserver. """
-        raise RuntimeError("Not implemented yet.")
-        pass
+        from pypeapp.storage import Storage
+        from pypeapp import execute
+        from pypeapp.deployment import Deployment
+
+        d = Deployment(os.environ.get('PYPE_ROOT', None))
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
+        items = [
+            config_path, "pype", "ftrack", "ftrack_server",
+            "event_server.py"
+        ]
+        fname = os.path.sep.join(items)
+
+        returncode = execute([
+            sys.executable, "-u", fname
+        ])
+        return returncode
+
+    def _launch_eventservercli(self):
+        """ This will run standalone ftrack eventserver headless. """
+
+        from pypeapp.storage import Storage
+        from pypeapp import execute
+        from pypeapp.deployment import Deployment
+
+        d = Deployment(os.environ.get('PYPE_ROOT', None))
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
+        items = [
+            config_path, "pype", "ftrack", "ftrack_server",
+            "event_server_cli.py"
+        ]
+        fname = os.path.sep.join(items)
+
+        returncode = execute([
+            sys.executable, "-u", fname
+        ])
+        return returncode
 
     def _install(self):
         """ This will run venv installation process.
