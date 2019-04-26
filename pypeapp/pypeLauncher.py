@@ -271,19 +271,19 @@ class PypeLauncher(object):
         from pypeapp import execute
         from pypeapp.deployment import Deployment
 
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
 
         tools, config_path = d.get_environment_data()
 
         os.environ['PYPE_CONFIG'] = config_path
         os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
                                                   'environments'))
-
         self._add_modules()
         Storage().update_environment()
         self._load_default_environments(tools=tools)
         items = [
-            config_path, "pype", "ftrack", "ftrack_server",
+            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server.py"
         ]
         fname = os.path.sep.join(items)
@@ -295,24 +295,23 @@ class PypeLauncher(object):
 
     def _launch_eventservercli(self):
         """ This will run standalone ftrack eventserver headless. """
-
         from pypeapp.storage import Storage
         from pypeapp import execute
         from pypeapp.deployment import Deployment
 
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
 
         tools, config_path = d.get_environment_data()
 
         os.environ['PYPE_CONFIG'] = config_path
         os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
                                                   'environments'))
-
         self._add_modules()
         Storage().update_environment()
         self._load_default_environments(tools=tools)
         items = [
-            config_path, "pype", "ftrack", "ftrack_server",
+            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server_cli.py"
         ]
         fname = os.path.sep.join(items)
