@@ -30,6 +30,7 @@ PyQt5==5.12
 PyQt5-sip==4.19.14
 pytest==4.3.0
 pytest-cov==2.6.1
+pytest-print==0.1.2
 python-dateutil==2.8.0
 pytz==2018.9
 PyYAML==5.1

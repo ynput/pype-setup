@@ -15,7 +15,8 @@ param(
   [switch]$offline=$false,
   [switch]$download=$false,
   [switch]$deploy=$false,
-  [switch]$skip=$false
+  [switch]$skip=$false,
+  [switch]$localmongodb=$false
 )
 
 $arguments = $ARGS
@@ -41,6 +42,10 @@ if($arguments -eq "--deploy") {
 if($arguments -eq "--skip") {
   $skip=$true
 }
+if($arguments -eq "--localmongodb") {
+  $localmongodb=$true
+}
+
 $env:PYPE_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Install PSWriteColor to support colorized output to terminal
@@ -190,6 +195,35 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 6)) {
 
 Write-Color -Text "OK" -Color Green -NoNewLine
 Write-Color -Text " - version [ ", $p ," ]" -Color Gray, Cyan, Gray
+
+# Detect mongod in PATHs
+if($localmongodb -eq $true) {
+  Write-Color -Text ">>> ", "Detecting MongoDB ... " -Color Green, Gray -NoNewLine
+  if (-not (Get-Command "mongod" -ErrorAction SilentlyContinue)) {
+    if(Test-Path 'C:\Program Files\MongoDB\Server\*\bin\mongod.exe' -PathType Leaf) {
+      # we have mongo server installed on standard Windows location
+      # so we can inject it to the PATH. We'll use latest version available.
+      $mongoVersions = Get-ChildItem -Directory 'C:\Program Files\MongoDB\Server' | Sort-Object -Property {$_.Name -as [int]}
+      if(Test-Path "C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\mongod.exe" -PathType Leaf) {
+        $env:PATH="$($env:PATH);C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\"
+        Write-Color -Text "OK" -Color Green
+        Write-Color -Text "  - ", "auto-added from [ ", "C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\", " ]" -Color Cyan, Gray, White, Gray
+      } else {
+          Write-Color -Text "FAILED", " MongoDB not detected" -Color Red, Yellow
+          Write-Color -Text "!!! ", "tried to find it on standard location [ ", "C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\", " ] but failed." -Color Red, Yellow, White, Yellow
+          exit
+      }
+    } else {
+      Write-Color -Text "FAILED", " MongoDB not detected" -Color Red, Yellow
+      Write-Color -Text "!!! ", "'mongod' wasn't found in PATH" -Color Red, Yellow
+      exit
+    }
+
+  } else {
+    Write-Color -Text "OK" -Color Green
+  }
+}
+
 
 # Detect existing venv
 Write-Color -Text ">>> ", "Detecting environment ... " -Color Green, Gray -NoNewLine

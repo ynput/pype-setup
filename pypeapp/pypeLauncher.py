@@ -81,6 +81,9 @@ class PypeLauncher(object):
         elif self._kwargs.eventservercli:
             self._launch_eventservercli()
 
+        elif self._kwargs.localmongodb:
+            self._launch_local_mongodb()
+
     def _parse_args(self):
         """ Create argument parser.
 
@@ -117,7 +120,7 @@ class PypeLauncher(object):
         parser.add_argument("--traydebug",
                             help="Launch Pype Tray in debug mode",
                             action="store_true")
-        parser.add_argument("--local-mongodb",
+        parser.add_argument("--localmongodb",
                             help=("Launch instance of local mongodb server"),
                             action="store_true")
         parser.add_argument("--publish",
@@ -265,6 +268,20 @@ class PypeLauncher(object):
         """ This will run local instance of mongodb. """
         from pypeapp import Logger
         import subprocess
+        from pypeapp.storage import Storage
+        from pypeapp.deployment import Deployment
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
 
         log = Logger().get_logger('mongodb')
         # Get database location.
@@ -280,12 +297,16 @@ class PypeLauncher(object):
         # Start server.
         if platform.system().lower() == "linux":
             log.info("Local mongodb is running...")
+            log.info("Using port {} and db at {}".format(
+                os.environ["AVALON_MONGO_PORT"], location))
             returncode = subprocess.Popen(
                 ["mongod", "--dbpath", location, "--port",
                  os.environ["AVALON_MONGO_PORT"]], close_fds=True
             )
         elif platform.system().lower() == "windows":
             log.info("Local mongodb is running...")
+            log.info("Using port {} and db at {}".format(
+                os.environ["AVALON_MONGO_PORT"], location))
             returncode = subprocess.Popen(
                 ["start", "Avalon MongoDB", "mongod", "--dbpath",
                  location, "--port", os.environ["AVALON_MONGO_PORT"]],
