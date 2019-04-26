@@ -42,7 +42,11 @@ def partial_format(s, data, missing="{{{key}}}"):
 
     formatter = string.Formatter()
     mapping = FormatDict(**data)
-    return formatter.vformat(s, (), mapping)
+    try:
+        f = formatter.vformat(s, (), mapping)
+    except ValueError:
+        return s
+    return f
 
 
 def topological_sort(dependency_pairs):
