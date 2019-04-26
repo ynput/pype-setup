@@ -1,18 +1,6 @@
 import subprocess
 import os
-from .. import Logger
-
-log_levels = {
-    'info': ">>> [",
-    'warning': "*** WRN:",
-    'error': "--- ERR:",
-    'critical': "!!! CRI:",
-    'debug': "  - {"
-}
-log_levels_debug = [
-    'DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
-
-log = Logger().get_logger('api')
+from .log import PypeLogger as Logger
 
 
 def execute(args,
@@ -40,7 +28,18 @@ def execute(args,
         :returns: return code of process
         :rtype: int
     """
-    log.info("Executing '%s'.." % " ".join(args))
+    log_levels = {
+        'info': ">>> [",
+        'warning': "*** WRN:",
+        'error': "--- ERR:",
+        'critical': "!!! CRI:",
+        'debug': "  - {"
+    }
+    log_levels_debug = [
+        'DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
+
+    log = Logger().get_logger('execute')
+    log.info("Executing ({})".format(" ".join(args)))
     popen = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,

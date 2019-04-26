@@ -19,6 +19,28 @@ param(
 )
 
 $arguments = $ARGS
+# map double hyphens to single for powershell use
+if($arguments -eq "--install") {
+  $install=$true
+}
+if($arguments -eq "--force") {
+  $force=$true
+}
+if($arguments -eq "--ignore") {
+  $ignore=$true
+}
+if($arguments -eq "--offline") {
+  $offline=$true
+}
+if($arguments -eq "--download") {
+  $download=$true
+}
+if($arguments -eq "--deploy") {
+  $deploy=$true
+}
+if($arguments -eq "--skip") {
+  $skip=$true
+}
 $env:PYPE_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Install PSWriteColor to support colorized output to terminal
