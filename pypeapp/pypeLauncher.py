@@ -75,6 +75,12 @@ class PypeLauncher(object):
         elif self._kwargs.deploy:
             self._deploy()
 
+        elif self._kwargs.eventserver:
+            self._launch_eventserver()
+
+        elif self._kwargs.eventservercli:
+            self._launch_eventservercli()
+
     def _parse_args(self):
         """ Create argument parser.
 
