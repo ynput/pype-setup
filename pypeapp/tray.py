@@ -90,6 +90,7 @@ class TrayManager:
         self.tray_widget.menu.addAction(aExit)
         # Tell each module which modules were imported
         self.connect_modules()
+        self.start_modules()
 
     def process_items(self, items, parent_menu):
         """ Loop through items and add them to parent_menu.
@@ -166,6 +167,13 @@ class TrayManager:
             self.modules[name] = obj
             self.log.info("{} - Module imported".format(title))
         except ImportError as ie:
+            if self.services_submenu is None:
+                self.services_submenu = QtWidgets.QMenu(
+                    'Services', self.tray_widget.menu
+                )
+            action = QtWidgets.QAction(title, self.services_submenu)
+            action.setIcon(self.icon_failed)
+            self.services_submenu.addAction(action)
             self.log.warning(
                 "{} - Module import Error: {}".format(title, str(ie))
             )
@@ -280,9 +288,18 @@ class TrayManager:
         """Sends all imported modules to imported modules
         which have process_modules method.
         """
-        for name, obj in self.modules.items():
+        for obj in self.modules.values():
             if hasattr(obj, 'process_modules'):
                 obj.process_modules(self.modules)
+
+    def start_modules(self):
+        """Modules which can be modified by another modules and
+        must be launched after *connect_modules* should have tray_start
+        to start their process afterwards. (e.g. Ftrack actions)
+        """
+        for obj in self.modules.values():
+            if hasattr(obj, 'tray_start'):
+                obj.tray_start()
 
     def check_services_status(self):
         """Check services activity.
@@ -292,12 +309,14 @@ class TrayManager:
         for service, action in self.services.items():
             obj = self.modules[service]
             # TODO: how to recognize that service failed?
-            if not obj:
-                action.setIcon(self.icon_failed)
-            if obj.is_running:
-                action.setIcon(self.icon_run)
+            if not obj or obj.failed:
+                icon = self.icon_failed
+            elif obj.is_running:
+                icon = self.icon_run
             else:
-                action.setIcon(self.icon_stay)
+                icon = self.icon_stay
+            if icon != action.icon():
+                action.setIcon(icon)
 
 
 class ServicesThread(QtCore.QThread):
