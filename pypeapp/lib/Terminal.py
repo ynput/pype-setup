@@ -31,6 +31,7 @@ class Terminal:
     # shortcuts for colorama codes
     if noColorama:
         _SB = _RST = _LR = _LG = _LB = _LM = _R = _G = _B = _C = _Y = _W = ""
+        _LY = ""
     else:
         _SB = Style.BRIGHT
         _RST = Style.RESET_ALL
@@ -103,6 +104,9 @@ class Terminal:
             :rtype: string
 
         """
+        if noColorama:
+            print(message)
+            return message
         if not isinstance(sys.stdout, ansitowin32.StreamWrapper):
             init()
         colorized = Terminal.log(message)
