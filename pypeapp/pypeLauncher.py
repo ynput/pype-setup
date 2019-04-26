@@ -263,7 +263,35 @@ class PypeLauncher(object):
 
     def _launch_local_mongodb(self):
         """ This will run local instance of mongodb. """
-        raise RuntimeError("Not implemented yet.")
+        from pypeapp import Logger
+        import subprocess
+
+        log = Logger().get_logger('mongodb')
+        # Get database location.
+        try:
+            location = os.environ["AVALON_DB_DATA"]
+        except KeyError:
+            location = os.path.join(os.path.expanduser("~"), "data", "db")
+
+        # Create database directory.
+        if not os.path.exists(location):
+            os.makedirs(location)
+
+        # Start server.
+        if platform.system().lower() == "linux":
+            log.info("Local mongodb is running...")
+            returncode = subprocess.Popen(
+                ["mongod", "--dbpath", location, "--port",
+                 os.environ["AVALON_MONGO_PORT"]], close_fds=True
+            )
+        elif platform.system().lower() == "windows":
+            log.info("Local mongodb is running...")
+            returncode = subprocess.Popen(
+                ["start", "Avalon MongoDB", "mongod", "--dbpath",
+                 location, "--port", os.environ["AVALON_MONGO_PORT"]],
+                shell=True
+            )
+        return returncode
 
     def _launch_eventserver(self):
         """ This will run standalone ftrack eventserver. """
