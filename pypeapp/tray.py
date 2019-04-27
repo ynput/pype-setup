@@ -160,8 +160,10 @@ class TrayManager:
                         'Services', self.tray_widget.menu
                     )
                 action = QtWidgets.QAction(title, self.services_submenu)
+                action.setIcon(self.icon_run)
                 self.services_submenu.addAction(action)
-                self.services[name] = action
+                if hasattr(obj, 'set_qaction'):
+                    obj.set_qaction(action, self.icon_failed)
             self.modules[name] = obj
             self.log.info("{} - Module imported".format(title))
         except ImportError as ie:
