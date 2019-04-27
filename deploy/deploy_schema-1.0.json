@@ -61,6 +61,24 @@
     "pip": {
       "description": "Pip dependencies installed to environment",
       "type": "array"
+    },
+    "zip_files": {
+      "description": "Array of zip files for vendor usage.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "url"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Zip file extracted used as directory name containing it"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL used to download zip file."
+          }
+        }
+      }
     }
   },
   "required": ["repositories", "PYPE_CONFIG", "init_env"]
