@@ -299,7 +299,7 @@ class PypeLauncher(object):
             log.info("Local mongodb is running...")
             log.info("Using port {} and db at {}".format(
                 os.environ["AVALON_MONGO_PORT"], location))
-            returncode = subprocess.Popen(
+            p = subprocess.Popen(
                 ["mongod", "--dbpath", location, "--port",
                  os.environ["AVALON_MONGO_PORT"]], close_fds=True
             )
@@ -307,12 +307,12 @@ class PypeLauncher(object):
             log.info("Local mongodb is running...")
             log.info("Using port {} and db at {}".format(
                 os.environ["AVALON_MONGO_PORT"], location))
-            returncode = subprocess.Popen(
-                ["start", "Avalon MongoDB", "mongod", "--dbpath",
+            p = subprocess.Popen(
+                ["start", "Avalon MongoDB", "call", "mongod", "--dbpath",
                  location, "--port", os.environ["AVALON_MONGO_PORT"]],
                 shell=True
             )
-        return returncode
+        return p.returncode
 
     def _launch_eventserver(self):
         """ This will run standalone ftrack eventserver. """

@@ -1,3 +1,4 @@
 @echo off
-cd ..
-call powershell -noexit -nologo -executionpolicy bypass -File pype.ps1 --local-mongodb
+pushd %~dp0..\
+call pype.bat --localmongodb
+popd

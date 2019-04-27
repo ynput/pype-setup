@@ -9,5 +9,10 @@
 #
 #                    ...  █░░ --=[ CLuB ]]=-- ░░█ ...
 
-cd ..
-source pype --eventservercli
+# Full path of the current script
+THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
+# The directory where current script resides
+DIR=`dirname "${THIS}"`
+export PYPE_ROOT="$(cd $DIR/../ ; pwd)"
+
+source "$PYPE_ROOT/pype" --eventservercli
