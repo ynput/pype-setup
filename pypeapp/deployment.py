@@ -489,7 +489,8 @@ class Deployment(object):
                     path,
                     progress=_GitProgress(),
                     env=None,
-                    b=repo.get('branch') or repo.get('tag')
+                    b=repo.get('branch') or repo.get('tag'),
+                    recursive=True
                 )
             except git.exc.GitCommandError as e:
                 raise DeployException(
@@ -573,7 +574,8 @@ class Deployment(object):
                         path,
                         progress=_GitProgress(),
                         env=None,
-                        b=ritem.get('branch') or ritem.get('tag')
+                        b=ritem.get('branch') or ritem.get('tag'),
+                        recursive=True
                     )
                 except git.exc.GitCommandError as e:
                     raise DeployException(
