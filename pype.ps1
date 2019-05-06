@@ -126,7 +126,7 @@ function Bootstrap-Pype {
     }
   } else {
     # in offline mode, install all from vendor
-    Write-Color -Text ">>> ", "Downloading dependencies ... " -Color Green, Gray -NoNewLine
+    Write-Color -Text ">>> ", "Offline installation ... " -Color Green, Gray -NoNewLine
     Start-Progress {& pip install -r pypeapp/requirements.txt -f vendor/packages | out-null}
   }
 }
@@ -252,7 +252,8 @@ if ($needToInstall -eq $true) {
 # This will download pip packages to vendor/packages for later offline installation and exit
 if ($download -eq $true) {
   Write-Color -Text ">>> ", "Downloading packages for offline installation ... " -Color Green, Gray
-  & pip download -r pypeapp\requirements.txt -d vendor\packages --platform any
+  Write-Color -Text "  - ", "For platform [ ", "win_amd64", " ]... " -Color Cyan, Gray, White, Gray
+  & pip download -r pypeapp\requirements.txt -d vendor\packages
   Write-Color -Text "<-- ", "Deactivating environment ..." -Color Cyan, Gray
   deactivate
   Write-Color -Text "+++ ", "Terminating ..." -Color Magenta, Gray

@@ -176,7 +176,7 @@ bootstrap () {
       return 1
     fi
   else
-    echo -e "${BIGreen}>>>${RST} Downloading dependecies ... \c"
+    echo -e "${BIGreen}>>>${RST} Offline installation ... \c"
     pip install -r pypeapp/requirements.txt -f vendor/packages > /dev/null
     if [ $? -ne 0 ] ; then
       echo -e "${BIRed}!!!${RST} Download ${BIRed}FAILED${RST}"
@@ -211,7 +211,7 @@ validate () {
 
 download () {
   echo -e "${IGreen}>>>${RST} Downloading packages for offline installation ..."
-  python -m pip download -r pypeapp/requirements.txt -d vendor/packages --platform any
+  python -m pip download -r pypeapp/requirements.txt -d vendor/packages
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}!!!${RST} Download failed"
     return 1
