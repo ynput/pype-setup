@@ -6,6 +6,18 @@ try:
     import ruamel.yaml as yaml
 except ImportError:
     print("yaml module wasn't found, skipping anatomy")
+else:
+    directory = os.path.join(
+        os.environ["PYPE_ENV"], "Lib", "site-packages", "ruamel"
+    )
+    file_path = os.path.join(directory, "__init__.py")
+    if os.path.exists(directory) and not os.path.exists(file_path):
+        print(
+            "{0} found but not {1}. Patching ruamel.yaml...".format(
+                directory, file_path
+            )
+        )
+        open(file_path, "a").close()
 
 """''.format_map() in Python 2.x"""
 
