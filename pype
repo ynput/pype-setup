@@ -238,6 +238,12 @@ deploy () {
 # Main function
 main () {
   welcome_message
+  if [ "$ARGS" = "--deploy" ] ; then
+    if [ "$ARGS" = "--offline" ] ; then
+      echo -e "${BIRed}!!!{$RST} Invalid invocation, cannot deploy in offline mode."
+      return 1
+    fi
+  fi
   detect || return 1
   environment || return 1
   if [ $needToInstall -eq "1" ] ; then
@@ -255,26 +261,42 @@ main () {
   fi
   validate
   if [ $? -ne 0 ] ; then
-    if [ "$ARGS" = "--force" ] ; then
-      echo -e "${BIYellow}!!!${RST} Deployment is ${BIYellow}INVALID${RST} - forcing re-deployment"
-      deploy || return 1
-      validate || return 1
-    else
-      if [ ! "$ARGS" = "--ignore" ] ; then
-        echo -e "${BIRed}!!!${RST} Deployment is ${BIRed}INVALID${RST}"
-        echo -e "${BIRed}!!!${RST} Pype deployment is invalid. Use --force to re-deploy".
-        echo -e "${BIRed}!!!${RST} Use --ignore if you want to run Pype nevertheless at your own risk."
-        return 1
+    if [ "$ARGS" = "--offline" ] ; then
+      if [ "$ARGS" = "--ignore" ] ; then
+        echo -e "${BIYellow}!!!${RST} Cannot automatically fix deployment in offline mode."
+        echo -e "${BIYellow}---${RST} Ignoring and going forward ..."
       else
-        echo -e "${BIYellow}!!!${RST} Deployment is ${BIRed}INVALID${RST} - forced to ignore"
+        echo -e "${BIRed}!!!${RST} Cannot automatically fix deployment in offline mode."
+        echo -e "${BIRed}!!!${RST} You need to fix deployment yourself or run with ${ICyan}--ignore${RST}"
+      fi
+    else
+      if [ "$ARGS" = "--force" ] ; then
+        echo -e "${BIYellow}!!!${RST} Deployment is ${BIYellow}INVALID${RST} - forcing re-deployment"
+        deploy || return 1
+        validate || return 1
+      else
+        if [ ! "$ARGS" = "--ignore" ] ; then
+          echo -e "${BIRed}!!!${RST} Deployment is ${BIRed}INVALID${RST}"
+          echo -e "${BIRed}!!!${RST} Pype deployment is invalid. Use ${ICyan}--force${RST} to re-deploy".
+          echo -e "${BIRed}!!!${RST} Use ${ICyan}--ignore${RST} if you want to run Pype nevertheless at your own risk."
+          return 1
+        else
+          echo -e "${BIYellow}!!!${RST} Deployment is ${BIRed}INVALID${RST} - forced to ignore"
+        fi
       fi
     fi
+
   else
-    if [ "$ARGS" = "--deploy" ] || [ "$ARGS" = "--install" ] ; then
-      deploy || return 1
-      validate || return 1
+    if [ "$ARGS" = "--offline" ] ; then
+      echo -e "${BIYellow}!!!${RST} Installation in offline mode will skip deployment"
+      echo -e "${BIYellow}!!!${RST} It is your responsibility to take care for it manually."
     else
-        echo -e "${IGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+      if [ "$ARGS" = "--deploy" ] || [ "$ARGS" = "--install" ] ; then
+        deploy || return 1
+        validate || return 1
+      else
+          echo -e "${IGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+      fi
     fi
   fi
   if [ "$ARGS" = "--install" ] ; then
