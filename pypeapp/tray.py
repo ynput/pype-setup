@@ -80,8 +80,6 @@ class TrayManager:
         # Add services if they are
         if self.services_submenu is not None:
             self.tray_widget.menu.addMenu(self.services_submenu)
-            self.services_thread = ServicesThread(self)
-            self.services_thread.start()
         # Add separator
         self.add_separator(self.tray_widget.menu)
         # Add Exit action to menu
@@ -162,8 +160,10 @@ class TrayManager:
                         'Services', self.tray_widget.menu
                     )
                 action = QtWidgets.QAction(title, self.services_submenu)
+                action.setIcon(self.icon_run)
                 self.services_submenu.addAction(action)
-                self.services[name] = action
+                if hasattr(obj, 'set_qaction'):
+                    obj.set_qaction(action, self.icon_failed)
             self.modules[name] = obj
             self.log.info("{} - Module imported".format(title))
         except ImportError as ie:
@@ -300,43 +300,6 @@ class TrayManager:
         for obj in self.modules.values():
             if hasattr(obj, 'tray_start'):
                 obj.tray_start()
-
-    def check_services_status(self):
-        """Check services activity.
-
-        *Changing service's icon based on service activity.*
-        """
-        for service, action in self.services.items():
-            obj = self.modules[service]
-            # TODO: how to recognize that service failed?
-            if not obj or obj.failed:
-                icon = self.icon_failed
-            elif obj.is_running:
-                icon = self.icon_run
-            else:
-                icon = self.icon_stay
-            if icon != action.icon():
-                action.setIcon(icon)
-
-
-class ServicesThread(QtCore.QThread):
-    """Triggers checking services activity in manager every 3 sec.
-
-    :param manager: object where check will be triggered
-    :type manager: TrayManager
-    """
-    def __init__(self, manager):
-        QtCore.QThread.__init__(self)
-        self.manager = manager
-        self.is_running = True
-
-    def stop(self):
-        self.is_running = False
-
-    def run(self):
-        while self.is_running:
-            self.manager.check_services_status()
-            time.sleep(3)
 
 
 class TrayMainWindow(QtWidgets.QMainWindow):
