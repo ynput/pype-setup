@@ -131,8 +131,8 @@ function Bootstrap-Pype {
     }
   } else {
     # in offline mode, install all from vendor
-    Write-Color -Text ">>> ", "Downloading dependencies ... " -Color Green, Gray -NoNewLine
-    Start-Progress {& pip install -r pypeapp/requirements.txt -f vendor/packages | out-null}
+    Write-Color -Text ">>> ", "Offline installation ... " -Color Green, Gray
+    & pip install -r pypeapp/requirements.txt -f vendor/packages
   }
 }
 
@@ -161,6 +161,11 @@ function Validate-Pype {
 }
 
 Write-Color -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White, Gray
+# Check invalid argument combination
+if ($offline -eq $true -and $deploy -eq $true) {
+  Write-Color -Text "!!! ", "Invalid invocation. Cannot deploy in offline mode." -Color Red, Gray
+  exit 1
+}
 
 # Set default environment variables if not already set
 if (-not (Test-Path 'env:PYPE_ENV')) { $env:PYPE_ENV = "C:\Users\Public\pype_env2" }
@@ -195,6 +200,8 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 6)) {
 
 Write-Color -Text "OK" -Color Green -NoNewLine
 Write-Color -Text " - version [ ", $p ," ]" -Color Gray, Cyan, Gray
+# Detect git
+
 
 # Detect mongod in PATHs
 if($localmongodb -eq $true) {
@@ -286,7 +293,8 @@ if ($needToInstall -eq $true) {
 # This will download pip packages to vendor/packages for later offline installation and exit
 if ($download -eq $true) {
   Write-Color -Text ">>> ", "Downloading packages for offline installation ... " -Color Green, Gray
-  & pip download -r pypeapp\requirements.txt -d vendor\packages --platform any
+  Write-Color -Text "  - ", "For platform [ ", "win_amd64", " ]... " -Color Cyan, Gray, White, Gray
+  & pip download -r pypeapp\requirements.txt -d vendor\packages
   Write-Color -Text "<-- ", "Deactivating environment ..." -Color Cyan, Gray
   deactivate
   Write-Color -Text "+++ ", "Terminating ..." -Color Magenta, Gray
@@ -301,53 +309,73 @@ if (($install -eq $true) -or ($deploy -eq $true) -or ($skip -eq $true)) {
 }
 
 if ($LASTEXITCODE -ne 0) {
-  # if force set, than re-deploy
-  if ($force -eq $true) {
-    Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forcing re-deployment" -Color Yellow, Gray, Red, Yellow
-    Write-Color -Text ">>> ", "Deploying ", "Pype", " ..." -Color Green, Gray, White, Gray
-    Deploy-Pype -Force $force
-    if ($LASTEXITCODE -ne 0) {
-      Write-Color -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
-      exit 1
-    }
-    Write-Color -Text ">>> ", "Re-validating ", "Pype", " deployment ... " -Color Green, Gray, White, Gray
-    Validate-Pype
-    if ($LASTEXITCODE -ne 0) {
-      Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forced to ignore" -Color Yellow, Gray, Red, Yellow
-      exit 1
+  # Deployment is invalid
+  if ($offline -eq $true) {
+    # In offline mode, we cannot deploy since we don't have access to git repositories
+    if ($ignore -eq $true) {
+        # If ignored, we don't care about deployment state and we try to run anyway
+        Write-Color -Text "!!! ", "Cannot automatically fix deployment in offline mode." -Color Yellow, Gray
+        Write-Color -Text "--- ", "Ignoring and going forward ..." -Color Yellow, Gray
+    } else {
+        # If not ignored, we terminate with error
+        Write-Color -Text "!!! ", "Cannot automatically fix deployment in offline mode." -Color Red, Gray
+        Write-Color -Text "!!! ", "You need to fix deployment yourself or run with ", "--ignore" -Color Red, Yellow, Cyan
+        exit 1
     }
   } else {
-    # if ignore set, run even if validation failed
-    if ($ignore -ne $true) {
-      Write-Color -Text "!!! ", "Deployment is ", "INVALID" -Color Red, Gray, Red
-      Write-Color -Text "!!! ", "Pype deployment is invalid. Use ", "-force", " to re-deploy." -Color Red, Gray, White, Gray
-      Write-Color -Text "... ", "Use ", "-ignore", " if you want to run Pype nevertheless at your own risk."
-      exit 1
+    # if force set, than re-deploy
+    if ($force -eq $true) {
+      Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forcing re-deployment" -Color Yellow, Gray, Red, Yellow
+      Write-Color -Text ">>> ", "Deploying ", "Pype", " ..." -Color Green, Gray, White, Gray
+      Deploy-Pype -Force $force
+      if ($LASTEXITCODE -ne 0) {
+        Write-Color -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
+        exit 1
+      }
+      Write-Color -Text ">>> ", "Re-validating ", "Pype", " deployment ... " -Color Green, Gray, White, Gray
+      Validate-Pype
+      if ($LASTEXITCODE -ne 0) {
+        Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forced to ignore" -Color Yellow, Gray, Red, Yellow
+        exit 1
+      }
     } else {
-      Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forced to ignore" -Color Yellow, Gray, Red, Yellow
+      # if ignore set, run even if validation failed
+      if ($ignore -ne $true) {
+        Write-Color -Text "!!! ", "Deployment is ", "INVALID" -Color Red, Gray, Red
+        Write-Color -Text "!!! ", "Pype deployment is invalid. Use ", "-force", " to re-deploy." -Color Red, Gray, White, Gray
+        Write-Color -Text "... ", "Use ", "-ignore", " if you want to run Pype nevertheless at your own risk."
+        exit 1
+      } else {
+        Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forced to ignore" -Color Yellow, Gray, Red, Yellow
+      }
     }
   }
 
 } else {
-  if ($deploy -eq $true -or $install -eq $true)
-  {
-    Write-Color -Text ">>> ", "Proceeding with deployment ... " -Color Green, Gray
-    Deploy-Pype
-    if ($LASTEXITCODE -ne 0) {
-      Write-Color -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
-      exit 1
-    }
-    Write-Color -Text ">>> ", "Re-validating ", "Pype", " deployment ... " -Color Green, Gray, White, Gray
-    Validate-Pype
-    if ($LASTEXITCODE -ne 0) {
-      Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forced to ignore" -Color Yellow, Gray, Red, Yellow
-      exit 1
-    }
+  if ($offline -eq $true) {
+    Write-Color -Text "!!! ", "Installation in offline mode will skip deployment" -Color Yellow, Gray
+    Write-Color -Text "!!! ", "It is your responsibility to take care for it manually." -Color Yellow, Gray
   } else {
-    Write-Color -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
+    if ($deploy -eq $true -or $install -eq $true)
+    {
+      Write-Color -Text ">>> ", "Proceeding with deployment ... " -Color Green, Gray
+      Deploy-Pype
+      if ($LASTEXITCODE -ne 0) {
+        Write-Color -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
+        exit 1
+      }
+      Write-Color -Text ">>> ", "Re-validating ", "Pype", " deployment ... " -Color Green, Gray, White, Gray
+      Validate-Pype
+      if ($LASTEXITCODE -ne 0) {
+        Write-Color -Text "!!! ", "Deployment is ", "INVALID", " - forced to ignore" -Color Yellow, Gray, Red, Yellow
+        exit 1
+      }
+    } else {
+      Write-Color -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
+    }
   }
 }
-if ($intall -eq $true) {
+if ($install -eq $true) {
     Write-Color -Text "*** ", "Installation complete. ", "Have a nice day!" -Color Green, White, Gray
     exit 0
 }
