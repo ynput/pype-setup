@@ -75,6 +75,15 @@ class PypeLauncher(object):
         elif self._kwargs.deploy:
             self._deploy()
 
+        elif self._kwargs.eventserver:
+            self._launch_eventserver()
+
+        elif self._kwargs.eventservercli:
+            self._launch_eventservercli()
+
+        elif self._kwargs.localmongodb:
+            self._launch_local_mongodb()
+
     def _parse_args(self):
         """ Create argument parser.
 
@@ -111,7 +120,7 @@ class PypeLauncher(object):
         parser.add_argument("--traydebug",
                             help="Launch Pype Tray in debug mode",
                             action="store_true")
-        parser.add_argument("--local-mongodb",
+        parser.add_argument("--localmongodb",
                             help=("Launch instance of local mongodb server"),
                             action="store_true")
         parser.add_argument("--publish",
@@ -125,6 +134,9 @@ class PypeLauncher(object):
         parser.add_argument("--root", help="set project root directory")
         parser.add_argument("--eventserver",
                             help="Launch Pype ftrack event server",
+                            action="store_true")
+        parser.add_argument("--eventservercli",
+                            help="Launch Pype ftrack event server headless",
                             action="store_true")
 
         return parser
@@ -254,12 +266,109 @@ class PypeLauncher(object):
 
     def _launch_local_mongodb(self):
         """ This will run local instance of mongodb. """
-        raise RuntimeError("Not implemented yet.")
+        from pypeapp import Logger
+        import subprocess
+        from pypeapp.storage import Storage
+        from pypeapp.deployment import Deployment
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
+
+        log = Logger().get_logger('mongodb')
+        # Get database location.
+        try:
+            location = os.environ["AVALON_DB_DATA"]
+        except KeyError:
+            location = os.path.join(os.path.expanduser("~"), "data", "db")
+
+        # Create database directory.
+        if not os.path.exists(location):
+            os.makedirs(location)
+
+        # Start server.
+        if platform.system().lower() == "linux":
+            log.info("Local mongodb is running...")
+            log.info("Using port {} and db at {}".format(
+                os.environ["AVALON_MONGO_PORT"], location))
+            p = subprocess.Popen(
+                ["mongod", "--dbpath", location, "--port",
+                 os.environ["AVALON_MONGO_PORT"]], close_fds=True
+            )
+        elif platform.system().lower() == "windows":
+            log.info("Local mongodb is running...")
+            log.info("Using port {} and db at {}".format(
+                os.environ["AVALON_MONGO_PORT"], location))
+            p = subprocess.Popen(
+                ["start", "Avalon MongoDB", "call", "mongod", "--dbpath",
+                 location, "--port", os.environ["AVALON_MONGO_PORT"]],
+                shell=True
+            )
+        return p.returncode
 
     def _launch_eventserver(self):
         """ This will run standalone ftrack eventserver. """
-        raise RuntimeError("Not implemented yet.")
-        pass
+        from pypeapp.storage import Storage
+        from pypeapp import execute
+        from pypeapp.deployment import Deployment
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
+        items = [
+            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
+            "event_server.py"
+        ]
+        fname = os.path.sep.join(items)
+
+        returncode = execute([
+            sys.executable, "-u", fname
+        ])
+        return returncode
+
+    def _launch_eventservercli(self):
+        """ This will run standalone ftrack eventserver headless. """
+        from pypeapp.storage import Storage
+        from pypeapp import execute
+        from pypeapp.deployment import Deployment
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
+        items = [
+            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
+            "event_server_cli.py"
+        ]
+        fname = os.path.sep.join(items)
+
+        returncode = execute([
+            sys.executable, "-u", fname
+        ])
+        return returncode
 
     def _install(self):
         """ This will run venv installation process.
