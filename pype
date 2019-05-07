@@ -19,8 +19,53 @@ PYTHON="python"
 export PYPE_ENV=${PYPE_ENV:="/tmp/pype_env2"}
 # Set debug level if not set
 export PYPE_DEBUG=${PYPE_DEBUG:=0}
-# Passed arguments
-ARGS=$@
+# Process passed arguments
+# Initialize vars
+f_offline=0
+f_install=0
+f_deploy=0
+f_download=0
+f_skip=0
+f_ignore=0
+f_force=0
+f_localmongo=0
+while :; do
+  case $1 in
+    --offline)
+      f_offline=1
+      ;;
+    --install)
+      f_install=1
+      ;;
+    --deploy)
+      f_deploy=1
+      ;;
+    --download)
+      f_download=1
+      ;;
+    --skip)
+      f_skip=1
+      ;;
+    --ignore)
+      f_ignore=1
+      ;;
+    --force)
+      f_force=1
+      ;;
+    --local-mongodb)
+      f_localmongo=1
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+  esac
+
+  shift
+done
+
 # Set PYPE_ROOT to path to this script
 export PYPE_ROOT="$(cd $DIR; pwd)"
 # Add PYPE_ROOT to PYTHONPATH if missing
@@ -95,7 +140,7 @@ detect () {
     echo -e "${BIGreen}$1.$2${RST}"
   fi
   # detect mongo only if running server
-  if [ "$ARGS" = "--local-mongodb" ] ; then
+  if [ "$f_localmongo" == 1  ] ; then
     echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ mongo ]${RST} ... \c"
     command -v mongo >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; print_dependency_help; return 1; }
     echo -e "${BIGreen}OK${RST}"
@@ -116,13 +161,13 @@ environment () {
     # We done have env dir
     needToInstall="1"
   fi
-  if [ "$ARGS" = "--install" ] ; then
+  if [ "$f_install" == 1 ] ; then
     # install flag is set
     needToInstall="1"
   fi
 
   if [ $needToInstall -eq "1" ] ; then
-      if [ "$ARGS" = "--install" ] ; then
+      if [ "$f_install" == 1 ] ; then
         echo -e "${BIYellow}WILL BE INSTALLED${RST}"
       else
         echo -e "${BIYellow}NOT FOUND${RST}"
@@ -134,9 +179,9 @@ environment () {
 
 environment_install () {
   echo -e "${IGreen}>>>${RST} Installing environment to [${BIWhite} $PYPE_ENV ${RST}] ..."
-  if [ ! "$ARGS" = "--skip" ] ; then
+  if [ ! "$f_skip" == 1 ] ; then
     echo -e "${ICyan}===${RST} $PYTHONPATH"
-    if [ "$ARGS" = "--force" ] ; then
+    if [ "$f_force" == 1 ] ; then
       local install_command="$PYTHON -m pypeapp --install --force"
       ${install_command}
     else
@@ -166,7 +211,7 @@ activate () {
 }
 
 bootstrap () {
-  if [ ! "$ARGS" = "--offline" ] ; then
+  if [ "$f_offline" == 0 ] ; then
     echo -e "${BIGreen}>>>${RST} Bootstrapping Pype ..."
     pip install --upgrade pip > /dev/null
     echo -e "${BICyan}  -${RST} Installing dependecies ..."
@@ -175,13 +220,17 @@ bootstrap () {
       echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
       return 1
     fi
+    echo -e "${BICyan}  -${RST} Updating requirements ..."
+    pip freeze > pypeapp/requirements.txt
   else
-    echo -e "${BIGreen}>>>${RST} Offline installation ... \c"
-    pip install -r pypeapp/requirements.txt -f vendor/packages > /dev/null
+    echo -e "${BIGreen}>>>${RST} Offline installation ..."
+    pip install -r pypeapp/requirements.txt --no-index --find-links vendor/packages
     if [ $? -ne 0 ] ; then
-      echo -e "${BIRed}!!!${RST} Download ${BIRed}FAILED${RST}"
+      echo -e "${BIRed}!!! ${RST} Install ${BIRed}FAILED${RST}"
       return 1
     fi
+    echo -e "${BICyan}  -${RST} Updating requirements ..."
+    pip freeze > pypeapp/requirements.txt
   fi
 }
 
@@ -199,7 +248,7 @@ environment_check () {
 
 validate () {
   echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
-  if [ "$ARGS" = "--install" ] || [ "$ARGS" = "--deploy" ] || [ "$ARGS" = "--skip" ] ; then
+  if [ "$f_install" == 1 ] || [ "$f_deploy" == 1 ] || [ "$f_skip" == 1 ] ; then
     python -m pypeapp --validate --skipmissing
   else
     python -m pypeapp --validate --skip
@@ -219,12 +268,12 @@ download () {
   echo -e "${ICyan}<--${RST} Deactivating environment ..."
   deactivate
   echo -e "${IPurple}xxx${RST} Terminating ..."
-  exit 0
+  return 0
 }
 
 deploy () {
   echo -e "${IGreen}>>>${RST} Deploying ${BIWhite}Pype${RST} ..."
-  if [ $ARGS = "--force" ] ; then
+  if [ $f_force == 1 ] ; then
     python -m pypeapp --deploy --force
   else
     python -m pypeapp --deploy
@@ -238,8 +287,8 @@ deploy () {
 # Main function
 main () {
   welcome_message
-  if [ "$ARGS" = "--deploy" ] ; then
-    if [ "$ARGS" = "--offline" ] ; then
+  if [ "$f_deploy" == 1 ] ; then
+    if [ "$f_offline" == 1 ] ; then
       echo -e "${BIRed}!!!{$RST} Invalid invocation, cannot deploy in offline mode."
       return 1
     fi
@@ -249,20 +298,20 @@ main () {
   if [ $needToInstall -eq "1" ] ; then
     environment_install || return 1
     activate || return 1
-    if [ ! "$ARGS" = "--skip" ] ; then
+    if [ ! "$f_skip" == 1 ] ; then
       bootstrap || return 1
     fi
   else
     activate || return 1
     environment_check || return 1
   fi
-  if [ "$ARGS" = "--download" ] ; then
+  if [ "$f_download" == 1 ] ; then
     download || return 1
   fi
   validate
   if [ $? -ne 0 ] ; then
-    if [ "$ARGS" = "--offline" ] ; then
-      if [ "$ARGS" = "--ignore" ] ; then
+    if [ "$f_offline" == 1 ] ; then
+      if [ "$f_ignore" == 1 ] ; then
         echo -e "${BIYellow}!!!${RST} Cannot automatically fix deployment in offline mode."
         echo -e "${BIYellow}---${RST} Ignoring and going forward ..."
       else
@@ -270,12 +319,12 @@ main () {
         echo -e "${BIRed}!!!${RST} You need to fix deployment yourself or run with ${ICyan}--ignore${RST}"
       fi
     else
-      if [ "$ARGS" = "--force" ] ; then
+      if [ "$f_force" == 1 ] ; then
         echo -e "${BIYellow}!!!${RST} Deployment is ${BIYellow}INVALID${RST} - forcing re-deployment"
         deploy || return 1
         validate || return 1
       else
-        if [ ! "$ARGS" = "--ignore" ] ; then
+        if [ "$f_ignore" == 0 ] ; then
           echo -e "${BIRed}!!!${RST} Deployment is ${BIRed}INVALID${RST}"
           echo -e "${BIRed}!!!${RST} Pype deployment is invalid. Use ${ICyan}--force${RST} to re-deploy".
           echo -e "${BIRed}!!!${RST} Use ${ICyan}--ignore${RST} if you want to run Pype nevertheless at your own risk."
@@ -287,11 +336,11 @@ main () {
     fi
 
   else
-    if [ "$ARGS" = "--offline" ] ; then
+    if [ "$f_offline" == 1 ] ; then
       echo -e "${BIYellow}!!!${RST} Installation in offline mode will skip deployment"
       echo -e "${BIYellow}!!!${RST} It is your responsibility to take care for it manually."
     else
-      if [ "$ARGS" = "--deploy" ] || [ "$ARGS" = "--install" ] ; then
+      if [ "$f_deploy" == 1 ] || [ "$f_install" == 1 ] ; then
         deploy || return 1
         validate || return 1
       else
@@ -299,9 +348,9 @@ main () {
       fi
     fi
   fi
-  if [ "$ARGS" = "--install" ] ; then
+  if [ "$f_install" == 1 ] ; then
     echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
-    exit 0
+    return 0
   fi
   echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
   python -m pypeapp $@
@@ -311,4 +360,3 @@ main () {
 }
 
 main "$@"
-return $?
