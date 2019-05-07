@@ -92,7 +92,7 @@ def get_presets(project=None):
         return default_data
 
     project_configs_path = os.path.normpath(project_configs_path)
-    project_config_items = [project_configs_path, project]
+    project_config_items = [project_configs_path, project, 'presets']
     project_config_path = os.path.sep.join(project_config_items)
 
     if not os.path.isdir(project_config_path):
