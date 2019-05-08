@@ -336,17 +336,18 @@ class Deployment(object):
                         ), 230)
 
         # Go through zip files.
-        for item in deploy.get('zip_files'):
-            test_path = os.path.join(
-                self._pype_root, "vendor", item.get('name')
-            )
-            # does repo directory exist?
-            if not self._validate_is_directory(test_path):
-                if skip:
-                    continue
-                raise DeployException(
-                    "Vendor path doesn't exist [ {} ]".format(test_path), 130
+        if deploy.get('zip_files'):
+            for item in deploy.get('zip_files'):
+                test_path = os.path.join(
+                    self._pype_root, "vendor", item.get('name')
                 )
+                # does repo directory exist?
+                if not self._validate_is_directory(test_path):
+                    if skip:
+                        continue
+                    raise DeployException(
+                        "Vendor path doesn't exist [ {} ]".format(test_path), 130
+                    )
 
         return True
 
@@ -609,27 +610,28 @@ class Deployment(object):
 
         # Go through zip files.
         term.echo(">>> Deploying zip files ...")
-        for item in deploy.get("zip_files"):
-            term.echo(" -- processing [ {} ]".format(item.get("name")))
-            path = os.path.join(
-                self._pype_root, "vendor", item.get("name")
-            )
-
-            if self._validate_is_directory(path):
-                term.echo("  - removing existing directory.")
-                shutil.rmtree(path)
-
-            # Download zip file.
-            term.echo("  - downloading [ {} ]".format(item.get("url")))
-            zip_file_path = path + ".zip"
-            success = self._download_file(item.get("url"), zip_file_path)
-            if not success:
-                raise DeployException(
-                    "Failed to download [ {} ]".format(item.get("url")), 130
+        if deploy.get('zip_files'):
+            for item in deploy.get("zip_files"):
+                term.echo(" -- processing [ {} ]".format(item.get("name")))
+                path = os.path.join(
+                    self._pype_root, "vendor", item.get("name")
                 )
 
-            zip_file = zipfile.ZipFile(zip_file_path)
-            zip_file.extractall(path)
+                if self._validate_is_directory(path):
+                    term.echo("  - removing existing directory.")
+                    shutil.rmtree(path)
+
+                # Download zip file.
+                term.echo("  - downloading [ {} ]".format(item.get("url")))
+                zip_file_path = path + ".zip"
+                success = self._download_file(item.get("url"), zip_file_path)
+                if not success:
+                    raise DeployException(
+                        "Failed to download [ {} ]".format(item.get("url")), 130
+                    )
+
+                zip_file = zipfile.ZipFile(zip_file_path)
+                zip_file.extractall(path)
 
         # install python dependencies
         term.echo(">>> Adding python dependencies ...")
