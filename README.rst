@@ -6,6 +6,9 @@ This is 2.0 incarnation of setup tool to install **pype**.
 usage
 -----
 
+command line arguments
+~~~~~~~~~~~~~~~~~~~~~~
+
 Use ``pype`` command to launch and control whole pipeline. Available command
 line arguments are:
 
@@ -13,6 +16,9 @@ line arguments are:
 When something is detected in environment destination directory, installation
 will abort unless used with **--force**. That will force install to clean
 destination environment.
+
+**--skip** will skip validation of deployment, so if repositories are in
+different state then specified in ``deploy.json``, only warning is shown.
 
 Installation will download and setup python dependencies and then it will
 load ``deploy/deploy.json``. Using this file setup will populate
@@ -25,11 +31,23 @@ then considered as an override and setup will use that.
 You can use **--download** to just download required python packages
 to ``vendor/packages`` to be used later with **--offline** switch that will
 use those downloaded without connecting to internet. Useful in scenarios
-where internet connection is unavailable.
+where internet connection is unavailable. It will download only packages
+specific for current platform so if you need to download packages for linux,
+you must be running linux.
 
 **--ignore** switch can be used to ignore inconsistent setup of
 repositories when launching **pype**. Useful during development, but
 dangerous as it can result in crashes and malfunctions.
+
+**--traydebug** will cause **--skip** to be se also.
+
+deployment
+~~~~~~~~~~
+
+Deployment is driven by configuration in ``deploy/deploy.json`` where
+repositories are specified and additional dependecies. It can be overridden
+by creating directory inside ``deploy`` and adding customized ``deploy.json``
+and its schema there.
 
 tests
 -----
@@ -80,8 +98,6 @@ Autodoc is configured to use **rst** docstyle, but takes **napoleon** too.
 
 todo
 ----
-
- - Implement rest of pype-setup 1.0
  - Cover more code with tests
  - Write documentation
  - Increase test coverage

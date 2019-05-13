@@ -19,7 +19,8 @@ param(
   [switch]$localmongodb=$false
 )
 
-$arguments = $ARGS
+$arguments=$ARGS
+$traydebug=$false
 # map double hyphens to single for powershell use
 if($arguments -eq "--install") {
   $install=$true
@@ -44,6 +45,9 @@ if($arguments -eq "--skip") {
 }
 if($arguments -eq "--localmongodb") {
   $localmongodb=$true
+}
+if($arguments -eq "--traydebug") {
+  $ignore=$true
 }
 
 $env:PYPE_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
