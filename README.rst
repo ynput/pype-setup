@@ -39,7 +39,7 @@ you must be running linux.
 repositories when launching **pype**. Useful during development, but
 dangerous as it can result in crashes and malfunctions.
 
-**--traydebug** will cause **--skip** to be se also.
+**--traydebug** will cause **--ignore** to be se also.
 
 deployment
 ~~~~~~~~~~
