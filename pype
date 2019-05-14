@@ -16,7 +16,7 @@ DIR=`dirname "${THIS}"`
 # Set python interpreter name
 PYTHON="python"
 # Set path to environment if not set
-export PYPE_ENV=${PYPE_ENV:="/tmp/pype_env2"}
+export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
 # Set debug level if not set
 export PYPE_DEBUG=${PYPE_DEBUG:=0}
 # Process passed arguments
