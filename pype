@@ -142,6 +142,7 @@ detect () {
     set -- $python_version
     IFS="$oIFS"
     echo -e "${BIGreen}$1.$2${RST}"
+    echo -e "${BIYellow}!!! WARNING:${RST} Supported version of python isn't named '${BIWhite}python${RST}'. There can be trouble with that."
   fi
   # detect mongo only if running server
   if [ "$f_localmongo" == 1  ] ; then
@@ -240,11 +241,15 @@ bootstrap () {
 
 environment_check () {
   echo -e "${IGreen}>>>${RST} Validating environment dependencies... \c"
-  diff pypeapp/requirements.txt <(pip freeze) < /dev/null
+  diff pypeapp/requirements.txt <(pip freeze) > /dev/null
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}FAILED${RST}"
-    echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
-    bootstrap
+    if [ "$f_ignore" == 1 ]; then
+      echo -e "${BIYellow}***${RST} Ignoring current state due ${BIWhite}--ignore${RST} ..."
+    else
+      echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
+      bootstrap
+    fi
   else
     echo -e "${BIGreen}OK${RST}"
   fi
@@ -311,6 +316,7 @@ main () {
   fi
   if [ "$f_download" == 1 ] ; then
     download || return 1
+    return 0
   fi
   validate
   if [ $? -ne 0 ] ; then
