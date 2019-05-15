@@ -29,6 +29,7 @@ f_skip=0
 f_ignore=0
 f_force=0
 f_localmongo=0
+f_workstation=0
 while :; do
   case $1 in
     --offline)
@@ -51,6 +52,9 @@ while :; do
       ;;
     --force)
       f_force=1
+      ;;
+    --workstation)
+      f_workstation=1
       ;;
     --local-mongodb)
       f_localmongo=1
@@ -310,6 +314,13 @@ main () {
   fi
   validate
   if [ $? -ne 0 ] ; then
+    if [ "$f_workstation" == 1 ] ; then
+      echo -e "${BIYellow}!!! WARNING:${RST} Deployment is invalid."
+      echo -e "${BIYellow}  *${RST} Contact your system administrator to resolve this issue."
+      echo -e "${BIGreen}  *${RST} You can now run pype tray with ${BIWhite}--tray${RST}"
+      echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
+      return 0
+    fi
     if [ "$f_offline" == 1 ] ; then
       if [ "$f_ignore" == 1 ] ; then
         echo -e "${BIYellow}!!!${RST} Cannot automatically fix deployment in offline mode."
