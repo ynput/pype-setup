@@ -16,7 +16,7 @@ DIR=`dirname "${THIS}"`
 # Set python interpreter name
 PYTHON="python"
 # Set path to environment if not set
-export PYPE_ENV=${PYPE_ENV:="/tmp/pype_env2"}
+export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
 # Set debug level if not set
 export PYPE_DEBUG=${PYPE_DEBUG:=0}
 # Process passed arguments
@@ -29,6 +29,7 @@ f_skip=0
 f_ignore=0
 f_force=0
 f_localmongo=0
+f_workstation=0
 while :; do
   case $1 in
     --offline)
@@ -51,6 +52,9 @@ while :; do
       ;;
     --force)
       f_force=1
+      ;;
+    --workstation)
+      f_workstation=1
       ;;
     --local-mongodb)
       f_localmongo=1
@@ -140,6 +144,7 @@ detect () {
     set -- $python_version
     IFS="$oIFS"
     echo -e "${BIGreen}$1.$2${RST}"
+    echo -e "${BIYellow}!!! WARNING:${RST} Supported version of python isn't named '${BIWhite}python${RST}'. There can be trouble with that."
   fi
   # detect mongo only if running server
   if [ "$f_localmongo" == 1  ] ; then
@@ -238,11 +243,15 @@ bootstrap () {
 
 environment_check () {
   echo -e "${IGreen}>>>${RST} Validating environment dependencies... \c"
-  diff pypeapp/requirements.txt <(pip freeze) < /dev/null
+  diff pypeapp/requirements.txt <(pip freeze) > /dev/null
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}FAILED${RST}"
-    echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
-    bootstrap
+    if [ "$f_ignore" == 1 ]; then
+      echo -e "${BIYellow}***${RST} Ignoring current state due ${BIWhite}--ignore${RST} ..."
+    else
+      echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
+      bootstrap
+    fi
   else
     echo -e "${BIGreen}OK${RST}"
   fi
@@ -309,9 +318,17 @@ main () {
   fi
   if [ "$f_download" == 1 ] ; then
     download || return 1
+    return 0
   fi
   validate
   if [ $? -ne 0 ] ; then
+    if [ "$f_workstation" == 1 ] ; then
+      echo -e "${BIYellow}!!! WARNING:${RST} Deployment is invalid."
+      echo -e "${BIYellow}  *${RST} Contact your system administrator to resolve this issue."
+      echo -e "${BIGreen}  *${RST} You can now run pype tray with ${BIWhite}--tray${RST}"
+      echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
+      return 0
+    fi
     if [ "$f_offline" == 1 ] ; then
       if [ "$f_ignore" == 1 ] ; then
         echo -e "${BIYellow}!!!${RST} Cannot automatically fix deployment in offline mode."
