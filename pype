@@ -59,6 +59,8 @@ while :; do
     --local-mongodb)
       f_localmongo=1
       ;;
+    --traydebug)
+      f_ignore=1
     --)
       shift
       break
