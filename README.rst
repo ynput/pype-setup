@@ -14,6 +14,10 @@ When something is detected in environment destination directory, installation
 will abort unless used with **--force**. That will force install to clean
 destination environment.
 
+**--workstation** will install only python environment of computer, to
+proceeding with deployment. As deployment should be installed only once on
+some network share.
+
 Installation will download and setup python dependencies and then it will
 load ``deploy/deploy.json``. Using this file setup will populate
 repositories in ```repos``. If they exists but differs with specified

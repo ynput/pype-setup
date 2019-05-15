@@ -10,6 +10,7 @@
 
 param(
   [switch]$install=$false,
+  [switch]$workstation=$false,
   [switch]$force=$false,
   [switch]$ignore=$false,
   [switch]$offline=$false,
@@ -26,6 +27,9 @@ if($arguments -eq "--install") {
 }
 if($arguments -eq "--force") {
   $force=$true
+}
+if($arguments -eq "--workstation") {
+  $workstation=$true
 }
 if($arguments -eq "--ignore") {
   $ignore=$true
@@ -157,7 +161,14 @@ function Validate-Pype {
   } else {
       & python -m "pypeapp" --validate
   }
+}
 
+function Upgrade-pip {
+  if ($offline -ne $true)
+  {
+      Write-Color -Text ">>> ", "Updating pip ... " -Color Green, Gray
+    & python -m pip install --upgrade pip
+  }
 }
 
 Write-Color -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White, Gray
@@ -289,6 +300,8 @@ if ($needToInstall -eq $true) {
   Check-Environment
 }
 
+Upgrade-pip
+
 # Download
 # This will download pip packages to vendor/packages for later offline installation and exit
 if ($download -eq $true) {
@@ -310,6 +323,15 @@ if (($install -eq $true) -or ($deploy -eq $true) -or ($skip -eq $true)) {
 
 if ($LASTEXITCODE -ne 0) {
   # Deployment is invalid
+  if ($workstation -eq $true) {
+    # Workstation installation just initialize python environment. Deployment is supposed to be carried
+    # out by administrator on central location
+    Write-Color -Text "!!! WARNING:", "Deployment is invalid." -Color Yellow, Gray
+    Write-Color -Text "  * ", "Contact your system administrator to resolve this issue." -Color Yellow, Gray
+    Write-Color -Text "  * ", "You can now run pype tray with ", "--tray" -Color Green, Gray, White
+    Write-Color -Text "  * ", "Installation complete. ", "Have a nice day!" -Color Green, White, Gray
+    exit 0
+  }
   if ($offline -eq $true) {
     # In offline mode, we cannot deploy since we don't have access to git repositories
     if ($ignore -eq $true) {
