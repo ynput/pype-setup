@@ -96,7 +96,7 @@ def get_presets(project=None):
     project_config_path = os.path.sep.join(project_config_items)
 
     if not os.path.isdir(project_config_path):
-        log.error('Preset path for project {} not found: "{}"'.format(
+        log.warning('Preset path for project {} not found: "{}"'.format(
             project, config_path
         ))
         return default_data
