@@ -665,6 +665,10 @@ class Deployment(object):
                     tar_file.extractall(path)
                     tar_file.close()
 
+                # Move folders/files if skip first subfolder is set
+                if item.get('skip_first_subfolder', False):
+                    self.move_subfolders_to_main(path)
+
         # install python dependencies
         term.echo(">>> Adding python dependencies ...")
         for pitem in deploy.get('pip'):
@@ -693,6 +697,26 @@ class Deployment(object):
         with open(r_path, 'w') as r_write:
             r_write.write(out)
         pass
+
+    def move_subfolders_to_main(self, path):
+        with os.scandir(path) as main_folder:
+            sub_folders = [entry.path for entry in main_folder]
+
+        if len(sub_folders) != 1:
+            raise DeployException(
+                "Archive file has more then one main folder."
+                " Please change 'skip_first_subfolder'"
+                " for '{}'".format(path)
+            )
+        sub_folder_path = sub_folders[0]
+        with os.scandir(sub_folder_path) as sub_folder:
+            paths_to_move = [entry.path for entry in sub_folder]
+
+        for path_to_move in paths_to_move:
+            shutil.move(path_to_move, path)
+
+        if len(os.listdir(sub_folder_path)) == 0:
+            shutil.rmtree(sub_folder_path)
 
     def get_deployment_paths(self) -> list:
         """ Return paths from **deploy.json** for later use.
