@@ -18,6 +18,8 @@ import sys
 import subprocess
 import jsonschema
 import requests
+import tempfile
+import tarfile
 import zipfile
 from pypeapp import Logger
 from pypeapp.lib.Terminal import Terminal
@@ -335,11 +337,11 @@ class Deployment(object):
                             ritem.get('tag')
                         ), 230)
 
-        # Go through zip files.
-        if deploy.get('zip_files'):
-            for item in deploy.get('zip_files'):
+        # Go through archive files.
+        if deploy.get('archive_files'):
+            for item in deploy.get('archive_files'):
                 test_path = os.path.join(
-                    self._pype_root, "vendor", item.get('name')
+                    self._pype_root, item.get('extract_path')
                 )
                 # does repo directory exist?
                 if not self._validate_is_directory(test_path):
@@ -609,13 +611,15 @@ class Deployment(object):
                     ) from e
 
         # Go through zip files.
-        term.echo(">>> Deploying zip files ...")
-        if deploy.get('zip_files'):
-            for item in deploy.get("zip_files"):
-                term.echo(" -- processing [ {} ]".format(item.get("name")))
-                path = os.path.join(
-                    self._pype_root, "vendor", item.get("name")
+        term.echo(">>> Deploying archive files ...")
+        if deploy.get('archive_files'):
+            for item in deploy.get("archive_files"):
+                term.echo(
+                    " -- processing [ {} ]".format(item.get("extract_path"))
                 )
+                path = os.path.normpath(os.path.join(
+                    self._pype_root, item.get("extract_path")
+                ))
 
                 if self._validate_is_directory(path):
                     term.echo("  - removing existing directory.")
@@ -638,8 +642,28 @@ class Deployment(object):
                         "Failed to download [ {} ]".format(item.get("url")), 130
                     )
 
-                zip_file = zipfile.ZipFile(zip_file_path)
-                zip_file.extractall(path)
+                # Extract files from archive
+                if archive_type in ['zip']:
+                    zip_file = zipfile.ZipFile(archive_file_path)
+                    zip_file.extractall(path)
+
+                elif archive_type in [
+                    'tar', 'tgz', 'tar.gz', 'tar.xz', 'tar.bz2'
+                ]:
+                    if archive_type == 'tar':
+                        tar_type = 'r:'
+                    elif archive_type.endswith('xz'):
+                        tar_type = 'r:xz'
+                    elif archive_type.endswith('gz'):
+                        tar_type = 'r:gz'
+                    elif archive_type.endswith('bz2'):
+                        tar_type = 'r:bz2'
+                    else:
+                        tar_type = 'r:*'
+
+                    tar_file = tarfile.open(archive_file_path, tar_type)
+                    tar_file.extractall(path)
+                    tar_file.close()
 
         # install python dependencies
         term.echo(">>> Adding python dependencies ...")
