@@ -621,10 +621,18 @@ class Deployment(object):
                     term.echo("  - removing existing directory.")
                     shutil.rmtree(path)
 
-                # Download zip file.
+                # Download archive file.
+                archive_type = item.get('archive_type')
+                basename = os.path.split(path)[-1]
+                filename = '.'.join([basename, archive_type])
+                archive_file_path = tempfile.mkdtemp(basename + '_archive')
+                archive_file_path = os.path.join(archive_file_path, filename)
+
                 term.echo("  - downloading [ {} ]".format(item.get("url")))
-                zip_file_path = path + ".zip"
-                success = self._download_file(item.get("url"), zip_file_path)
+                success = self._download_file(
+                    item.get("url"), archive_file_path
+                )
+
                 if not success:
                     raise DeployException(
                         "Failed to download [ {} ]".format(item.get("url")), 130
