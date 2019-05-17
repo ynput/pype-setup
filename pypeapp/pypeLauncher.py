@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import platform
+from vendor import bin
 
 
 class PypeLauncher(object):

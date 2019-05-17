@@ -8,6 +8,11 @@ __pycache__/
 !/deploy/*.*
 /vendor/packages/*
 !/vendor/packages/README.md
+/vendor/bin/*/*
+!/vendor/bin/README.md
+!/vendor/bin/__init__.py
+!/vendor/bin/*/__init__.py
+
 /repos/*
 !/repos/README.md
 

@@ -62,20 +62,29 @@
       "description": "Pip dependencies installed to environment",
       "type": "array"
     },
-    "zip_files": {
+    "archive_files": {
       "description": "Array of zip files for vendor usage.",
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "url"],
+        "required": ["extract_path", "url", "archive_type"],
         "properties": {
-          "name": {
+          "extract_path": {
             "type": "string",
-            "description": "Zip file extracted used as directory name containing it"
+            "description": "Archive file will be extracted into this path. Result will be concatenated: {$PYPE_ROOT}/{extract_path} - Example: vendor/bin/ffmpeg"
           },
           "url": {
             "type": "string",
             "description": "URL used to download zip file."
+          },
+          "archive_type": {
+            "type": "string",
+            "description": "Type of archive file (from enum)",
+            "enum": ["zip", "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"]
+          },
+          "skip_first_subfolder": {
+              "type": "boolean",
+              "description": "Subfolders of main archive folder will be extracted if set to true (expected that main archive folder is only one)"
           }
         }
       }

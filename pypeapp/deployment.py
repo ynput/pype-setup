@@ -18,6 +18,8 @@ import sys
 import subprocess
 import jsonschema
 import requests
+import tempfile
+import tarfile
 import zipfile
 from pypeapp import Logger
 from pypeapp.lib.Terminal import Terminal
@@ -335,11 +337,11 @@ class Deployment(object):
                             ritem.get('tag')
                         ), 230)
 
-        # Go through zip files.
-        if deploy.get('zip_files'):
-            for item in deploy.get('zip_files'):
+        # Go through archive files.
+        if deploy.get('archive_files'):
+            for item in deploy.get('archive_files'):
                 test_path = os.path.join(
-                    self._pype_root, "vendor", item.get('name')
+                    self._pype_root, item.get('extract_path')
                 )
                 # does repo directory exist?
                 if not self._validate_is_directory(test_path):
@@ -609,29 +611,63 @@ class Deployment(object):
                     ) from e
 
         # Go through zip files.
-        term.echo(">>> Deploying zip files ...")
-        if deploy.get('zip_files'):
-            for item in deploy.get("zip_files"):
-                term.echo(" -- processing [ {} ]".format(item.get("name")))
-                path = os.path.join(
-                    self._pype_root, "vendor", item.get("name")
+        term.echo(">>> Deploying archive files ...")
+        if deploy.get('archive_files'):
+            for item in deploy.get("archive_files"):
+                term.echo(
+                    " -- processing [ {} ]".format(item.get("extract_path"))
                 )
+                path = os.path.normpath(os.path.join(
+                    self._pype_root, item.get("extract_path")
+                ))
 
                 if self._validate_is_directory(path):
                     term.echo("  - removing existing directory.")
                     shutil.rmtree(path)
 
-                # Download zip file.
+                # Download archive file.
+                archive_type = item.get('archive_type')
+                basename = os.path.split(path)[-1]
+                filename = '.'.join([basename, archive_type])
+                archive_file_path = tempfile.mkdtemp(basename + '_archive')
+                archive_file_path = os.path.join(archive_file_path, filename)
+
                 term.echo("  - downloading [ {} ]".format(item.get("url")))
-                zip_file_path = path + ".zip"
-                success = self._download_file(item.get("url"), zip_file_path)
+                success = self._download_file(
+                    item.get("url"), archive_file_path
+                )
+
                 if not success:
                     raise DeployException(
                         "Failed to download [ {} ]".format(item.get("url")), 130
                     )
 
-                zip_file = zipfile.ZipFile(zip_file_path)
-                zip_file.extractall(path)
+                # Extract files from archive
+                if archive_type in ['zip']:
+                    zip_file = zipfile.ZipFile(archive_file_path)
+                    zip_file.extractall(path)
+
+                elif archive_type in [
+                    'tar', 'tgz', 'tar.gz', 'tar.xz', 'tar.bz2'
+                ]:
+                    if archive_type == 'tar':
+                        tar_type = 'r:'
+                    elif archive_type.endswith('xz'):
+                        tar_type = 'r:xz'
+                    elif archive_type.endswith('gz'):
+                        tar_type = 'r:gz'
+                    elif archive_type.endswith('bz2'):
+                        tar_type = 'r:bz2'
+                    else:
+                        tar_type = 'r:*'
+
+                    tar_file = tarfile.open(archive_file_path, tar_type)
+                    tar_file.extractall(path)
+                    tar_file.close()
+
+                # Move folders/files if skip first subfolder is set
+                if item.get('skip_first_subfolder', False):
+                    self.move_subfolders_to_main(path)
 
         # install python dependencies
         term.echo(">>> Adding python dependencies ...")
@@ -661,6 +697,26 @@ class Deployment(object):
         with open(r_path, 'w') as r_write:
             r_write.write(out)
         pass
+
+    def move_subfolders_to_main(self, path):
+        with os.scandir(path) as main_folder:
+            sub_folders = [entry.path for entry in main_folder]
+
+        if len(sub_folders) != 1:
+            raise DeployException(
+                "Archive file has more then one main folder."
+                " Please change 'skip_first_subfolder'"
+                " for '{}'".format(path)
+            )
+        sub_folder_path = sub_folders[0]
+        with os.scandir(sub_folder_path) as sub_folder:
+            paths_to_move = [entry.path for entry in sub_folder]
+
+        for path_to_move in paths_to_move:
+            shutil.move(path_to_move, path)
+
+        if len(os.listdir(sub_folder_path)) == 0:
+            shutil.rmtree(sub_folder_path)
 
     def get_deployment_paths(self) -> list:
         """ Return paths from **deploy.json** for later use.
