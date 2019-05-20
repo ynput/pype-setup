@@ -1,8 +1,0 @@
-*.qmlc
-*.jsc
-*.pyc
-__pycache__/
-*.py[cod]
-bin/python
-repos/
-qt5/
