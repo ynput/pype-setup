@@ -1,0 +1,69 @@
+{
+	"PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+  "init_env": ["global", "avalon", "ftrack", "deadline"],
+  "repositories": [{
+      "name": "avalon-core",
+      "url": "git@github.com:pypeclub/avalon-core.git",
+      "branch": "2.0/develop"
+    },
+    {
+      "name": "avalon-launcher",
+      "url": "git@github.com:pypeclub/avalon-launcher.git",
+      "branch": "develop"
+    },
+    {
+      "name": "pyblish-base",
+      "url": "https://github.com/pyblish/pyblish-base.git",
+      "branch": "master"
+    },
+    {
+      "name": "pyblish-lite",
+      "url": "https://github.com/pyblish/pyblish-lite.git",
+      "branch": "master"
+    },
+    {
+      "name": "pyblish-qml",
+      "url": "https://github.com/pyblish/pyblish-qml.git",
+      "branch": "master"
+    },
+    {
+      "name": "maya-look-assigner",
+      "url": "git@github.com:pypeclub/maya-look-assigner.git",
+      "branch": "master"
+    },
+    {
+      "name": "pype",
+      "url": "git@bitbucket.org:pypeclub/pype.git",
+      "branch": "2.0/develop"
+    },
+    {
+      "name": "pype-config",
+      "url": "git@bitbucket.org:pypeclub/pype-config.git",
+      "branch": "feature/2.0/develop"
+    }
+  ],
+  "pip": [
+    "colorama",
+    "six",
+    "toml",
+    "pymongo",
+    "gitpython",
+    "psutil",
+    "Xlib",
+    "pyqt5"
+  ],
+  "archive_files": [
+	{
+	  "extract_path": "vendor/bin/ffmpeg_exec/windows",
+	  "url": "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.1.3-win64-static.zip",
+	  "archive_type": "zip",
+	  "skip_first_subfolder": true
+	},
+	{
+	  "extract_path": "vendor/bin/ffmpeg_exec/linux",
+	  "url": "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz",
+	  "archive_type": "tar.xz",
+	  "skip_first_subfolder": true
+	}
+  ]
+}

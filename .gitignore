@@ -1,0 +1,53 @@
+*.qmlc
+*.jsc
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+/deploy/*
+!/deploy/*.*
+/vendor/packages/*
+!/vendor/packages/README.md
+/vendor/bin/*/*
+!/vendor/bin/README.md
+!/vendor/bin/__init__.py
+!/vendor/bin/*/__init__.py
+
+/repos/*
+!/repos/README.md
+
+# Documentation
+###############
+/docs/build
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Editor backup files #
+#######################
+*~
+
+# Unit test / coverage reports
+##############################
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+/coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/

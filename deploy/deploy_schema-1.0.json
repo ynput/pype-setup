@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+
+  "title": "pype:deployment-schema",
+  "description": "A product in the catalog",
+  "type": "object",
+
+  "properties": {
+    "PYPE_CONFIG": {
+      "description": "Env variable pointing to current pype config repo",
+      "type": "string"
+    },
+    "init_env": {
+      "description": "Environment files in PYPE_CONFIG to load by default.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repositories": {
+      "description": "Array of repositories used for Pype",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "url"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Repository name used as directory name containing it"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL used to clone repository"
+          },
+          "branch": {
+              "type": "string",
+              "description": "name of branch to checkout"
+          },
+          "tag": {
+            "type": "string",
+            "description": "name of tag to checkout"
+          },
+          "ref": {
+            "type": "string",
+            "description": "git ref to checkout"
+          }
+        },
+        "oneOf": [
+            {
+              "required": ["branch"]
+            },
+            {
+              "required": ["tag"]
+            },
+            {
+              "required": ["ref"]
+            }
+        ]
+      }
+    },
+    "pip": {
+      "description": "Pip dependencies installed to environment",
+      "type": "array"
+    },
+    "archive_files": {
+      "description": "Array of zip files for vendor usage.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["extract_path", "url", "archive_type"],
+        "properties": {
+          "extract_path": {
+            "type": "string",
+            "description": "Archive file will be extracted into this path. Result will be concatenated: {$PYPE_ROOT}/{extract_path} - Example: vendor/bin/ffmpeg"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL used to download zip file."
+          },
+          "archive_type": {
+            "type": "string",
+            "description": "Type of archive file (from enum)",
+            "enum": ["zip", "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"]
+          },
+          "skip_first_subfolder": {
+              "type": "boolean",
+              "description": "Subfolders of main archive folder will be extracted if set to true (expected that main archive folder is only one)"
+          }
+        }
+      }
+    }
+  },
+  "required": ["repositories", "PYPE_CONFIG", "init_env"]
+}
