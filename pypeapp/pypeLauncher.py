@@ -2,7 +2,6 @@ import argparse
 import os
 import sys
 import platform
-from vendor import bin
 
 
 class PypeLauncher(object):
@@ -85,6 +84,12 @@ class PypeLauncher(object):
         elif self._kwargs.localmongodb:
             self._launch_local_mongodb()
 
+        elif self._kwargs.publish:
+            self._publish()
+
+        elif self._kwargs.publishgui:
+            self._publish(gui=True)
+
     def _parse_args(self):
         """ Create argument parser.
 
@@ -128,11 +133,13 @@ class PypeLauncher(object):
                             help=("Publish from current working"
                                   "directory, or supplied --root"),
                             action="store_true")
-        parser.add_argument("--publish-gui",
+        parser.add_argument("--publishgui",
                             help=("Publish with GUI from current working"
                                   "directory, or supplied --root"),
                             action="store_true")
         parser.add_argument("--root", help="set project root directory")
+        parser.add_argument("--path", help="")
+        parser.add_argument("--paths", help="set directories for publishing")
         parser.add_argument("--eventserver",
                             help="Launch Pype ftrack event server",
                             action="store_true")
@@ -190,6 +197,7 @@ class PypeLauncher(object):
         env = acre.compute(dict(tools_env))
         env = acre.merge(env, dict(os.environ))
         os.environ = acre.append(dict(os.environ), env)
+        os.environ = acre.compute(os.environ)
         pass
 
     def _launch_tray(self, debug=False):
@@ -202,21 +210,9 @@ class PypeLauncher(object):
         """
         import subprocess
         from pypeapp import Logger
-        from pypeapp.storage import Storage
         from pypeapp import execute
-        from pypeapp.deployment import Deployment
 
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
+        self._initialize()
 
         if debug:
             pype_setup = os.getenv('PYPE_ROOT')
@@ -268,20 +264,8 @@ class PypeLauncher(object):
         """ This will run local instance of mongodb. """
         from pypeapp import Logger
         import subprocess
-        from pypeapp.storage import Storage
-        from pypeapp.deployment import Deployment
 
-        pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
+        self._initialize()
 
         log = Logger().get_logger('mongodb')
         # Get database location.
@@ -316,21 +300,11 @@ class PypeLauncher(object):
 
     def _launch_eventserver(self):
         """ This will run standalone ftrack eventserver. """
-        from pypeapp.storage import Storage
         from pypeapp import execute
-        from pypeapp.deployment import Deployment
+
+        self._initialize()
 
         pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server.py"
@@ -344,21 +318,10 @@ class PypeLauncher(object):
 
     def _launch_eventservercli(self):
         """ This will run standalone ftrack eventserver headless. """
-        from pypeapp.storage import Storage
         from pypeapp import execute
-        from pypeapp.deployment import Deployment
+        self._initialize()
 
         pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server_cli.py"
@@ -409,3 +372,59 @@ class PypeLauncher(object):
         except DeployException:
             sys.exit(200)
         pass
+
+    def _initialize(self):
+        from pypeapp.storage import Storage
+        from pypeapp.deployment import Deployment
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
+
+    def _publish(self, gui=False):
+        """ Starts headless publishing.
+
+            Publish collects json from current working directory
+            or supplied --path argument
+
+        """
+
+        from pypeapp import execute
+        from pypeapp import Logger
+
+        self._initialize()
+
+        # Register target and host
+        import pyblish.api
+        pyblish.api.register_host("shell")
+
+        # paths = [self._kwargs.path] or [os.getcwd()]
+        # assert isinstance(paths, (list, tuple)), "Must be list of paths"
+        # log.info('paths: {}'.format(paths))
+        # assert any(paths), "No paths found in the list"
+        # # Set the paths to publish for the collector if any provided
+        # if paths:
+        #     os.environ["FILESEQUENCE"] = os.pathsep.join(paths)
+
+        args = [
+            "-pp", os.pathsep.join(pyblish.api.registered_paths()),
+            "--plugins"
+        ]
+
+        if gui:
+            args += ["gui"]
+
+        returncode = execute([
+            sys.executable, "-u", "-m", "pyblish"
+        ] + args, env=os.environ)
+        from pprint import pprint
+        pprint(returncode)
+        return returncode
