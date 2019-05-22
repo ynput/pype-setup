@@ -367,7 +367,7 @@ class PypeLauncher(object):
 
         returncode = execute([
             sys.executable, "-u", fname
-        ])
+        ] + sys.argv)
         return returncode
 
     def _install(self):
