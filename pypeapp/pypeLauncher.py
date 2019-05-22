@@ -2,8 +2,10 @@ import argparse
 import os
 import sys
 import platform
-from vendor import bin
-
+try:
+    from vendor import bin
+except:
+    pass
 
 class PypeLauncher(object):
     """ Class handling start of different modes of Pype.
