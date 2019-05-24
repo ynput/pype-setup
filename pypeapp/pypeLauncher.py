@@ -139,7 +139,8 @@ class PypeLauncher(object):
                             action="store_true")
         parser.add_argument("--root", help="set project root directory")
         parser.add_argument("--path", help="")
-        parser.add_argument("--paths", help="set directories for publishing")
+        parser.add_argument("--paths", help="set files or directories for "
+                            "publishing", nargs="*", default=[])
         parser.add_argument("--eventserver",
                             help="Launch Pype ftrack event server",
                             action="store_true")
@@ -396,35 +397,50 @@ class PypeLauncher(object):
             or supplied --path argument
 
         """
+        # handle paths
 
-        from pypeapp import execute
+        # from pypeapp import execute
         from pypeapp import Logger
+        # from pypeapp.lib.Terminal import Terminal
 
+        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+        log = Logger().get_logger('publish')
         self._initialize()
 
         # Register target and host
         import pyblish.api
+        pyblish.api.register_target("filesequence")
         pyblish.api.register_host("shell")
 
-        # paths = [self._kwargs.path] or [os.getcwd()]
-        # assert isinstance(paths, (list, tuple)), "Must be list of paths"
-        # log.info('paths: {}'.format(paths))
-        # assert any(paths), "No paths found in the list"
-        # # Set the paths to publish for the collector if any provided
-        # if paths:
-        #     os.environ["FILESEQUENCE"] = os.pathsep.join(paths)
+        paths = self._kwargs.publish
+        if not isinstance(paths, (list, tuple)):
+            log.error("Provided paths are invalid. Must be list or tuple.")
+            return False
 
-        args = [
-            "-pp", os.pathsep.join(pyblish.api.registered_paths()),
-            "--plugins"
-        ]
+        if not any(paths):
+            log.error("No publish paths specified")
+            return False
+
+        if paths:
+            os.environ["FILESEQUENCE"] = os.pathsep.join(paths)
 
         if gui:
-            args += ["gui"]
+            import pyblish_qml
+            pyblish_qml.show(modal=True)
+        else:
 
-        returncode = execute([
-            sys.executable, "-u", "-m", "pyblish"
-        ] + args, env=os.environ)
-        from pprint import pprint
-        pprint(returncode)
-        return returncode
+            import pyblish.util
+            context = pyblish.util.publish()
+
+            if not context:
+                log.warning("Nothing collected.")
+                sys.exit(1)
+
+            # Collect errors, {plugin name: error}
+            error_results = [r for r in context.data["results"] if r["error"]]
+
+            if error_results:
+                log.error("Errors occurred ...")
+                for result in error_results:
+                    log.error(error_format.format(**result))
+                sys.exit(2)
