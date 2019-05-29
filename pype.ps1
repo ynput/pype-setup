@@ -119,6 +119,8 @@ function Check-Environment {
     } else {
       & pip install -r pypeapp\requirements.txt -f vendor\packages
     }
+    Write-Color -Text "  -", "Updating requirements ..."
+    & pip freeze > pypeapp/requirements.txt
   } else {
     Write-Color -Text "OK" -Color Green
   }
@@ -136,11 +138,20 @@ function Bootstrap-Pype {
     & pip install -r pypeapp/requirements.txt
     if ($LASTEXITCODE -ne 0) {
       Write-Color -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
+      return 1
     }
+    Write-Color -Text "  -", "Updating requirements ..."
+    & pip freeze > pypeapp/requirements.txt
   } else {
     # in offline mode, install all from vendor
     Write-Color -Text ">>> ", "Offline installation ... " -Color Green, Gray
-    & pip install -r pypeapp/requirements.txt -f vendor/packages
+    & pip install -r pypeapp/requirements.txt --no-index --find-links vendor/packages
+    if ($LASTEXITCODE -ne 0) {
+      Write-Color -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
+      return 1
+    }
+    Write-Color -Text "  -", "Updating requirements ..."
+    & pip freeze > pypeapp/requirements.txt
   }
 }
 
@@ -170,8 +181,8 @@ function Validate-Pype {
 function Upgrade-pip {
   if ($offline -ne $true)
   {
-      Write-Color -Text ">>> ", "Updating pip ... " -Color Green, Gray
-    & python -m pip install --upgrade pip
+    Write-Color -Text ">>> ", "Updating pip ... " -Color Green, Gray
+    & python -m pip install --upgrade pip | out-null 
   }
 }
 
@@ -407,3 +418,5 @@ if ($install -eq $true) {
 }
 Write-Color -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
 & python -m "pypeapp" @arguments
+Write-Color -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
+deactivate

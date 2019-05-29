@@ -1,2 +1,3 @@
 @echo off
-call powershell -noexit -nologo -executionpolicy bypass -command "%~dp0pype.ps1 %*"
+pushd %~dp0
+powershell -NoProfile -noexit -nologo -executionpolicy bypass -command "%~dp0pype.ps1 %*; exit $LASTEXITCODE"

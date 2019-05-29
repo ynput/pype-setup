@@ -176,18 +176,25 @@ class PypeLauncher(object):
                 if entry.is_dir():
                     paths.append(entry.path)
 
+        self._update_python_path(paths)
+
+    def _update_python_path(self, paths=None):
         if (os.environ.get('PYTHONPATH')):
             python_paths = os.environ.get('PYTHONPATH').split(os.pathsep)
         else:
             python_paths = []
 
-        # add only if not already present
-        for p in paths:
-            if p not in python_paths:
-                os.environ['PYTHONPATH'] += os.pathsep + p
-            if p not in sys.path:
-                sys.path.append(p)
-        pass
+        if not paths:
+            # paths are not set, sync PYTHONPATH with sys.path only
+            for p in python_paths:
+                if p not in sys.path:
+                    sys.path.append(p)
+        else:
+            for p in paths:
+                if p not in python_paths:
+                    os.environ['PYTHONPATH'] += os.pathsep + p
+                if p not in sys.path:
+                    sys.path.append(p)
 
     def _load_default_environments(self, tools):
         """ Load and apply default environment files. """
@@ -401,28 +408,32 @@ class PypeLauncher(object):
 
         # from pypeapp import execute
         from pypeapp import Logger
-        # from pypeapp.lib.Terminal import Terminal
+        from pypeapp.lib.Terminal import Terminal
+
+        Terminal()
 
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
         log = Logger().get_logger('publish')
         self._initialize()
 
+        from pype import install, uninstall
         # Register target and host
         import pyblish.api
+
+        install()
         pyblish.api.register_target("filesequence")
         pyblish.api.register_host("shell")
 
-        paths = self._kwargs.publish
-        if not isinstance(paths, (list, tuple)):
-            log.error("Provided paths are invalid. Must be list or tuple.")
-            return False
+        self._update_python_path()
+
+        paths = self._kwargs.paths
 
         if not any(paths):
             log.error("No publish paths specified")
             return False
 
         if paths:
-            os.environ["FILESEQUENCE"] = os.pathsep.join(paths)
+            os.environ["PYPE_PUBLISH_PATHS"] = os.pathsep.join(paths)
 
         if gui:
             import pyblish_qml
@@ -434,6 +445,7 @@ class PypeLauncher(object):
 
             if not context:
                 log.warning("Nothing collected.")
+                uninstall()
                 sys.exit(1)
 
             # Collect errors, {plugin name: error}
@@ -443,4 +455,6 @@ class PypeLauncher(object):
                 log.error("Errors occurred ...")
                 for result in error_results:
                     log.error(error_format.format(**result))
+                uninstall()
                 sys.exit(2)
+        uninstall()
