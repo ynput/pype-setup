@@ -182,7 +182,7 @@ function Upgrade-pip {
   if ($offline -ne $true)
   {
     Write-Color -Text ">>> ", "Updating pip ... " -Color Green, Gray
-    & python -m pip install --upgrade pip | out-null 
+    & python -m pip install --upgrade pip | out-null
   }
 }
 
@@ -197,7 +197,10 @@ if ($offline -eq $true -and $deploy -eq $true) {
 if (-not (Test-Path 'env:PYPE_ENV')) { $env:PYPE_ENV = "C:\Users\Public\pype_env2" }
 if (-not (Test-Path 'env:PYPE_DEBUG')) { $env:PYPE_DEBUG = 0 }
 # Add pypeapp to PYTHONPATH
-$env:PYTHONPATH = "$($env:PYPE_ROOT)\pypeapp;$($env:PYTHONPATH)"
+if(-not $env:PYTHONPATH -like "*$($env:PYPE_ROOT)") {
+    $env:PYTHONPATH = "$($env:PYPE_ROOT);$($env:PYTHONPATH)"
+}
+
 
 # Test if python is available
 Write-Color -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
