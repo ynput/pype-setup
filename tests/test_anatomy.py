@@ -1,6 +1,6 @@
 import pytest
 from pypeapp import Anatomy
-import yaml
+import ruamel.yaml as yaml
 import os
 import pathlib
 
