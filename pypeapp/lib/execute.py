@@ -54,31 +54,24 @@ def execute(args,
     # Blocks until finished
     while True:
         line = popen.stdout.readline()
-        if line != '':
-            if not silent:
-                line_test = False
-                for funct, test_string in log_levels.items():
-                    if test_string in line:
-                        getattr(log, funct)(
-                            "Exe: {}".format(
-                                line[:-2]
-                            ).replace(
-                                test_string,
-                                ""
-                            )
-                        )
-                        line_test = True
-                        break
-                for test_string in log_levels_debug:
-                    if line.startswith(test_string):
-                        line_test = True
-                        break
-
-                if (int(os.getenv("PYPE_DEBUG", "0")) == 3 and
-                        not line_test):
-                    print(line[:-1])
-        else:
+        if line == '':
             break
+        if silent:
+            continue
+        line_test = False
+        for funct, test_string in log_levels.items():
+            if test_string in line:
+                getattr(log, funct)(
+                    "Exe: {}".format(line[:-2]).replace(test_string, "")
+                )
+                line_test = True
+                break
+        for test_string in log_levels_debug:
+            if line.startswith(test_string):
+                line_test = True
+                break
+        if int(os.getenv("PYPE_DEBUG", "0")) == 3 and not line_test:
+            print(line[:-1])
 
     log.info("Execution is finishing up ...")
 
