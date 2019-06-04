@@ -28,13 +28,6 @@ def execute(args,
         :returns: return code of process
         :rtype: int
     """
-    log_levels = {
-        'info': ">>> [",
-        'warning': "*** WRN:",
-        'error': "--- ERR:",
-        'critical': "!!! CRI:",
-        'debug': "  - {"
-    }
     log_levels_debug = [
         'DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
 
@@ -59,13 +52,6 @@ def execute(args,
         if silent:
             continue
         line_test = False
-        for funct, test_string in log_levels.items():
-            if test_string in line:
-                getattr(log, funct)(
-                    "Exe: {}".format(line[:-2]).replace(test_string, "")
-                )
-                line_test = True
-                break
         for test_string in log_levels_debug:
             if line.startswith(test_string):
                 line_test = True
