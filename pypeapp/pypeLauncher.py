@@ -58,8 +58,6 @@ class PypeLauncher(object):
                          set None, then commandline arguments will be used.
             :type args: List or None
         """
-        from vendor import bin
-
         parser = self._parse_args()
         self._kwargs, self._args = parser.parse_known_args(args)
 
