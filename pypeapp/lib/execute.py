@@ -56,7 +56,7 @@ def execute(args,
             if line.startswith(test_string):
                 line_test = True
                 break
-        if int(os.getenv("PYPE_DEBUG", "0")) == 3 and not line_test:
+        if not line_test:
             print(line[:-1])
 
     log.info("Execution is finishing up ...")
