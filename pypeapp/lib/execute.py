@@ -28,8 +28,8 @@ def execute(args,
         :returns: return code of process
         :rtype: int
     """
-    log_levels_debug = [
-        'DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
+
+    log_levels = ['DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
 
     log = Logger().get_logger('execute')
     log.info("Executing ({})".format(" ".join(args)))
@@ -52,7 +52,7 @@ def execute(args,
         if silent:
             continue
         line_test = False
-        for test_string in log_levels_debug:
+        for test_string in log_levels:
             if line.startswith(test_string):
                 line_test = True
                 break
