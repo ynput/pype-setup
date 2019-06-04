@@ -75,9 +75,6 @@ class PypeLauncher(object):
         elif self._kwargs.deploy:
             self._deploy()
 
-        elif self._kwargs.eventserver:
-            self._launch_eventserver()
-
         elif self._kwargs.eventservercli:
             self._launch_eventservercli()
 
@@ -132,9 +129,6 @@ class PypeLauncher(object):
                                   "directory, or supplied --root"),
                             action="store_true")
         parser.add_argument("--root", help="set project root directory")
-        parser.add_argument("--eventserver",
-                            help="Launch Pype ftrack event server",
-                            action="store_true")
         parser.add_argument("--eventservercli",
                             help="Launch Pype ftrack event server headless",
                             action="store_true")
@@ -366,7 +360,7 @@ class PypeLauncher(object):
 
         returncode = execute([
             sys.executable, "-u", fname
-        ])
+        ] + sys.argv)
         return returncode
 
     def _install(self):
