@@ -214,6 +214,10 @@ if($env:PYTHONPATH -NotLike "*$($env:PYPE_ROOT);*") {
 if($env:PYTHONPATH -NotLike "*$($env:PYPE_ROOT)\pypeapp;*") {
     $env:PYTHONPATH = "$($env:PYPE_ROOT)\pypeapp;$($env:PYTHONPATH)"
 }
+# Add pype-setup to PATH
+if($env:PATH -NotLike "*$($env:PYPE_ROOT);*") {
+  $env:PATH = "$($env:PYPE_ROOT);$($env:PATH)"
+}
 
 
 # Test if python is available
