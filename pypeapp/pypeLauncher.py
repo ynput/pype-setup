@@ -409,11 +409,26 @@ class PypeLauncher(object):
         # from pypeapp import execute
         from pypeapp import Logger
         from pypeapp.lib.Terminal import Terminal
+        import json
 
-        Terminal()
+        t = Terminal()
 
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
         log = Logger().get_logger('publish')
+
+        # uninstall static part of AVALON environment
+        # FIXME: this is probably very wrong way to do it. Can acre adjust
+        # replace parts of environment instead of merging it?
+
+        avalon_path = os.path.join(os.environ.get("PYPE_CONFIG"),
+                                   "environments", "avalon.json")
+        with open(avalon_path) as av_env:
+            avalon_data = json.load(av_env)
+
+        t.echo(">>> Unsetting static AVALON environment variables ...")
+        for k, v in avalon_data.items():
+            os.environ[k] = ""
+
         self._initialize()
 
         from pype import install, uninstall
@@ -441,6 +456,7 @@ class PypeLauncher(object):
         else:
 
             import pyblish.util
+            t.echo(">>> Running publish ...")
             context = pyblish.util.publish()
 
             if not context:
