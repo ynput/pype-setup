@@ -18,7 +18,7 @@
     },
     {
       "name": "pyblish-lite",
-      "url": "https://github.com/pyblish/pyblish-lite.git",
+      "url": "git@github.com:pypeclub/pyblish-lite.git",
       "branch": "master"
     },
     {
