@@ -4,7 +4,7 @@
   "repositories": [{
       "name": "avalon-core",
       "url": "git@github.com:pypeclub/avalon-core.git",
-      "branch": "2.0/develop"
+      "branch": "develop"
     },
     {
       "name": "avalon-launcher",
