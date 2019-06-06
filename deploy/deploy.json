@@ -4,7 +4,7 @@
   "repositories": [{
       "name": "avalon-core",
       "url": "git@github.com:pypeclub/avalon-core.git",
-      "branch": "2.0/develop"
+      "branch": "develop"
     },
     {
       "name": "avalon-launcher",
@@ -13,12 +13,12 @@
     },
     {
       "name": "pyblish-base",
-      "url": "https://github.com/pyblish/pyblish-base.git",
-      "branch": "master"
+      "url": "git@github.com:pypeclub/pyblish-base.git",
+      "branch": "develop"
     },
     {
       "name": "pyblish-lite",
-      "url": "https://github.com/pyblish/pyblish-lite.git",
+      "url": "git@github.com:pypeclub/pyblish-lite.git",
       "branch": "master"
     },
     {
