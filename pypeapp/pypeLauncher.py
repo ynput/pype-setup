@@ -75,9 +75,6 @@ class PypeLauncher(object):
         elif self._kwargs.deploy:
             self._deploy()
 
-        elif self._kwargs.eventserver:
-            self._launch_eventserver()
-
         elif self._kwargs.eventservercli:
             self._launch_eventservercli()
 
@@ -240,13 +237,13 @@ class PypeLauncher(object):
         items = [pype_setup, "pypeapp", "tray.py"]
         fname = os.path.sep.join(items)
 
-        args = ["-d", fname]
+        args = [sys.executable, "-d", fname]
         if sys.platform.startswith('linux'):
             subprocess.Popen(
                 args,
                 universal_newlines=True,
                 bufsize=1,
-                executable=sys.executable,
+                # executable=sys.executable,
                 env=os.environ,
                 # stdin=None,
                 stdout=None,
@@ -260,7 +257,7 @@ class PypeLauncher(object):
                 universal_newlines=True,
                 bufsize=1,
                 cwd=None,
-                executable=sys.executable,
+                # executable=sys.executable,
                 env=os.environ,
                 # stdin=None,
                 stdout=open(Logger.get_file_path(), 'w+'),
@@ -338,7 +335,7 @@ class PypeLauncher(object):
 
         returncode = execute([
             sys.executable, "-u", fname
-        ])
+        ] + sys.argv)
         return returncode
 
     def _install(self):

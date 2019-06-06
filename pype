@@ -13,6 +13,7 @@
 THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
 # The directory where current script resides
 DIR=`dirname "${THIS}"`
+pushd $DIR
 # Set python interpreter name
 PYTHON="python"
 # Set path to environment if not set
@@ -63,7 +64,7 @@ while :; do
     --traydebug)
       f_ignore=1
       ;;
-    --traydebug)
+    --node)
       f_node=1
       ;;
     --)
@@ -233,8 +234,6 @@ bootstrap () {
       echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
       return 1
     fi
-    echo -e "${BICyan}  -${RST} Updating requirements ..."
-    pip freeze > pypeapp/requirements.txt
   else
     echo -e "${BIGreen}>>>${RST} Offline installation ..."
     pip install -r pypeapp/requirements.txt --no-index --find-links vendor/packages
@@ -242,8 +241,12 @@ bootstrap () {
       echo -e "${BIRed}!!! ${RST} Install ${BIRed}FAILED${RST}"
       return 1
     fi
+  fi
+  if [ -w "pypeapp/requirements.txt" ] ; then
     echo -e "${BICyan}  -${RST} Updating requirements ..."
     pip freeze > pypeapp/requirements.txt
+  else
+    echo -e "${BIYellow}***${RST} Cannot update dependecies list"
   fi
 }
 
@@ -338,7 +341,7 @@ main () {
     run_pype
     return 0
   fi
-    
+
   validate
   if [ $? -ne 0 ] ; then
     if [ "$f_workstation" == 1 ] ; then
