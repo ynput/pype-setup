@@ -57,11 +57,7 @@ if($arguments -eq "--traydebug") {
 $env:PYPE_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Install PSWriteColor to support colorized output to terminal
-if (-not (Get-Module -ListAvailable -Name "PSWriteColor")) {
-  Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser
-  Install-Module -Name "PSWriteColor" -Scope CurrentUser
-}
-
+$env:PSModulePath = $env:PSModulePath + ";$($env:PYPE_ROOT)\vendor\powershell"
 # Display spinner for running job
 function Start-Progress {
   param(
