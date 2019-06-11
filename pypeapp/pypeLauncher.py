@@ -81,6 +81,12 @@ class PypeLauncher(object):
         elif self._kwargs.localmongodb:
             self._launch_local_mongodb()
 
+        elif self._kwargs.publish:
+            self._publish()
+
+        elif self._kwargs.publishgui:
+            self._publish(gui=True)
+
     def _parse_args(self):
         """ Create argument parser.
 
@@ -124,11 +130,17 @@ class PypeLauncher(object):
                             help=("Publish from current working"
                                   "directory, or supplied --root"),
                             action="store_true")
-        parser.add_argument("--publish-gui",
+        parser.add_argument("--publishgui",
                             help=("Publish with GUI from current working"
                                   "directory, or supplied --root"),
                             action="store_true")
         parser.add_argument("--root", help="set project root directory")
+        parser.add_argument("--path", help="")
+        parser.add_argument("--paths", help="set files or directories for "
+                            "publishing", nargs="*", default=[])
+        parser.add_argument("--eventserver",
+                            help="Launch Pype ftrack event server",
+                            action="store_true")
         parser.add_argument("--eventservercli",
                             help="Launch Pype ftrack event server headless",
                             action="store_true")
@@ -161,18 +173,25 @@ class PypeLauncher(object):
                 if entry.is_dir():
                     paths.append(entry.path)
 
+        self._update_python_path(paths)
+
+    def _update_python_path(self, paths=None):
         if (os.environ.get('PYTHONPATH')):
             python_paths = os.environ.get('PYTHONPATH').split(os.pathsep)
         else:
             python_paths = []
 
-        # add only if not already present
-        for p in paths:
-            if p not in python_paths:
-                os.environ['PYTHONPATH'] += os.pathsep + p
-            if p not in sys.path:
-                sys.path.append(p)
-        pass
+        if not paths:
+            # paths are not set, sync PYTHONPATH with sys.path only
+            for p in python_paths:
+                if p not in sys.path:
+                    sys.path.append(p)
+        else:
+            for p in paths:
+                if p not in python_paths:
+                    os.environ['PYTHONPATH'] += os.pathsep + p
+                if p not in sys.path:
+                    sys.path.append(p)
 
     def _load_default_environments(self, tools):
         """ Load and apply default environment files. """
@@ -183,6 +202,7 @@ class PypeLauncher(object):
         env = acre.compute(dict(tools_env))
         env = acre.merge(env, dict(os.environ))
         os.environ = acre.append(dict(os.environ), env)
+        os.environ = acre.compute(os.environ)
         pass
 
     def _launch_tray(self, debug=False):
@@ -195,21 +215,9 @@ class PypeLauncher(object):
         """
         import subprocess
         from pypeapp import Logger
-        from pypeapp.storage import Storage
         from pypeapp import execute
-        from pypeapp.deployment import Deployment
 
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
+        self._initialize()
 
         if debug:
             pype_setup = os.getenv('PYPE_ROOT')
@@ -261,20 +269,8 @@ class PypeLauncher(object):
         """ This will run local instance of mongodb. """
         from pypeapp import Logger
         import subprocess
-        from pypeapp.storage import Storage
-        from pypeapp.deployment import Deployment
 
-        pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
+        self._initialize()
 
         log = Logger().get_logger('mongodb')
         # Get database location.
@@ -309,21 +305,11 @@ class PypeLauncher(object):
 
     def _launch_eventserver(self):
         """ This will run standalone ftrack eventserver. """
-        from pypeapp.storage import Storage
         from pypeapp import execute
-        from pypeapp.deployment import Deployment
+
+        self._initialize()
 
         pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server.py"
@@ -337,21 +323,10 @@ class PypeLauncher(object):
 
     def _launch_eventservercli(self):
         """ This will run standalone ftrack eventserver headless. """
-        from pypeapp.storage import Storage
         from pypeapp import execute
-        from pypeapp.deployment import Deployment
+        self._initialize()
 
         pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-
-        os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
-        self._add_modules()
-        Storage().update_environment()
-        self._load_default_environments(tools=tools)
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server_cli.py"
@@ -402,3 +377,103 @@ class PypeLauncher(object):
         except DeployException:
             sys.exit(200)
         pass
+
+    def _initialize(self):
+        from pypeapp.storage import Storage
+        from pypeapp.deployment import Deployment
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
+
+        tools, config_path = d.get_environment_data()
+
+        os.environ['PYPE_CONFIG'] = config_path
+        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
+                                                  'environments'))
+        self._add_modules()
+        Storage().update_environment()
+        self._load_default_environments(tools=tools)
+
+    def _publish(self, gui=False):
+        """ Starts headless publishing.
+
+            Publish collects json from current working directory
+            or supplied --path argument
+
+        """
+        # handle paths
+
+        # from pypeapp import execute
+        from pypeapp import Logger
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp.deployment import Deployment
+        import json
+
+        t = Terminal()
+
+        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+        log = Logger().get_logger('publish')
+
+        # uninstall static part of AVALON environment
+        # FIXME: this is probably very wrong way to do it. Can acre adjust
+        # replace parts of environment instead of merging it?
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        d = Deployment(pype_setup)
+
+        tools, config_path = d.get_environment_data()
+        os.environ['PYPE_CONFIG'] = config_path
+        avalon_path = os.path.join(os.environ.get("PYPE_CONFIG"),
+                                   "environments", "avalon.json")
+        with open(avalon_path) as av_env:
+            avalon_data = json.load(av_env)
+
+        t.echo(">>> Unsetting static AVALON environment variables ...")
+        for k, v in avalon_data.items():
+            os.environ[k] = ""
+
+        self._initialize()
+
+        from pype import install, uninstall
+        # Register target and host
+        import pyblish.api
+
+        install()
+        pyblish.api.register_target("filesequence")
+        pyblish.api.register_host("shell")
+
+        self._update_python_path()
+
+        paths = self._kwargs.paths
+
+        if not any(paths):
+            log.error("No publish paths specified")
+            return False
+
+        if paths:
+            os.environ["PYPE_PUBLISH_PATHS"] = os.pathsep.join(paths)
+
+        if gui:
+            import pyblish_qml
+            pyblish_qml.show(modal=True)
+        else:
+
+            import pyblish.util
+            t.echo(">>> Running publish ...")
+            context = pyblish.util.publish()
+
+            if not context:
+                log.warning("Nothing collected.")
+                uninstall()
+                sys.exit(1)
+
+            # Collect errors, {plugin name: error}
+            error_results = [r for r in context.data["results"] if r["error"]]
+
+            if error_results:
+                log.error("Errors occurred ...")
+                for result in error_results:
+                    log.error(error_format.format(**result))
+                uninstall()
+                sys.exit(2)
+        uninstall()

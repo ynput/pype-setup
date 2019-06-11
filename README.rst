@@ -24,6 +24,10 @@ different state then specified in ``deploy.json``, only warning is shown.
 proceeding with deployment. As deployment should be installed only once on
 some network share.
 
+**--node** will completely skip repositories validation. In this mode it is
+expected that **pype** is running in already setup environment for example
+on render node and that repositories deployment has been already done.
+
 Installation will download and setup python dependencies and then it will
 load ``deploy/deploy.json``. Using this file setup will populate
 repositories in ```repos``. If they exists but differs with specified
