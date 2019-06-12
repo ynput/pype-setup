@@ -1,4 +1,4 @@
 @echo off
 pushd %~dp0..\
-call pype.bat --workstation --tray
+call pype.bat --node --tray
 popd
