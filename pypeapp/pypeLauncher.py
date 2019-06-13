@@ -87,6 +87,9 @@ class PypeLauncher(object):
         elif self._kwargs.publishgui:
             self._publish(gui=True)
 
+        elif self._kwargs.texturecopy:
+            self._texture_copy()
+
     def _parse_args(self):
         """ Create argument parser.
 
@@ -130,6 +133,11 @@ class PypeLauncher(object):
                             help=("Publish from current working"
                                   "directory, or supplied --root"),
                             action="store_true")
+        parser.add_argument("--texturecopy",
+                            help="Run texture copy tool",
+                            action="store_true")
+        parser.add_argument("--asset", help="asset name")
+        parser.add_argument("--project", help="project name")
         parser.add_argument("--publishgui",
                             help=("Publish with GUI from current working"
                                   "directory, or supplied --root"),
@@ -393,6 +401,33 @@ class PypeLauncher(object):
         self._add_modules()
         Storage().update_environment()
         self._load_default_environments(tools=tools)
+
+    def _texture_copy(self):
+        from pypeapp import execute
+
+        if not self._kwargs.project:
+            print("Missing --project argument")
+            exit(1)
+        if not self._kwargs.asset:
+            print("Missing --asset argument")
+            exit(1)
+        if not self._kwargs.project:
+            print("Missing --path argument")
+            exit(1)
+
+        self._initialize()
+
+        pype_setup = os.getenv('PYPE_ROOT')
+        items = [
+            pype_setup, "repos", "pype", "pype", "tools",
+            "texture_copy", "app.py"
+        ]
+        fname = os.path.sep.join(items)
+
+        returncode = execute([
+            sys.executable, "-u", fname, "--project", self._kwargs.project,
+            "--asset", self._kwargs.asset, "--path", self._kwargs.path])
+        return returncode
 
     def _publish(self, gui=False):
         """ Starts headless publishing.
