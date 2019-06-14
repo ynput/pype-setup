@@ -131,7 +131,7 @@ function Check-Environment {
       & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" -f "$($env:PYPE_ROOT)\vendor\packages"
     }
     Write-Color -Text "  -", " Updating requirements ..."
-    & pip freeze > "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
+    & pip freeze | Out-File -encoding ASCII "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
   } else {
     Write-Color -Text "OK" -Color Green
   }
@@ -152,7 +152,7 @@ function Bootstrap-Pype {
       return 1
     }
     Write-Color -Text "  -", "Updating requirements ..."
-    & pip freeze > "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
+    & pip freeze | Out-File -encoding ASCII "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
   } else {
     # in offline mode, install all from vendor
     Write-Color -Text ">>> ", "Offline installation ... " -Color Green, Gray
