@@ -13,7 +13,7 @@
 THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
 # The directory where current script resides
 DIR=`dirname "${THIS}"`
-pushd $DIR
+pushd $DIR > /dev/null
 # Set python interpreter name
 PYTHON="python"
 # Set path to environment if not set
@@ -32,6 +32,9 @@ f_force=0
 f_localmongo=0
 f_workstation=0
 f_node=0
+
+args=$@
+
 while :; do
   case $1 in
     --offline)
@@ -85,6 +88,15 @@ export PYTHONPATH=${PYTHONPATH:="$PYPE_ROOT/pypeapp"}
 if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT/pypeapp:"* ]]; then
   export PYTHONPATH="$PYPE_ROOT/pypeapp:$PYTHONPATH"
 fi
+if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT:"* ]]; then
+  export PYTHONPATH="$PYPE_ROOT:$PYTHONPATH"
+fi
+# add PYPE_ROOT to PATH
+export PATH=${PATH:="$PYPE_ROOT"}
+if [[ ":$PATH:" != *":$PYPE_ROOT:"* ]]; then
+  export PATH="$PYPE_ROOT:$PATH"
+fi
+
 
 # Load colors definitions for easy output coloring
 source "$PYPE_ROOT/pypeapp/colors.sh"
@@ -151,7 +163,7 @@ detect () {
     set -- $python_version
     IFS="$oIFS"
     echo -e "${BIGreen}$1.$2${RST}"
-    echo -e "${BIYellow}!!! WARNING:${RST} Supported version of python isn't named '${BIWhite}python${RST}'. There can be trouble with that."
+    # echo -e "${BIYellow}!!! WARNING:${RST} Supported version of python isn't named '${BIWhite}python${RST}'. There can be trouble with that."
   fi
   # detect mongo only if running server
   if [ "$f_localmongo" == 1  ] ; then
@@ -306,7 +318,7 @@ deploy () {
 
 run_pype () {
   echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
-  python -m pypeapp $@
+  python -m pypeapp $args
   echo -e "${ICyan}<--${RST} Deactivating environment ..."
   deactivate
   echo -e "${IPurple}xxx${RST} Finishing up. ${IWhite}Have a nice day!${RST}"
@@ -393,7 +405,8 @@ main () {
     echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
     return 0
   fi
-  run_pype
+  run_pype "$args"
 }
 
-main "$@"
+main "$args"
+popd
