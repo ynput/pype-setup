@@ -23,19 +23,21 @@ else:
 
 try:
     ''.format_map({})
-except AttributeError: # Python < 3.2
+except AttributeError:  # Python < 3.2
     import string
+
     def format_map(format_string, mapping, _format=string.Formatter().vformat):
         return _format(format_string, None, mapping)
     del string
 
-    #XXX works on CPython 2.6
+    # XXX works on CPython 2.6
     # http://stackoverflow.com/questions/2444680/how-do-i-add-my-own-custom-attributes-to-existing-built-in-python-types-like-a/2450942#2450942
     import ctypes as c
 
     class PyObject_HEAD(c.Structure):
         _fields_ = [
-            ('HEAD', c.c_ubyte * (object.__basicsize__ -  c.sizeof(c.c_void_p))),
+            ('HEAD', c.c_ubyte *
+                (object.__basicsize__ - c.sizeof(c.c_void_p))),
             ('ob_type', c.c_void_p)
         ]
 
@@ -47,7 +49,7 @@ except AttributeError: # Python < 3.2
         return _get_dict(object).contents.value
 
     get_dict(str)['format_map'] = format_map
-else: # Python 3.2+
+else:  # Python 3.2+
     def format_map(format_string, mapping):
         return format_string.format_map(mapping)
 
@@ -116,7 +118,7 @@ class Anatomy:
         :rtype: dictionary
         '''
         # TODO: right way to get templates path
-        path = r'{PYPE_ROOT}\repos\pype-config\anatomy\default.yaml'
+        path = '{PYPE_CONFIG}/anatomy/default.yaml'
         path = os.path.normpath(path.format(**os.environ))
         with open(path, 'r') as stream:
             try:
@@ -129,7 +131,10 @@ class Anatomy:
                 os.environ.get('PYPE_PROJECT_CONFIGS', "")
             )
             project_config_items = [
-                project_configs_path, self.project_name, 'anatomy', 'default.yaml'
+                project_configs_path,
+                self.project_name,
+                'anatomy',
+                'default.yaml'
             ]
             project_anatomy_path = os.path.sep.join(project_config_items)
             proj_anatomy = {}
@@ -198,7 +203,7 @@ class Anatomy:
         subdict = PartialDict()
         count = 1
         store_pattern = 5*'_'+'{:0>3}'
-        regex_patern = "\{\w*\[[^\}]*\]\}"
+        regex_patern = r"\{\w*\[[^\}]*\]\}"
         matches = re.findall(regex_patern, template)
 
         for match in matches:
@@ -211,7 +216,7 @@ class Anatomy:
         # try to solve subdict and replace them back to string
         for k, v in subdict.items():
             try:
-                v = format_map(v,data)
+                v = format_map(v, data)
             except (KeyError, TypeError):
                 pass
             subdict[k] = v
@@ -222,7 +227,8 @@ class Anatomy:
         ''' Solves anatomy and split results into:
         - :'solved': Fully solved anatomy strings (missing environs don't
         affect result if `only_keys` is `True`).
-        - :'partial': At least one key was filled but still remain keys to fill.
+        - :'partial': At least one key was filled but still
+                      remain keys to fill.
         - :'unsolved': Nothing has changed in these strings.
 
         :param input: All Anatomy templates which will be formatted.
@@ -234,8 +240,8 @@ class Anatomy:
         :type only_keys: bool
         :rtype: dictionary
         '''
-        check_regex_keys = '\{[^\}]*\}'
-        check_regex_env = '\{\$[^\}]*\}'
+        check_regex_keys = r'\{[^\}]*\}'
+        check_regex_env = r'\{\$[^\}]*\}'
         output = {
             'solved': {},
             'partial': {},
@@ -253,7 +259,7 @@ class Anatomy:
                         if key not in output[s_key]:
                             output[s_key][key] = {}
 
-                        output[s_key][key].update({sk_key:sk_value})
+                        output[s_key][key].update({sk_key: sk_value})
 
             else:
                 value = self._format(orig_value, data)
@@ -269,7 +275,7 @@ class Anatomy:
                         solved = False
                 if solved is True:
                     output['solved'][key] = value
-                elif orig_value==value:
+                elif orig_value == value:
                     output['unsolved'][key] = value
                 else:
                     output['partial'][key] = value
