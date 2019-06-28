@@ -528,6 +528,7 @@ class PypeLauncher(object):
 
         t.echo(">>> Running test on pype ...")
 
-        pytest.main(['-x',
+        pytest.main(['-x', '--capture=sys', '--print',
+                     '-W', 'ignore::DeprecationWarning',
                      os.path.join(os.getenv('PYPE_ROOT'),
                                   'repos', 'pype', 'pype', 'tests')])
