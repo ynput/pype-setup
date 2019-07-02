@@ -1,4 +1,5 @@
 import git
+from tqdm import tqdm
 
 
 class _GitProgress(git.remote.RemoteProgress):
