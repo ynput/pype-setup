@@ -207,10 +207,10 @@ class PypeLauncher(object):
         import acre
         os.environ['PLATFORM'] = platform.system().lower()
         tools_env = acre.get_tools(tools)
-        env = acre.compute(dict(tools_env))
+        env = acre.compute(dict(tools_env), cleanup=False)
         env = acre.merge(env, dict(os.environ))
         os.environ = acre.append(dict(os.environ), env)
-        os.environ = acre.compute(os.environ)
+        os.environ = acre.compute(os.environ, cleanup=False)
         pass
 
     def _launch_tray(self, debug=False):
