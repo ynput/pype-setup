@@ -90,6 +90,9 @@ class PypeLauncher(object):
         elif self._kwargs.texturecopy:
             self._texture_copy()
 
+        elif self._kwargs.testpype:
+            self._run_pype_tests()
+
     def _parse_args(self):
         """ Create argument parser.
 
@@ -152,6 +155,7 @@ class PypeLauncher(object):
         parser.add_argument("--eventservercli",
                             help="Launch Pype ftrack event server headless",
                             action="store_true")
+        parser.add_argument("--testpype", action="store_true")
 
         return parser
 
@@ -512,3 +516,19 @@ class PypeLauncher(object):
                 uninstall()
                 sys.exit(2)
         uninstall()
+
+    def _run_pype_tests(self):
+        """ Run pytest on `pype/pype/tests` directory """
+
+        from pypeapp.lib.Terminal import Terminal
+        import pytest
+
+        self._initialize()
+        t = Terminal()
+
+        t.echo(">>> Running test on pype ...")
+
+        pytest.main(['-x', '--capture=sys', '--print',
+                     '-W', 'ignore::DeprecationWarning',
+                     os.path.join(os.getenv('PYPE_ROOT'),
+                                  'repos', 'pype', 'pype', 'tests')])
