@@ -249,7 +249,7 @@ class PypeLauncher(object):
         items = [pype_setup, "pypeapp", "tray.py"]
         fname = os.path.sep.join(items)
 
-        args = [sys.executable, "-d", fname]
+        args = ["pythonw", "-d", fname]
         if sys.platform.startswith('linux'):
             subprocess.Popen(
                 args,
