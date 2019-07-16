@@ -111,6 +111,42 @@ def get_presets(project=None):
     return update_dict(default_data, project_data)
 
 
+def get_init_presets(project=None):
+    """ Loads content of presets like get_presets() but also evaluate init.json ponter to default presets
+
+    Returns:
+    - None
+
+      - if default path does not exist
+
+    - default presets (dict)
+
+      - if project_name is not set
+      - if project's presets folder does not exist
+
+    - project presets (dict)
+
+      - if project_name is set and include override data
+
+    """
+    presets = get_presets(project)
+
+    try:
+        # try if it is not in projects custom directory
+        # `{PYPE_PROJECT_CONFIGS}/[PROJECT_NAME]/init.json`
+        # init.json define preset names to be used
+        p_init = presets["init"]
+        presets["colorspace"] = presets["colorspace"][p_init["colorspace"]]
+        presets["dataflow"] = presets["dataflow"][p_init["dataflow"]]
+    except KeyError:
+        log.warning("No projects custom preset available...")
+        presets["colorspace"] = presets["colorspace"]["default"]
+        presets["dataflow"] = presets["dataflow"]["default"]
+        log.info("Presets `colorspace` and `dataflow` loaded from `default`...")
+
+    return presets
+
+
 def update_dict(main_dict, enhance_dict):
     """ Merges dictionaries by keys.
     Function call itself if value on key is again dictionary
