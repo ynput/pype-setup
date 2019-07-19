@@ -15,4 +15,4 @@ THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
 DIR=`dirname "${THIS}"`
 export PYPE_ROOT="$(cd $DIR/../ ; pwd)"
 
-source "$PYPE_ROOT/pype" --localmongodb
+source "$PYPE_ROOT/pype" mongodb

@@ -24,7 +24,6 @@ import zipfile
 from pypeapp import Logger
 from pypeapp.lib.Terminal import Terminal
 import shutil
-from tqdm import tqdm
 
 
 class DeployException(Exception):
@@ -264,7 +263,7 @@ class Deployment(object):
                     if skip:
                         continue
                     raise DeployException(
-                        "Vendor path doesn't exist [ {} ]".format(test_path), 130
+                        "Vendor path doesn't exist [ {} ]".format(test_path), 130  # noqa: E501
                     )
 
         return True
@@ -566,7 +565,7 @@ class Deployment(object):
 
                 if not success:
                     raise DeployException(
-                        "Failed to download [ {} ]".format(item.get("url")), 130
+                        "Failed to download [ {} ]".format(item.get("url")), 130  # noqa: E501
                     )
 
                 # Extract files from archive
@@ -608,22 +607,26 @@ class Deployment(object):
                     'PIP command failed with {}'.format(e.returncode)
                     ) from e
 
-        term.echo(">>> Updating requirements ...")
-        try:
-            out = subprocess.check_output(
-                [sys.executable,
-                 '-m', 'pip', 'freeze', '--disable-pip-version-check'],
-                universal_newlines=True)
-        except subprocess.CalledProcessError as e:
-            raise DeployException(
-                'PIP command failed with {}'.format(e.returncode)
-                ) from e
-
-        r_path = os.path.join(
-            os.path.abspath("."), 'pypeapp', 'requirements.txt')
-        with open(r_path, 'w') as r_write:
-            r_write.write(out)
-        pass
+        # TODO(antirotor): This should be removed later as no changes
+        # in requirements.txt should be made automatically. For that,
+        # use `pype update-requirements` command
+        
+        # term.echo(">>> Updating requirements ...")
+        # try:
+        #     out = subprocess.check_output(
+        #         [sys.executable,
+        #          '-m', 'pip', 'freeze', '--disable-pip-version-check'],
+        #         universal_newlines=True)
+        # except subprocess.CalledProcessError as e:
+        #     raise DeployException(
+        #         'PIP command failed with {}'.format(e.returncode)
+        #         ) from e
+        #
+        # r_path = os.path.join(
+        #     os.path.abspath("."), 'pypeapp', 'requirements.txt')
+        # with open(r_path, 'w') as r_write:
+        #     r_write.write(out)
+        # pass
 
     def move_subfolders_to_main(self, path):
         with os.scandir(path) as main_folder:

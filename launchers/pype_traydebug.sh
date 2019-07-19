@@ -16,4 +16,4 @@ DIR=`dirname "${THIS}"`
 export PYPE_ROOT="$(cd $DIR/../ ; pwd)"
 export PYPE_DEBUG=3
 
-source "$PYPE_ROOT/pype" --traydebug --skip
+source "$PYPE_ROOT/pype" tray --debug

@@ -7,157 +7,11 @@ import platform
 class PypeLauncher(object):
     """ Class handling start of different modes of Pype.
 
-        Based of arguments passed to constructor, :class:`PypeLauncher` will
-        launch Pype in different modes of operation:
-
-        - **tray**: will detach from terminal and create GUI (icon in tray) to
-          control pype.
-        - **traydebug**: will do the same as above but won't detach from
-          terminal, making it easy to see debug output in *stdout*
-          and *stderr*.
-        - **local_mongodb**: will start local mongodb instance based on
-          configuration found in **config**.
-        - **eventserver**: will launch standalone ftrack event server (usually
-          started as system service or daemon on server as there has to be only
-          one instance of it per site running reliably).
-
-        Additional arguments are:
-
-        - **install**: will install Pype - setup python environment and deploy
-          repositories.
-
-          - **force**: used in conjunction with **install** will force
-            to overwrite environment directory with new one.
-
-          - **skip**: is implemented on shell side but to that flag will skip
-            installation of environmen at all.
-
-        - **deploy**: will deploy repositories set in ``deploy/deploy.json``
-          or in it's override directory. It will deploy git repositories and
-          install additional python dependencies via pip.
-
-          - **force**: used in conjunction with **deploy** will force
-            git to overwrite all existing repositories already in path.
-
-        - **validate**: will validate Pype deployment, comparing it to
-          ``deploy/deploy.json`` or it override.
-
-          - **skipmissing**: will skip validation of missing repositories.
-            used during installation stage.
-
+        Most of its methods are called by :mod:`cli` module.
     """
 
     _kwargs = None
     _args = None
-
-    def __init__(self, args=None):
-        """ Constructor will parse arguments and then execute different modes
-            of pype app.
-
-            :param args: If supplied, used instead commandline arguments. If
-                         set None, then commandline arguments will be used.
-            :type args: List or None
-        """
-        parser = self._parse_args()
-        self._kwargs, self._args = parser.parse_known_args(args)
-
-        if self._kwargs.tray or self._kwargs.traydebug:
-            if self._kwargs.traydebug:
-                os.environ['PYPE_DEBUG'] = '3'
-            self._launch_tray(debug=self._kwargs.traydebug)
-
-        elif self._kwargs.install:
-            self._install()
-
-        elif self._kwargs.validate:
-            self._validate()
-
-        elif self._kwargs.deploy:
-            self._deploy()
-
-        elif self._kwargs.eventservercli:
-            self._launch_eventservercli()
-
-        elif self._kwargs.localmongodb:
-            self._launch_local_mongodb()
-
-        elif self._kwargs.publish:
-            self._publish()
-
-        elif self._kwargs.publishgui:
-            self._publish(gui=True)
-
-        elif self._kwargs.texturecopy:
-            self._texture_copy()
-
-        elif self._kwargs.testpype:
-            self._run_pype_tests()
-
-    def _parse_args(self):
-        """ Create argument parser.
-
-            :returns: argument parser
-            :rtype: :class:`ArgumentParser`
-        """
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--install", help="Install environment",
-                            action="store_true")
-        parser.add_argument("--force",
-                            help=("Used with --install will force "
-                                  "installation of environment into "
-                                  "destination directory even if it exists "
-                                  "and is not empty. "
-                                  "Content will be erased and replaced by "
-                                  "new environment. With --deploy it will "
-                                  "force existing repositories to be "
-                                  "overrided by specified ones in "
-                                  "deploy.json."),
-                            action="store_true"
-                            )
-        parser.add_argument("--deploy",
-                            help=("Deploy Pype repos and dependencies"),
-                            action="store_true")
-        parser.add_argument("--validate",
-                            help="Validate Pype deployment",
-                            action="store_true")
-        parser.add_argument("--skipmissing",
-                            help=("Skip missing repos during validation"),
-                            action="store_true")
-        parser.add_argument("--tray",
-                            help="Launch Pype Tray",
-                            action="store_true")
-        parser.add_argument("--traydebug",
-                            help="Launch Pype Tray in debug mode",
-                            action="store_true")
-        parser.add_argument("--localmongodb",
-                            help=("Launch instance of local mongodb server"),
-                            action="store_true")
-        parser.add_argument("--publish",
-                            help=("Publish from current working"
-                                  "directory, or supplied --root"),
-                            action="store_true")
-        parser.add_argument("--texturecopy",
-                            help="Run texture copy tool",
-                            action="store_true")
-        parser.add_argument("--asset", help="asset name")
-        parser.add_argument("--project", help="project name")
-        parser.add_argument("--publishgui",
-                            help=("Publish with GUI from current working"
-                                  "directory, or supplied --root"),
-                            action="store_true")
-        parser.add_argument("--root", help="set project root directory")
-        parser.add_argument("--path", help="")
-        parser.add_argument("--paths", help="set files or directories for "
-                            "publishing", nargs="*", default=[])
-        parser.add_argument("--eventserver",
-                            help="Launch Pype ftrack event server",
-                            action="store_true")
-        parser.add_argument("--eventservercli",
-                            help="Launch Pype ftrack event server headless",
-                            action="store_true")
-        parser.add_argument("--testpype", action="store_true")
-
-        return parser
 
     def _add_modules(self):
         """ Include in **PYTHONPATH** all necessary packages.
@@ -215,9 +69,8 @@ class PypeLauncher(object):
         env = acre.merge(env, dict(os.environ))
         os.environ = acre.append(dict(os.environ), env)
         os.environ = acre.compute(os.environ, cleanup=False)
-        pass
 
-    def _launch_tray(self, debug=False):
+    def launch_tray(self, debug=False):
         """ Method will launch tray.py
 
             :param debug: if True, tray will run in debug mode (not detached)
@@ -240,7 +93,7 @@ class PypeLauncher(object):
                 sys.executable,
                 "-u",
                 fname
-                ] + self._args)
+                ])
             return
 
         DETACHED_PROCESS = 0x00000008
@@ -277,8 +130,13 @@ class PypeLauncher(object):
                 creationflags=DETACHED_PROCESS
             )
 
-    def _launch_local_mongodb(self):
-        """ This will run local instance of mongodb. """
+    def launch_local_mongodb(self):
+        """ This will run local instance of mongodb.
+
+        :returns: process return code
+        :rtype: int
+
+        """
         from pypeapp import Logger
         import subprocess
 
@@ -315,8 +173,16 @@ class PypeLauncher(object):
             )
         return p.returncode
 
-    def _launch_eventserver(self):
-        """ This will run standalone ftrack eventserver. """
+    def launch_eventserver(self):
+        """
+        This will run standalone ftrack eventserver.
+
+        :returns: process return code
+        :rtype: int
+
+        .. deprecated:: 2.1
+           Use :meth:`launch_eventservercli` instead.
+        """
         from pypeapp import execute
 
         self._initialize()
@@ -333,8 +199,15 @@ class PypeLauncher(object):
         ])
         return returncode
 
-    def _launch_eventservercli(self):
-        """ This will run standalone ftrack eventserver headless. """
+    def launch_eventservercli(self, args):
+        """ This will run standalone ftrack eventserver headless.
+
+        :param args: arguments passed to event server script. See event server
+                     help for more info.
+        :type args: list
+        :returns: process return code
+        :rtype: int
+        """
         from pypeapp import execute
         self._initialize()
 
@@ -347,37 +220,40 @@ class PypeLauncher(object):
 
         returncode = execute([
             sys.executable, "-u", fname
-        ] + sys.argv)
+        ] + args)
         return returncode
 
-    def _install(self):
+    def install(self, force):
         """ This will run venv installation process.
 
-            .. seealso:: :mod:`install_env`
+        :param force: forcefully overwrite existing environment
+        :type force: bool
+
+        .. seealso:: :mod:`install_env`
         """
         from install_env import install
-        install(self._kwargs.force)
+        install(force)
 
-    def _validate(self):
+    def validate(self):
         """ This will run deployment validation process.
 
-            Upon failure it will exit with return code 200
-            to signal shell installation process about validation error.
+        Upon failure it will exit with return code 200
+        to signal shell installation process about validation error.
 
-            .. seealso:: :func:`Deployment.validate`
+        .. seealso:: :func:`Deployment.validate`
         """
         from pypeapp.deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
-            d.validate(self._kwargs.skipmissing)
+            d.validate()
         except DeployException:
             sys.exit(200)
 
-    def _deploy(self):
+    def deploy(self, force):
         """ This will run deployment process.
 
-            Upon failure it will exit with return code 200
-            to signal shell installation process about deployment error.
+        Upon failure it will exit with return code 200
+        to signal shell installation process about deployment error.
 
         .. seealso:: :func:`Deployment.deploy`
 
@@ -385,7 +261,7 @@ class PypeLauncher(object):
         from pypeapp.deployment import Deployment, DeployException
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         try:
-            d.deploy(self._kwargs.force)
+            d.deploy(force)
         except DeployException:
             sys.exit(200)
         pass
@@ -393,7 +269,10 @@ class PypeLauncher(object):
     def _initialize(self):
         from pypeapp.storage import Storage
         from pypeapp.deployment import Deployment
+        from pypeapp.lib.Terminal import Terminal
 
+        # if not called, console coloring will get mangled in python.
+        Terminal()
         pype_setup = os.getenv('PYPE_ROOT')
         d = Deployment(pype_setup)
 
@@ -406,18 +285,18 @@ class PypeLauncher(object):
         Storage().update_environment()
         self._load_default_environments(tools=tools)
 
-    def _texture_copy(self):
-        from pypeapp import execute
+    def texture_copy(self, project, asset, path):
+        """ This will copy textures specified in path asset publish
+        directory. It doesn't interact with avalon, just copying files.
 
-        if not self._kwargs.project:
-            print("Missing --project argument")
-            exit(1)
-        if not self._kwargs.asset:
-            print("Missing --asset argument")
-            exit(1)
-        if not self._kwargs.project:
-            print("Missing --path argument")
-            exit(1)
+        :param project: name of project
+        :type project: str
+        :param asset: name of asset
+        :type asset: str
+        :param path: path to textures
+        :type path: str
+        """
+        from pypeapp import execute
 
         self._initialize()
 
@@ -429,19 +308,21 @@ class PypeLauncher(object):
         fname = os.path.sep.join(items)
 
         returncode = execute([
-            sys.executable, "-u", fname, "--project", self._kwargs.project,
-            "--asset", self._kwargs.asset, "--path", self._kwargs.path])
+            sys.executable, "-u", fname, "--project", project,
+            "--asset", asset, "--path", path])
         return returncode
 
-    def _publish(self, gui=False):
+    def publish(self, gui=False, paths=None):
         """ Starts headless publishing.
 
-            Publish collects json from current working directory
-            or supplied --path argument
+        Publish collects json from current working directory
+        or supplied paths argument.
 
+        :param gui: launch Pyblish gui or not
+        :type gui: bool
+        :param paths: paths to jsons
+        :type paths: list
         """
-        # handle paths
-
         # from pypeapp import execute
         from pypeapp import Logger
         from pypeapp.lib.Terminal import Terminal
@@ -483,8 +364,6 @@ class PypeLauncher(object):
 
         self._update_python_path()
 
-        paths = self._kwargs.paths
-
         if not any(paths):
             log.error("No publish paths specified")
             return False
@@ -517,7 +396,7 @@ class PypeLauncher(object):
                 sys.exit(2)
         uninstall()
 
-    def _run_pype_tests(self):
+    def run_pype_tests(self):
         """ Run pytest on `pype/pype/tests` directory """
 
         from pypeapp.lib.Terminal import Terminal
@@ -532,3 +411,19 @@ class PypeLauncher(object):
                      '-W', 'ignore::DeprecationWarning',
                      os.path.join(os.getenv('PYPE_ROOT'),
                                   'repos', 'pype', 'pype', 'tests')])
+
+    def run_pype_setup_tests(self):
+        """ Run pytest on `tests` directory """
+
+        from pypeapp.lib.Terminal import Terminal
+        import pytest
+
+        self._initialize()
+        t = Terminal()
+
+        t.echo(">>> Running test on pype-setup ...")
+
+        pytest.main(['-x', '--capture=sys', '--print',
+                     '-W', 'ignore::DeprecationWarning',
+                     os.path.join(os.getenv('PYPE_ROOT'),
+                                  'tests')])

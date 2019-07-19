@@ -3,6 +3,7 @@ from pypeapp import Anatomy
 import ruamel.yaml as yaml
 import os
 import pathlib
+from pprint import pprint
 
 
 valid_data = {
@@ -64,8 +65,11 @@ def test_format_anatomy():
     a = anatomy.solve_dict(valid_templates, valid_data)
     # formatted_no_optional = anatomy.solve_dict(template, test_data_2)
 
+
+
     assert a['solved']['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
     assert a['solved']['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
+
     assert a['partial']['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
     assert a['unsolved']
     # assert formatted_no_optional == "iamrequiredKey"

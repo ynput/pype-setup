@@ -19,6 +19,14 @@ Subpackages
 Submodules
 ----------
 
+pypeapp.cli module
+------------------
+
+.. automodule:: pypeapp.cli
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pypeapp.deployment module
 -------------------------
 

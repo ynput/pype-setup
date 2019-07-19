@@ -49,6 +49,14 @@ pypeapp.lib.formatting module
     :undoc-members:
     :show-inheritance:
 
+pypeapp.lib.git\_progress module
+--------------------------------
+
+.. automodule:: pypeapp.lib.git_progress
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pypeapp.lib.log module
 ----------------------
 

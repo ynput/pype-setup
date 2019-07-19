@@ -57,7 +57,7 @@ def install(force=False):
             t.echo(">>> Creating directory [ {} ]". format(pype_env))
             os.makedirs(pype_env)
         except PermissionError:
-            t.echo("!!! We have no permission to create [ {} ].".format(pype_env))
+            t.echo("!!! We have no permission to create [ {} ].".format(pype_env))  # noqa: E501
             sys.exit(74)
         except OSError as e:
             t.echo(
