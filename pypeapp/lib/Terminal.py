@@ -62,6 +62,7 @@ class Terminal:
         r"}":  r"}" + _RST,
         r"\(": _LY + r"(",
         r"\)": r")" + _RST,
+        r"^\.\.\. ": _SB + _LM + r"... " + _RST,
         r"!!! ERR: ":
             _SB + _LR + r"!!! ERR: " + _RST,
         r"!!! CRI: ":

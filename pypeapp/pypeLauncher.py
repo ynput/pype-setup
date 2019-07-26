@@ -13,6 +13,30 @@ class PypeLauncher(object):
     _kwargs = None
     _args = None
 
+    def print_info(self):
+        """ This will print additional information to console. """
+        from pypeapp.lib.Terminal import Terminal
+
+        t = Terminal()
+
+        t.echo("... Running pype from\t\t\t[ {} ]".format(
+            os.environ.get('PYPE_ROOT')))
+        t.echo("... Using config at\t\t\t[ {} ]".format(
+            os.environ.get('PYPE_CONFIG')))
+        t.echo("... Projects root\t\t\t[ {} ]".format(
+            os.environ.get('PYPE_STUDIO_PROJECTS_PATH')))
+        t.echo("... Using mongodb\t\t\t[ {} ]".format(
+            os.environ.get("AVALON_MONGO")))
+        if os.environ.get('FTRACK_SERVER'):
+            t.echo("... Using FTrack at\t\t\t[ {} ]".format(
+                os.environ.get("FTRACK_SERVER")))
+        if os.environ.get('DEADLINE_REST_URL'):
+            t.echo("... Using Deadline webservice at\t[ {} ]".format(
+                os.environ.get("DEADLINE_REST_URL")))
+        if os.environ.get('MUSTER_REST_URL'):
+            t.echo("... Using Muster at\t\t[ {} ]".format(
+                os.environ.get("DEADLINE_REST_URL")))
+
     def _add_modules(self):
         """ Include in **PYTHONPATH** all necessary packages.
 
@@ -284,6 +308,7 @@ class PypeLauncher(object):
         self._add_modules()
         Storage().update_environment()
         self._load_default_environments(tools=tools)
+        self.print_info()
 
     def texture_copy(self, project, asset, path):
         """ This will copy textures specified in path asset publish
