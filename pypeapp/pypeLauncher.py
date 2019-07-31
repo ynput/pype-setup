@@ -1,4 +1,3 @@
-import argparse
 import os
 import sys
 import platform
@@ -47,11 +46,10 @@ class PypeLauncher(object):
             .. note:: This will append, not overwrite existing paths
         """
         from pypeapp.deployment import Deployment
-        # from pypeapp import Logger
 
-        # log = Logger().get_logger('launcher')
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         paths = d.get_deployment_paths()
+
         # add self
         paths.append(os.environ.get('PYPE_ROOT'))
 
@@ -161,12 +159,12 @@ class PypeLauncher(object):
         :rtype: int
 
         """
-        from pypeapp import Logger
         import subprocess
+        from pypeapp.lib.Terminal import Terminal
 
         self._initialize()
+        t = Terminal()
 
-        log = Logger().get_logger('mongodb')
         # Get database location.
         try:
             location = os.environ["AVALON_DB_DATA"]
@@ -179,16 +177,16 @@ class PypeLauncher(object):
 
         # Start server.
         if platform.system().lower() == "linux":
-            log.info("Local mongodb is running...")
-            log.info("Using port {} and db at {}".format(
+            t.echo("Local mongodb is running...")
+            t.echo("Using port {} and db at {}".format(
                 os.environ["AVALON_MONGO_PORT"], location))
             p = subprocess.Popen(
                 ["mongod", "--dbpath", location, "--port",
                  os.environ["AVALON_MONGO_PORT"]], close_fds=True
             )
         elif platform.system().lower() == "windows":
-            log.info("Local mongodb is running...")
-            log.info("Using port {} and db at {}".format(
+            t.echo("Local mongodb is running...")
+            t.echo("Using port {} and db at {}".format(
                 os.environ["AVALON_MONGO_PORT"], location))
             p = subprocess.Popen(
                 ["start", "Avalon MongoDB", "call", "mongod", "--dbpath",
@@ -357,7 +355,6 @@ class PypeLauncher(object):
         t = Terminal()
 
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-        log = Logger().get_logger('publish')
 
         # uninstall static part of AVALON environment
         # FIXME: this is probably very wrong way to do it. Can acre adjust
@@ -378,7 +375,7 @@ class PypeLauncher(object):
             os.environ[k] = ""
 
         self._initialize()
-
+        log = Logger().get_logger('publish')
         from pype import install, uninstall
         # Register target and host
         import pyblish.api

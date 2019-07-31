@@ -2,9 +2,19 @@ import logging
 import os
 import datetime
 import time
+import datetime as dt
+import platform
+import getpass
+
+try:
+    from log4mongo.handlers import MongoHandler
+except ImportError:
+    _mongo_logging = False
+else:
+    _mongo_logging = True
 
 from logging.handlers import TimedRotatingFileHandler
-from .Terminal import Terminal
+from pypeapp.lib.Terminal import Terminal
 
 
 try:
@@ -15,6 +25,39 @@ except NameError:
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
+
+
+def _bootstrap_mongo_log():
+    """
+    This will check if database and collection for logging exist on server.
+    """
+    import pymongo
+
+    host = os.environ.get('PYPE_LOG_MONGO_HOST')
+    port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
+    database = os.environ.get('PYPE_LOG_MONGO_DB')
+    collection = os.environ.get('PYPE_LOG_MONGO_COL')
+
+    if not host or not port or not database or not collection:
+        # fail silently
+        return
+
+    print(">>> connecting to log [ {}:{} ]".format(host, port))
+    client = pymongo.MongoClient(
+        host=[host], port=port)
+
+    # dblist = client.list_database_names()
+
+    logdb = client[database]
+
+    collist = logdb.list_collection_names()
+    if collection not in collist:
+        logdb.create_collection(collection, capped=True,
+                                max=5000, size=1073741824)
+
+
+if _mongo_logging:
+    _bootstrap_mongo_log()
 
 
 class PypeStreamHandler(logging.StreamHandler):
@@ -89,7 +132,58 @@ class PypeFormatter(logging.Formatter):
 
     def format(self, record):
         formatter = self.formatters.get(record.levelno, self.default_formatter)
-        return formatter.format(record)
+
+        out = formatter.format(record)
+        if record.exc_info is not None:
+            line_len = len(str(record.exc_info[1]))
+            out = "{}\n{}\n{}\n{}\n{}".format(out,
+                                              "-" * line_len,
+                                              str(record.exc_info[1]),
+                                              "=" * line_len,
+                                              self.formatException(
+                                                record.exc_info))
+        return out
+
+
+class PypeMongoFormatter(logging.Formatter):
+
+    DEFAULT_PROPERTIES = logging.LogRecord(
+        '', '', '', '', '', '', '', '').__dict__.keys()
+
+    def format(self, record):
+        """Formats LogRecord into python dictionary."""
+        # Standard document
+        document = {
+            'timestamp': dt.datetime.utcnow(),
+            'level': record.levelname,
+            'thread': record.thread,
+            'threadName': record.threadName,
+            'message': record.getMessage(),
+            'loggerName': record.name,
+            'fileName': record.pathname,
+            'module': record.module,
+            'method': record.funcName,
+            'lineNumber': record.lineno,
+            'host': platform.node(),
+            'user': getpass.getuser()
+        }
+        # Standard document decorated with exception info
+        if record.exc_info is not None:
+            document.update({
+                'exception': {
+                    'message': str(record.exc_info[1]),
+                    'code': 0,
+                    'stackTrace': self.formatException(record.exc_info)
+                }
+            })
+        # Standard document decorated with extra contextual information
+        if len(self.DEFAULT_PROPERTIES) != len(record.__dict__):
+            contextual_extra = set(record.__dict__).difference(
+                set(self.DEFAULT_PROPERTIES))
+            if contextual_extra:
+                for key in contextual_extra:
+                    document[key] = record.__dict__[key]
+        return document
 
 
 class PypeLogger:
@@ -150,6 +244,15 @@ class PypeLogger:
         file_handler.setFormatter(formatter)
         return file_handler
 
+    def _get_mongo_handler(self):
+        handler = MongoHandler(
+            host=os.environ.get('PYPE_LOG_MONGO_HOST'),
+            port=int(os.environ.get('PYPE_LOG_MONGO_PORT')),
+            database_name=os.environ.get('PYPE_LOG_MONGO_DB'),
+            capped=True,
+            formatter=PypeMongoFormatter())
+        return handler
+
     def _get_console_handler(self):
 
         formatter = PypeFormatter(self.FORMAT_FILE)
@@ -160,7 +263,6 @@ class PypeLogger:
         return console_handler
 
     def get_logger(self, name=None, host=None):
-        host_name = host or 'pype'
         logger = logging.getLogger(name or '__main__')
 
         if self.PYPE_DEBUG > 1:
@@ -170,12 +272,16 @@ class PypeLogger:
 
         if len(logger.handlers) > 0:
             for handler in logger.handlers:
-                if (not isinstance(handler, TimedRotatingFileHandler)
+                if (not isinstance(handler, MongoHandler)
                    and not isinstance(handler, PypeStreamHandler)):
-                    logger.addHandler(self._get_file_handler(host_name))
+                    if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:  # noqa
+                        logger.addHandler(self._get_mongo_handler())
+                        pass
                     logger.addHandler(self._get_console_handler())
         else:
-            logger.addHandler(self._get_file_handler(host_name))
+            if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:
+                logger.addHandler(self._get_mongo_handler())
+                pass
             logger.addHandler(self._get_console_handler())
 
         return logger
