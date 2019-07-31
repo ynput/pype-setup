@@ -409,6 +409,7 @@ class PypeLauncher(object):
                 uninstall()
                 sys.exit(1)
 
+            # Error exit as soon as any error occurs.
             for result in pyblish.util.publish_iter(context):
                 if result["error"]:
                     log.error(error_format.format(**result))
