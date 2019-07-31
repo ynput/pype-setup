@@ -6,7 +6,13 @@ import datetime as dt
 import platform
 import getpass
 
-from log4mongo.handlers import MongoHandler
+try:
+    from log4mongo.handlers import MongoHandler
+except ImportError:
+    _mongo_logging = False
+else:
+    _mongo_logging = True
+
 from logging.handlers import TimedRotatingFileHandler
 from pypeapp.lib.Terminal import Terminal
 
@@ -50,7 +56,8 @@ def _bootstrap_mongo_log():
                                 max=5000, size=1073741824)
 
 
-_bootstrap_mongo_log()
+if _mongo_logging:
+    _bootstrap_mongo_log()
 
 
 class PypeStreamHandler(logging.StreamHandler):
@@ -267,12 +274,12 @@ class PypeLogger:
             for handler in logger.handlers:
                 if (not isinstance(handler, MongoHandler)
                    and not isinstance(handler, PypeStreamHandler)):
-                    if os.environ.get('PYPE_LOG_MONGO_HOST'):
+                    if os.environ.get('PYPE_LOG_MONGO_HOST') or _mongo_logging:
                         logger.addHandler(self._get_mongo_handler())
                         pass
                     logger.addHandler(self._get_console_handler())
         else:
-            if os.environ.get('PYPE_LOG_MONGO_HOST'):
+            if os.environ.get('PYPE_LOG_MONGO_HOST') or _mongo_logging:
                 logger.addHandler(self._get_mongo_handler())
                 pass
             logger.addHandler(self._get_console_handler())
