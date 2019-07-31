@@ -400,22 +400,22 @@ class PypeLauncher(object):
 
             import pyblish.util
             t.echo(">>> Running publish ...")
-            context = pyblish.util.publish()
 
+            context = pyblish.util.collect()
+
+            # Error exit if nothing was collected.
             if not context:
                 log.warning("Nothing collected.")
                 uninstall()
                 sys.exit(1)
 
-            # Collect errors, {plugin name: error}
-            error_results = [r for r in context.data["results"] if r["error"]]
-
-            if error_results:
-                log.error("Errors occurred ...")
-                for result in error_results:
+            # Error exit as soon as any error occurs.
+            for result in pyblish.util.publish_iter(context):
+                if result["error"]:
                     log.error(error_format.format(**result))
-                uninstall()
-                sys.exit(2)
+                    uninstall()
+                    sys.exit(2)
+
         uninstall()
 
     def run_pype_tests(self):
