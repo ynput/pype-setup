@@ -1,3 +1,17 @@
+"""
+Logging to console and to mongo. For mongo logging, you need to set either
+``PYPE_LOG_MONGO_URL`` to something like:
+
+.. example::
+   mongo://user:password@hostname:port/database/collection
+
+or set ``PYPE_LOG_MONGO_HOST`` and other variables.
+See :func:`_bootstrap_mongo_log`
+
+Best place for it is in ``repos/pype-config/environments/global.json``
+"""
+
+
 import logging
 import os
 import datetime
@@ -5,13 +19,20 @@ import time
 import datetime as dt
 import platform
 import getpass
+from urllib.parse import urlparse
 
 try:
     from log4mongo.handlers import MongoHandler
 except ImportError:
     _mongo_logging = False
+except NameError:
+    _mongo_logging = False
 else:
     _mongo_logging = True
+    if (not os.environ.get('PYPE_LOG_MONGO_URL', False)
+            and not os.environ.get('PYPE_LOG_MONGO_HOST', False)):
+        # configuration missing
+        _mongo_logging = False
 
 from logging.handlers import TimedRotatingFileHandler
 from pypeapp.lib.Terminal import Terminal
@@ -27,16 +48,34 @@ except NameError:
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
 
 
+def _mongo_settings():
+    if os.environ.get('PYPE_LOG_MONGO_URL'):
+        result = urlparse(os.environ.get('PYPE_LOG_MONGO_URL'))
+
+        host = result.hostname
+        port = result.port
+        username = result.username
+        password = result.password
+        database = result.path.lstrip("/").split("/")[0]
+        collection = result.path.lstrip("/").split("/")[1]
+    else:
+        host = os.environ.get('PYPE_LOG_MONGO_HOST')
+        port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
+        database = os.environ.get('PYPE_LOG_MONGO_DB')
+        username = os.environ.get('PYPE_LOG_MONGO_USER')
+        password = os.environ.get('PYPE_LOG_MONGO_PASSWORD')
+        collection = os.environ.get('PYPE_LOG_MONGO_COL')
+
+    return host, port, database, username, password, collection
+
+
 def _bootstrap_mongo_log():
     """
     This will check if database and collection for logging exist on server.
     """
     import pymongo
 
-    host = os.environ.get('PYPE_LOG_MONGO_HOST')
-    port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
-    database = os.environ.get('PYPE_LOG_MONGO_DB')
-    collection = os.environ.get('PYPE_LOG_MONGO_COL')
+    host, port, database, username, password, collection = _mongo_settings()
 
     if not host or not port or not database or not collection:
         # fail silently
@@ -44,7 +83,7 @@ def _bootstrap_mongo_log():
 
     print(">>> connecting to log [ {}:{} ]".format(host, port))
     client = pymongo.MongoClient(
-        host=[host], port=port)
+        host=[host], port=port, username=username, password=password)
 
     # dblist = client.list_database_names()
 
@@ -245,10 +284,15 @@ class PypeLogger:
         return file_handler
 
     def _get_mongo_handler(self):
+        host, port, database, username, password, collection = _mongo_settings()  # noqa: E501
+
         handler = MongoHandler(
-            host=os.environ.get('PYPE_LOG_MONGO_HOST'),
-            port=int(os.environ.get('PYPE_LOG_MONGO_PORT')),
-            database_name=os.environ.get('PYPE_LOG_MONGO_DB'),
+            host=host,
+            port=int(port),
+            username=username,
+            password=password,
+            collection=collection,
+            database_name=database,
             capped=True,
             formatter=PypeMongoFormatter())
         return handler
@@ -272,14 +316,13 @@ class PypeLogger:
 
         if len(logger.handlers) > 0:
             for handler in logger.handlers:
-                if (not isinstance(handler, MongoHandler)
-                   and not isinstance(handler, PypeStreamHandler)):
-                    if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:  # noqa
-                        logger.addHandler(self._get_mongo_handler())
-                        pass
-                    logger.addHandler(self._get_console_handler())
+                if _mongo_logging and (not isinstance(handler, MongoHandler)
+                        and not isinstance(handler, PypeStreamHandler)):  # noqa: E128, E501
+                    logger.addHandler(self._get_mongo_handler())
+
+                logger.addHandler(self._get_console_handler())
         else:
-            if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:
+            if _mongo_logging:
                 logger.addHandler(self._get_mongo_handler())
                 pass
             logger.addHandler(self._get_console_handler())
