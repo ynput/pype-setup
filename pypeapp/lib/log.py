@@ -276,7 +276,7 @@ class PypeLogger:
             for handler in logger.handlers:
                 if _mongo_logging and (not isinstance(handler, MongoHandler)
                    and not isinstance(handler, PypeStreamHandler)):
-                    if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:  # noqa
+                    if os.environ.get('PYPE_LOG_MONGO_HOST'):  # noqa
                         logger.addHandler(self._get_mongo_handler())
                         pass
                     logger.addHandler(self._get_console_handler())
