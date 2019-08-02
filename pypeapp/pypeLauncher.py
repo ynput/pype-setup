@@ -301,8 +301,10 @@ class PypeLauncher(object):
         tools, config_path = d.get_environment_data()
 
         os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
+        os.environ['TOOL_ENV'] = os.path.normpath(
+            os.path.join(
+                config_path,
+                'environments'))
         self._add_modules()
         Storage().update_environment()
         self._load_default_environments(tools=tools)
@@ -449,3 +451,54 @@ class PypeLauncher(object):
                      '-W', 'ignore::DeprecationWarning',
                      os.path.join(os.getenv('PYPE_ROOT'),
                                   'tests')])
+
+    def make_docs(self):
+        """
+        Generate documentation using Sphinx for both **pype-setup** and
+        **pype**.
+        """
+
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp import execute
+
+        self._initialize()
+        t = Terminal()
+
+        source_dir_setup = os.path.join(
+            os.environ.get("PYPE_ROOT"), "docs", "source")
+        build_dir_setup = os.path.join(
+            os.environ.get("PYPE_ROOT"), "docs", "build")
+
+        source_dir_pype = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "source")
+        build_dir_pype = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "build")
+
+        t.echo(">>> Generating documentation ...")
+        t.echo("  - Cleaning up ...")
+        execute(['sphinx-build', '-M', 'clean',
+                 source_dir_setup, build_dir_setup],
+                shell=True)
+        execute(['sphinx-build', '-M', 'clean',
+                 source_dir_pype, build_dir_pype],
+                shell=True)
+        t.echo("  - generating sources ...")
+        execute(['sphinx-apidoc', '-M', '-f', '-d', '4', '--ext-autodoc',
+                 '--ext-intersphinx', '--ext-viewcode', '-o',
+                 source_dir_setup, 'pypeapp'], shell=True)
+        vendor_ignore = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "pype", "vendor")
+        execute(['sphinx-apidoc', '-M', '-f', '-d', '6', '--ext-autodoc',
+                 '--ext-intersphinx', '--ext-viewcode', '-o',
+                 source_dir_pype, 'pype',
+                 '{}{}*'.format(vendor_ignore, os.path.sep)], shell=True)
+        t.echo("  - Building html ...")
+        execute(['sphinx-build', '-M', 'html',
+                 source_dir_setup, build_dir_setup],
+                shell=True)
+        execute(['sphinx-build', '-M', 'html',
+                 source_dir_pype, build_dir_pype],
+                shell=True)
+        t.echo(">>> Done. Documentation id generated:")
+        t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
+        t.echo("*** For pype: [ {} ]".format(build_dir_pype))
