@@ -3,10 +3,10 @@ Logging to console and to mongo. For mongo logging, you need to set either
 ``PYPE_LOG_MONGO_URL`` to something like:
 
 .. example::
-   mongo://user:password@hostname:port/database/collection
+   mongo://user:password@hostname:port/database/collection?authSource=avalon
 
 or set ``PYPE_LOG_MONGO_HOST`` and other variables.
-See :func:`_bootstrap_mongo_log`
+See :func:`_mongo_settings`
 
 Best place for it is in ``repos/pype-config/environments/global.json``
 """
@@ -34,6 +34,7 @@ else:
         # configuration missing
         _mongo_logging = False
 
+
 from logging.handlers import TimedRotatingFileHandler
 from pypeapp.lib.Terminal import Terminal
 
@@ -58,6 +59,7 @@ def _mongo_settings():
         password = result.password
         database = result.path.lstrip("/").split("/")[0]
         collection = result.path.lstrip("/").split("/")[1]
+        auth_db = urlparse.parse_qs(result.query)['authSource']
     else:
         host = os.environ.get('PYPE_LOG_MONGO_HOST')
         port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
@@ -65,8 +67,9 @@ def _mongo_settings():
         username = os.environ.get('PYPE_LOG_MONGO_USER')
         password = os.environ.get('PYPE_LOG_MONGO_PASSWORD')
         collection = os.environ.get('PYPE_LOG_MONGO_COL')
+        auth_db = os.environ.get('PYPE_LOG_MONGO_AUTH_DB', 'avalon')
 
-    return host, port, database, username, password, collection
+    return host, port, database, username, password, collection, auth_db
 
 
 def _bootstrap_mongo_log():
@@ -75,7 +78,7 @@ def _bootstrap_mongo_log():
     """
     import pymongo
 
-    host, port, database, username, password, collection = _mongo_settings()
+    host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa
 
     if not host or not port or not database or not collection:
         # fail silently
@@ -83,7 +86,8 @@ def _bootstrap_mongo_log():
 
     print(">>> connecting to log [ {}:{} ]".format(host, port))
     client = pymongo.MongoClient(
-        host=[host], port=port, username=username, password=password)
+        host=[host], port=port, username=username, password=password,
+        authSource=auth_db)
 
     # dblist = client.list_database_names()
 
@@ -284,7 +288,7 @@ class PypeLogger:
         return file_handler
 
     def _get_mongo_handler(self):
-        host, port, database, username, password, collection = _mongo_settings()  # noqa: E501
+        host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa: E501
 
         handler = MongoHandler(
             host=host,
@@ -293,6 +297,7 @@ class PypeLogger:
             password=password,
             collection=collection,
             database_name=database,
+            authentication_db=auth_db,
             capped=True,
             formatter=PypeMongoFormatter())
         return handler
