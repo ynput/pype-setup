@@ -240,3 +240,11 @@ def test(pype):
         PypeLauncher().run_pype_tests()
     else:
         PypeLauncher().run_pype_setup_tests()
+
+
+@main.command()
+def make_docs():
+    """
+    This will generate documentation with Sphinx into `docs/build`
+    """
+    PypeLauncher().make_docs()

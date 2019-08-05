@@ -12,5 +12,6 @@ __all__ = [
     "PypeLauncher",
     "Anatomy",
     "config",
-    "execute"
+    "execute",
+    "cli"
 ]
