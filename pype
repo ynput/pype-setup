@@ -1,0 +1,569 @@
+#!/usr/bin/env bash
+#     ____________  ____      ____  ____________  ____________
+#   / \           \/\   \    /\   \/\           \/\           \
+#   \  \      ---  \ \   \___\_\   \ \      ---  \ \     ------\
+#    \  \     _____/  \____     ____\ \     _____/  \    \___\
+#     \  \    \__/  \____/ \    \__/\  \    \__/  \  \    -------\
+#      \  \____\         \  \____\   \  \____\     \  \___________\
+#       \/____/           \/____/     \/____/       \/___________/
+#
+#                    ...  █░░ --=[ CLuB ]]=-- ░░█ ...
+
+# Print Pype ascii art :)
+art () {
+  cat <<-EOF
+ ____________  ____      ____  ____________  ____________
+/ \\           \\/\\   \\    /\\   \\/\\           \\/\\           \\
+\\  \\      ---  \\ \\   \\___\\_\\   \\ \\      ---  \\ \\     ------\\
+ \\  \\     _____/  \\____     ____\\ \\     _____/  \\    \\___\\
+  \\  \\    \\__/  \\____/ \\    \\__/\\  \\    \\__/  \\  \\    -------\\
+   \\  \\____\\         \\  \\____\\   \\  \\____\\     \\  \\___________\\
+    \\/____/           \\/____/     \\/____/       \\/___________/
+
+EOF
+}
+
+# Full path of the current script
+THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
+# The directory where current script resides
+DIR=`dirname "${THIS}"`
+pushd $DIR > /dev/null
+# Set python interpreter name
+PYTHON="python"
+# Set path to environment if not set
+export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
+# Set debug level if not set
+export PYPE_DEBUG=${PYPE_DEBUG:=0}
+# Process passed arguments
+# Initialize vars
+f_offline=0
+f_install=0
+f_deploy=0
+f_download=0
+f_help=0
+f_validate=0
+f_force=0
+f_mongodb=0
+f_update=0
+
+# Process arguments
+# .
+
+args=$@
+
+while :; do
+  case $1 in
+    install)
+      f_install=1
+      ;;
+    --force)
+      f_force=1
+      ;;
+    --offline)
+      f_offline=1
+      ;;
+    help)
+      f_help=1
+      ;;
+    --help)
+      f_help=1
+      ;;
+    download)
+      f_download=1
+      ;;
+    deploy)
+      f_deploy=1
+      ;;
+    validate)
+      f_validate=1
+      ;;
+    mongodb)
+      f_mongodb=1
+      ;;
+    update-requirements)
+      f_update=1
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+  esac
+
+  shift
+done
+
+# -----------------------------------------------------------------------------
+# Initialize important environment variables
+
+# Set PYPE_ROOT to path to this script
+export PYPE_ROOT="$(cd $DIR; pwd)"
+# Add PYPE_ROOT to PYTHONPATH if missing
+export PYTHONPATH=${PYTHONPATH:="$PYPE_ROOT/pypeapp"}
+if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT/pypeapp:"* ]]; then
+  export PYTHONPATH="$PYPE_ROOT/pypeapp:$PYTHONPATH"
+fi
+if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT:"* ]]; then
+  export PYTHONPATH="$PYPE_ROOT:$PYTHONPATH"
+fi
+# add PYPE_ROOT to PATH
+export PATH=${PATH:="$PYPE_ROOT"}
+if [[ ":$PATH:" != *":$PYPE_ROOT:"* ]]; then
+  export PATH="$PYPE_ROOT:$PATH"
+fi
+
+# Load colors definitions for easy output coloring
+source "$PYPE_ROOT/pypeapp/colors.sh"
+
+###############################################################################
+# Display spinner for running job. Job must be running in a background.
+# Usage:
+#   run_job 2> /dev/null &
+#   spinner
+# Globals:
+#   PID of background job
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+spinner () {
+  local pid=$! # Process Id of the previous running command
+  local spin='-\|/'
+  local i=0
+  while kill -0 $pid 2>/dev/null
+  do
+    i=$(( (i+1) %4 ))
+    printf "\r${spin:$i:1}"
+    sleep .1
+  done
+}
+
+###############################################################################
+# Activate virtual environment
+# Globals:
+#   colors
+# Arguments:
+#   environment
+# Returns:
+#   1 if failed
+###############################################################################
+activate_venv () {
+  echo -e "${BICyan}-->${RST} Activating environment [${BIWhite} $1 ${RST}]"
+  source "$1/bin/activate"
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Failed to activate."
+    return 1
+  fi
+}
+
+##############################################################################
+# Update requirements with stuff based on what is installed in current
+# active python (virtual) environment.
+# Globals:
+#   colors
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+update_requirements () {
+  echo -e "${BICyan}  -${RST} Updating requirements ..."
+  pip freeze > pypeapp/requirements.txt
+}
+
+##############################################################################
+# Install virtual environment
+# Globals:
+#   colors
+#   f_help
+#   f_force
+#   PYPE_ENV
+#   PYTHON
+# Arguments:
+#   None
+# Returns:
+#   1 if failed
+###############################################################################
+install_environment () {
+  # if ran with --help, pass control to python to print help message and
+  # terminate.
+  if [ "$f_help" == 1 ] ; then
+    local install_command="$PYTHON -m pypeapp install --help"
+    ${install_command}
+    return 1
+  fi
+  echo -e "${IGreen}>>>${RST} Installing environment to [${BIWhite} $PYPE_ENV ${RST}] ..."
+  if [ "$f_force" == 1 ] ; then
+    local install_command="$PYTHON -m pypeapp install --force"
+    ${install_command}
+  else
+    local install_command="$PYTHON -m pypeapp install"
+    ${install_command}
+  fi
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Installation failed (${BIYellow}$?${RST})"
+    return 1
+  fi
+}
+
+##############################################################################
+# This checks current environment against pype's requirement.txt
+# Globals:
+#   colors
+#   f_offline
+#   PYPE_ROOT
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+check_environment () {
+  echo -e "${IGreen}>>>${RST} Validating environment dependencies ... \c"
+  diff pypeapp/requirements.txt <(pip freeze) > /dev/null
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIYellow}FAILED${RST}"
+    echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
+    if [ "$f_offline" -ne 1 ]; then
+      pip install -r "$PYPE_ROOT/pypeapp/requirements.txt"
+    else
+      pip install -r "$PYPE_ROOT/pypeapp/requirements.txt" -f "$PYPE_ROOT/vendor/packages"
+    fi
+  else
+    echo -e "${BIGreen}OK${RST}"
+  fi
+}
+
+upgrade_pip () {
+  if [ "$f_offline" -ne 1 ] ; then
+    echo -e "${BIGreen}>>>${RST} Updating pip ... \c"
+    pip install --upgrade pip 2> /dev/null &
+    spinner
+  fi
+}
+
+##############################################################################
+# This will install all requirements necessary from requirements.txt
+# Globals:
+#   colors
+#   f_offline
+#   PYPE_ROOT
+# Arguments:
+#   None
+# Returns:
+#   1 if failed
+###############################################################################
+bootstrap_pype () {
+  if [ "$f_offline" -ne 1 ] ; then
+    # ensure latest pip version
+    upgrade_pip
+    echo -e "${BIGreen}>>>${RST} Bootstrapping Pype ..."
+
+    # install essential dependecies
+    echo -e "${BICyan}  -${RST} Installing dependecies ..."
+    pip install -r "$PYPE_ROOT/pypeapp/requirements.txt"
+    if [ $? -ne 0 ] ; then
+      echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
+      return 1
+    fi
+  else
+    # in offline mode, install all from vendor
+    echo -e "${BIGreen}>>>${RST} Offline installation ..."
+    pip install -r "$PYPE_ROOT/pypeapp/requirements.txt" --no-index --find-links vendor/packages
+    if [ $? -ne 0 ] ; then
+      echo -e "${BIRed}!!! ${RST} Installation ${BIRed}FAILED${RST}"
+      return 1
+    fi
+  fi
+}
+
+##############################################################################
+# This will pass control to python to deploy repositories and stuff
+# Requires git
+# Globals:
+#   colors
+#   f_force
+#   f_help
+# Arguments:
+#   None
+# Returns:
+#   1 for exit
+###############################################################################
+deploy_pype () {
+  if [ $f_help == 1 ] ; then
+    python -m pypeapp deploy --help
+    return 1
+  fi
+  if [ $f_force == 1 ] ; then
+    python -m pypeapp deploy --force
+  else
+    python -m pypeapp deploy
+  fi
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Deployment ${BIRed}FAILED${RST}"
+    return 1
+  fi
+}
+
+##############################################################################
+# This will validate pype deployment.
+# It will pass control to python to validate repositories deployment.
+# Requires git
+# Globals:
+#   colors
+#   f_help
+# Arguments:
+#   None
+# Returns:
+#   1 if failed
+###############################################################################
+validate_pype () {
+  if [ "$f_help" == 1 ] ; then
+    python -m pypeapp validate --help
+    return 1
+  fi
+  python -m pypeapp validate
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!! WARNING:${RST} Deployment is invalid."
+    echo -e "${BIYellow}  *${RST} Contact your system administrator to resolve this issue."
+    echo -e "${BIYellow}  *${RST} You can try to fix deployment with ${BIWhite}pype deploy --force${RST}"
+    return 1
+  fi
+}
+
+##############################################################################
+# Function to detect mongod in path
+# Requires mongod
+# Globals:
+#   colors
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+detect_mongo () {
+  if [ "$f_mongodb" == 1  ] ; then
+    echo -e "${BIGreen}>>>${RST} looking for ${BIWhite}[ mongod ]${RST} ... \c"
+    command -v mongod >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; echo -e "${BIRed}!!!${RST} Mongod wasn't found in PATH"; return 1; }
+    echo -e "${BIGreen}OK${RST}"
+  fi
+}
+
+##############################################################################
+# Detect required version of python
+# Requires mongod
+# Globals:
+#   colors
+#   PYTHON
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+detect_python () {
+  echo -e "${BIGreen}>>>${RST} looking for ${BIWhite}[ python ]${RST} ... \c"
+  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
+  # Parse version string
+  local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
+  local python_version="$(python <<< ${version_command})"
+  oIFS="$IFS"
+  IFS=.
+  set -- $python_version
+  IFS="$oIFS"
+  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
+    echo -e "${BIGreen}$1.$2${RST}"
+  else
+    # Python is old, but maybe we have newer just not symlinked to `python`
+    PYTHON="python3.6"
+    command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    # If so, change python interpreter name
+    local python_version="$($PYTHON <<< ${version_command})"
+    oIFS="$IFS"
+    IFS=.
+    set -- $python_version
+    IFS="$oIFS"
+    echo -e "${BIGreen}$1.$2${RST}"
+  fi
+}
+
+##############################################################################
+# Function to detect git in path
+# Requires git
+# Globals:
+#   colors
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+detect_git () {
+  echo -e "${BIYellow}---${RST} looking for ${BIWhite}[ git ]${RST} ... \c"
+  command -v git >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
+  echo -e "${BIGreen}OK${RST}"
+}
+
+##############################################################################
+# Using ping testing if we have internet connection
+# Globals:
+#   colors
+#   f_offline
+# Arguments:
+#   None
+# Returns:
+#   1 if we are offline
+###############################################################################
+test_offline () {
+  echo -e "${BIGreen}>>>${RST} Testing if we are online ... \c"
+  ping -q -w1 -c1 google.com &> /dev/null || { echo -e "${BIYellow}OFFLINE${RST}"; $f_offline=1; return 1; }
+  echo -e "${BIGreen}ONLINE${RST}"
+}
+
+##############################################################################
+# Download required packages from internet
+# Globals:
+#   colors
+#   f_offline
+# Arguments:
+#   None
+# Returns:
+#   1 if we are offline
+###############################################################################
+download () {
+  echo -e "${IGreen}>>>${RST} Downloading packages for offline installation ..."
+  python -m pip download -r "$PYPE_ROOT/pypeapp/requirements.txt" -d "$PYPE_ROOT/vendor/packages"
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIYellow}!!!${RST} Download failed"
+    return 1
+  fi
+  echo -e "${ICyan}<--${RST} Deactivating environment ..."
+  deactivate 2>&1 > /dev/null
+  echo -e "${IPurple}xxx${RST} Terminating ..."
+  return 0
+}
+
+# -----------------------------------------------------------------------------
+# main
+# -----------------------------------------------------------------------------
+
+main () {
+  art
+  echo -e "${IGreen}***${RST} Welcome to ${BIWhite}Pype${RST}!"
+  # Check invalid argument combination
+  if [ "$f_deploy" == 1 ] ; then
+    if [ "$f_offline" == 1 ] ; then
+      echo -e "${BIRed}!!!{$RST} Invalid invocation, cannot deploy in offline mode."
+      return 1
+    fi
+  fi
+
+  # Test if python is available and test its version
+  detect_python || return 1
+
+  # Detect git
+  # used only when deploying or validating deployment
+  if [ "$f_deploy" == 1 ] || [ "$f_validate" == 1 ] ; then
+    detect_git || return 1
+  fi
+
+  # Detect mongod in PATHs
+  # used only when starting local mongodb
+  if [ "$f_mongodb" == 1 ] ; then
+    detect_mongo || return 1
+  fi
+
+  # Detect existing venv
+  echo -e "${IGreen}>>>${RST} Detecting environment ... \c"
+
+  needToInstall="0"
+  # Does directory exist?
+  if [ -d "$PYPE_ENV" ] ; then
+    # If so, is it empy?
+    if [ ! "$(ls -A $PYPE_ENV)" ] ; then
+      needToInstall="1"
+    fi
+  else
+    needToInstall="1"
+  fi
+
+  if [ "$f_install" == 1 ] ; then
+    needToInstall="1"
+  fi
+
+  if [ $needToInstall -eq "1" ] ; then
+      if [ "$f_install" == 1 ] ; then
+        echo -e "${BIYellow}WILL BE INSTALLED${RST}"
+      else
+        echo -e "${BIYellow}NOT FOUND${RST}"
+      fi
+      test_offline
+
+      # install environment
+      install_environment || return 1
+
+      # activate environment
+      activate_venv $PYPE_ENV || return 1
+
+      # bootstrap pype
+      bootstrap_pype || return 1
+  else
+    echo -e "${BIGreen}FOUND${RST} - [${BIWhite} $PYPE_ENV ${RST}]"
+    activate_venv $PYPE_ENV || return 1
+  fi
+
+  if [ "$f_install" == 1 ] ; then
+    echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
+    return 0
+  fi
+
+  # Update
+  if [ "$f_update" == 1 ] ; then
+    update_requirements || return 1
+    deactivate
+    return 0
+  fi
+
+  # Download
+  # This will download pip packages to vendor/packages for later offline
+  # installation and exit
+  if [ "$f_download" == 1 ] ; then
+    download || return 1
+    return 0
+  fi
+
+  # Validate deployment
+  if [ "$f_validate" == 1 ] ; then
+    echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
+    validate_pype || return 1
+    echo -e "${BIGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+  fi
+
+  # Deploy
+  if [ "$f_deploy" == 1 ] ; then
+    test_offline
+    if [ "$_offline" == 1 ] ; then
+      # If we are offline, we cannot deploy
+      echo -e "${BIRed}!!!${RST} Cannot deploy in offline mode."
+      return 1
+    fi
+    # if force set, then re-deploy
+    if [ "$f_force" == 1 ] ; then
+      echo -e "${IGreen}>>>${RST} Deploying ${BIWhite}Pype${RST} forcefully ..."
+    else
+      echo -e "${IGreen}>>>${RST} Deploying ${BIWhite}Pype${RST} ..."
+    fi
+    deploy_pype || return 1
+    echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
+    validate_pype || return 1
+    echo -e "${BIGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+    return
+  fi
+
+  echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
+  python -m pypeapp $args
+  echo -e "${ICyan}<--${RST} Deactivating environment ..."
+  deactivate 2>&1 > /dev/null
+  echo -e "${IPurple}xxx${RST} Finishing up. ${IWhite}Have a nice day!${RST}"
+}
+
+main "$args"
