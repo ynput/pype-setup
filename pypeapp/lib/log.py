@@ -10,8 +10,6 @@ try:
     from log4mongo.handlers import MongoHandler
 except ImportError:
     _mongo_logging = False
-except NameError:
-    _mongo_logging = False
 else:
     _mongo_logging = True
 
@@ -274,9 +272,9 @@ class PypeLogger:
 
         if len(logger.handlers) > 0:
             for handler in logger.handlers:
-                if _mongo_logging and (not isinstance(handler, MongoHandler)
+                if (not isinstance(handler, MongoHandler)
                    and not isinstance(handler, PypeStreamHandler)):
-                    if os.environ.get('PYPE_LOG_MONGO_HOST'):  # noqa
+                    if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:  # noqa
                         logger.addHandler(self._get_mongo_handler())
                         pass
                     logger.addHandler(self._get_console_handler())
