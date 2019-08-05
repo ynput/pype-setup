@@ -177,11 +177,11 @@ def eventserver(debug,
         args.append(ftrack_events_path)
 
     if no_stored_credentials:
-        args.append('-storecred')
+        args.append('-noloadcred')
         args.append(no_stored_credentials)
 
     if store_credentials:
-        args.append('-noloadcred')
+        args.append('-storecred')
         args.append(store_credentials)
 
     PypeLauncher().launch_eventservercli(args)
