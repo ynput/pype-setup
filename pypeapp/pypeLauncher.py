@@ -401,20 +401,12 @@ class PypeLauncher(object):
             import pyblish.util
             t.echo(">>> Running publish ...")
 
-            context = pyblish.util.collect()
-
-            # Error exit if nothing was collected.
-            if not context:
-                log.warning("Nothing collected.")
-                uninstall()
-                sys.exit(1)
-
             # Error exit as soon as any error occurs.
-            for result in pyblish.util.publish_iter(context):
+            for result in pyblish.util.publish_iter():
                 if result["error"]:
                     log.error(error_format.format(**result))
                     uninstall()
-                    sys.exit(2)
+                    sys.exit(1)
 
         uninstall()
 
