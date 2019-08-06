@@ -319,12 +319,17 @@ class PypeLogger:
         else:
             logger.setLevel(logging.INFO)
 
+        add_stream_handler = True
+        add_mongo_handler = True
         if len(logger.handlers) > 0:
             for handler in logger.handlers:
-                if _mongo_logging and (not isinstance(handler, MongoHandler)
-                        and not isinstance(handler, PypeStreamHandler)):  # noqa: E128, E501
-                    logger.addHandler(self._get_mongo_handler())
-
+                if _mongo_logging and (isinstance(handler, MongoHandler)):
+                    add_mongo_handler = False
+                if isinstance(handler, PypeStreamHandler):
+                    add_stream_handler = False
+            if add_mongo_handler and _mongo_logging:
+                logger.addHandler(self._get_mongo_handler())
+            if add_stream_handler:
                 logger.addHandler(self._get_console_handler())
         else:
             if _mongo_logging:
