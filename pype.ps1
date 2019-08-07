@@ -223,10 +223,15 @@ function Check-Environment {
     Write-Color -Text "FAILED" -Color Yellow
     # TODO: Fix only if option flag present?
     Write-Color -Text "*** ", "Environment dependencies inconsistent, fixing ... " -Color Yellow, Gray
+    Test-Offline
     if ($offline -ne $true) {
       & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
     } else {
-      & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" -f "$($env:PYPE_ROOT)\vendor\packages"
+      & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" --no-index --find-links "$($env:PYPE_ROOT)\vendor\packages"
+    }
+    if ($LASTEXITCODE -ne 0) {
+      Write-Color -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
+      return 1
     }
   } else {
     Write-Color -Text "OK" -Color Green
@@ -505,7 +510,7 @@ if ($needToInstall -eq $true) {
 } else {
   Write-Color -Text "FOUND", " - [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
   Activate-Venv -Environment $env:PYPE_ENV
-  # Check-Environment
+  Check-Environment
   # Upgrade-pip
 }
 
