@@ -354,33 +354,12 @@ class PypeLauncher(object):
         :param paths: paths to jsons
         :type paths: list
         """
-        # from pypeapp import execute
         from pypeapp import Logger
         from pypeapp.lib.Terminal import Terminal
-        from pypeapp.deployment import Deployment
-        import json
 
         t = Terminal()
 
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-
-        # uninstall static part of AVALON environment
-        # FIXME: this is probably very wrong way to do it. Can acre adjust
-        # replace parts of environment instead of merging it?
-
-        pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-        os.environ['PYPE_CONFIG'] = config_path
-        avalon_path = os.path.join(os.environ.get("PYPE_CONFIG"),
-                                   "environments", "avalon.json")
-        with open(avalon_path) as av_env:
-            avalon_data = json.load(av_env)
-
-        t.echo(">>> Unsetting static AVALON environment variables ...")
-        for k, v in avalon_data.items():
-            os.environ[k] = ""
 
         self._initialize()
         log = Logger().get_logger('publish')
