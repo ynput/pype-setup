@@ -89,7 +89,7 @@ class TestLogger():
         assert collection is None
         assert username is None
         assert password is None
-        assert auth_db is None
+        assert auth_db == ''
 
         test_url_3 = 'mongodb://host:1111/database/collection'
         printer("testing {}".format(test_url_3))
@@ -101,7 +101,7 @@ class TestLogger():
         assert collection == 'collection'
         assert username is None
         assert password is None
-        assert auth_db is None
+        assert auth_db == ''
 
         test_url_4 = 'mongodb://user@host:1111/database/collection'
         printer("testing {}".format(test_url_4))
@@ -113,7 +113,7 @@ class TestLogger():
         assert collection == 'collection'
         assert username == 'user'
         assert password is None
-        assert auth_db is None
+        assert auth_db == ''
 
         test_url_5 = 'mongodb://user:password@host:1111/database/collection?authSource=auth'
         printer("testing {}".format(test_url_5))
