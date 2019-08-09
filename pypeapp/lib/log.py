@@ -10,8 +10,7 @@ See :func:`_mongo_settings`
 
 Best place for it is in ``repos/pype-config/environments/global.json``
 """
-from future.standard_library import install_aliases
-install_aliases()
+
 
 import logging
 import os
@@ -20,8 +19,10 @@ import time
 import datetime as dt
 import platform
 import getpass
-from urllib.parse import urlparse
-from urllib.parse import parse_qs
+try:
+    from urllib.parse import urlparse, parse_qs
+except ImportError:
+    from urlparse import urlparse, parse_qs
 
 try:
     from log4mongo.handlers import MongoHandler
@@ -40,7 +41,6 @@ else:
 from logging.handlers import TimedRotatingFileHandler
 from pypeapp.lib.Terminal import Terminal
 
-
 try:
     unicode
     _unicode = True
@@ -58,7 +58,7 @@ def _mongo_settings():
     password = None
     collection = None
     database = None
-    auth_db = None
+    auth_db = ""
 
     if os.environ.get('PYPE_LOG_MONGO_URL'):
         result = urlparse(os.environ.get('PYPE_LOG_MONGO_URL'))
@@ -66,16 +66,16 @@ def _mongo_settings():
         host = result.hostname
         try:
             port = result.port
-        except ValueError as e:
-            raise RuntimeError("invalid port specified") from e
+        except ValueError:
+            raise RuntimeError("invalid port specified")
         username = result.username
         password = result.password
         try:
             database = result.path.lstrip("/").split("/")[0]
             collection = result.path.lstrip("/").split("/")[1]
-        except IndexError as e:
+        except IndexError:
             if not database:
-                raise RuntimeError("missing database name for logging") from e
+                raise RuntimeError("missing database name for logging")
         try:
             auth_db = parse_qs(result.query)['authSource'][0]
         except KeyError:
@@ -104,6 +104,7 @@ def _bootstrap_mongo_log():
     if not host or not port or not database or not collection:
         # fail silently
         return
+
 
     print(">>> connecting to log [ {}:{} ]".format(host, port))
     client = pymongo.MongoClient(
