@@ -28,15 +28,8 @@ try:
     from log4mongo.handlers import MongoHandler
 except ImportError:
     _mongo_logging = False
-except NameError:
-    _mongo_logging = False
 else:
     _mongo_logging = True
-    if (not os.environ.get('PYPE_LOG_MONGO_URL', False)
-            and not os.environ.get('PYPE_LOG_MONGO_HOST', False)):
-        # configuration missing
-        _mongo_logging = False
-
 
 from logging.handlers import TimedRotatingFileHandler
 from pypeapp.lib.Terminal import Terminal
@@ -99,7 +92,10 @@ def _bootstrap_mongo_log():
     """
     import pymongo
 
-    host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa
+    host = os.environ.get('PYPE_LOG_MONGO_HOST')
+    port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
+    database = os.environ.get('PYPE_LOG_MONGO_DB')
+    collection = os.environ.get('PYPE_LOG_MONGO_COL')
 
     if not host or not port or not database or not collection:
         # fail silently
@@ -108,8 +104,7 @@ def _bootstrap_mongo_log():
 
     print(">>> connecting to log [ {}:{} ]".format(host, port))
     client = pymongo.MongoClient(
-        host=[host], port=port, username=username, password=password,
-        authSource=auth_db)
+        host=[host], port=port)
 
     # dblist = client.list_database_names()
 
@@ -310,16 +305,10 @@ class PypeLogger:
         return file_handler
 
     def _get_mongo_handler(self):
-        host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa: E501
-
         handler = MongoHandler(
-            host=host,
-            port=int(port),
-            username=username,
-            password=password,
-            collection=collection,
-            database_name=database,
-            authentication_db=auth_db,
+            host=os.environ.get('PYPE_LOG_MONGO_HOST'),
+            port=int(os.environ.get('PYPE_LOG_MONGO_PORT')),
+            database_name=os.environ.get('PYPE_LOG_MONGO_DB'),
             capped=True,
             formatter=PypeMongoFormatter())
         return handler
@@ -341,20 +330,16 @@ class PypeLogger:
         else:
             logger.setLevel(logging.INFO)
 
-        add_stream_handler = True
-        add_mongo_handler = True
         if len(logger.handlers) > 0:
             for handler in logger.handlers:
-                if _mongo_logging and (isinstance(handler, MongoHandler)):
-                    add_mongo_handler = False
-                if isinstance(handler, PypeStreamHandler):
-                    add_stream_handler = False
-            if add_mongo_handler and _mongo_logging:
-                logger.addHandler(self._get_mongo_handler())
-            if add_stream_handler:
-                logger.addHandler(self._get_console_handler())
+                if (not isinstance(handler, MongoHandler)
+                   and not isinstance(handler, PypeStreamHandler)):
+                    if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:  # noqa
+                        logger.addHandler(self._get_mongo_handler())
+                        pass
+                    logger.addHandler(self._get_console_handler())
         else:
-            if _mongo_logging:
+            if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:
                 logger.addHandler(self._get_mongo_handler())
                 pass
             logger.addHandler(self._get_console_handler())

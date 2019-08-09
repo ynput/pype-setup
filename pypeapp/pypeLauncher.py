@@ -101,10 +101,16 @@ class PypeLauncher(object):
         import acre
         os.environ['PLATFORM'] = platform.system().lower()
         tools_env = acre.get_tools(tools)
-        env = acre.compute(dict(tools_env), cleanup=False)
-        env = acre.merge(env, dict(os.environ))
+        pype_paths_env = dict()
+        for key, value in dict(os.environ).items():
+            if key.startswith('PYPE_'):
+                pype_paths_env[key] = value
+
+        env = acre.append(tools_env, pype_paths_env)
+        env = acre.compute(env, cleanup=True)
         os.environ = acre.append(dict(os.environ), env)
         os.environ = acre.compute(os.environ, cleanup=False)
+
 
     def launch_tray(self, debug=False):
         """ Method will launch tray.py
@@ -315,8 +321,10 @@ class PypeLauncher(object):
         tools, config_path = d.get_environment_data()
 
         os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
+        os.environ['TOOL_ENV'] = os.path.normpath(
+            os.path.join(
+                config_path,
+                'environments'))
         self._add_modules()
         Storage().update_environment()
         self._load_default_environments(tools=tools)
@@ -360,33 +368,12 @@ class PypeLauncher(object):
         :param paths: paths to jsons
         :type paths: list
         """
-        # from pypeapp import execute
         from pypeapp import Logger
         from pypeapp.lib.Terminal import Terminal
-        from pypeapp.deployment import Deployment
-        import json
 
         t = Terminal()
 
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-
-        # uninstall static part of AVALON environment
-        # FIXME: this is probably very wrong way to do it. Can acre adjust
-        # replace parts of environment instead of merging it?
-
-        pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-        os.environ['PYPE_CONFIG'] = config_path
-        avalon_path = os.path.join(os.environ.get("PYPE_CONFIG"),
-                                   "environments", "avalon.json")
-        with open(avalon_path) as av_env:
-            avalon_data = json.load(av_env)
-
-        t.echo(">>> Unsetting static AVALON environment variables ...")
-        for k, v in avalon_data.items():
-            os.environ[k] = ""
 
         self._initialize()
         log = Logger().get_logger('publish')
@@ -415,20 +402,12 @@ class PypeLauncher(object):
             import pyblish.util
             t.echo(">>> Running publish ...")
 
-            context = pyblish.util.collect()
-
-            # Error exit if nothing was collected.
-            if not context:
-                log.warning("Nothing collected.")
-                uninstall()
-                sys.exit(1)
-
             # Error exit as soon as any error occurs.
-            for result in pyblish.util.publish_iter(context):
+            for result in pyblish.util.publish_iter():
                 if result["error"]:
                     log.error(error_format.format(**result))
                     uninstall()
-                    sys.exit(2)
+                    sys.exit(1)
 
         uninstall()
 
@@ -463,3 +442,54 @@ class PypeLauncher(object):
                      '-W', 'ignore::DeprecationWarning',
                      os.path.join(os.getenv('PYPE_ROOT'),
                                   'tests')])
+
+    def make_docs(self):
+        """
+        Generate documentation using Sphinx for both **pype-setup** and
+        **pype**.
+        """
+
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp import execute
+
+        self._initialize()
+        t = Terminal()
+
+        source_dir_setup = os.path.join(
+            os.environ.get("PYPE_ROOT"), "docs", "source")
+        build_dir_setup = os.path.join(
+            os.environ.get("PYPE_ROOT"), "docs", "build")
+
+        source_dir_pype = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "source")
+        build_dir_pype = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "build")
+
+        t.echo(">>> Generating documentation ...")
+        t.echo("  - Cleaning up ...")
+        execute(['sphinx-build', '-M', 'clean',
+                 source_dir_setup, build_dir_setup],
+                shell=True)
+        execute(['sphinx-build', '-M', 'clean',
+                 source_dir_pype, build_dir_pype],
+                shell=True)
+        t.echo("  - generating sources ...")
+        execute(['sphinx-apidoc', '-M', '-f', '-d', '4', '--ext-autodoc',
+                 '--ext-intersphinx', '--ext-viewcode', '-o',
+                 source_dir_setup, 'pypeapp'], shell=True)
+        vendor_ignore = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "pype", "vendor")
+        execute(['sphinx-apidoc', '-M', '-f', '-d', '6', '--ext-autodoc',
+                 '--ext-intersphinx', '--ext-viewcode', '-o',
+                 source_dir_pype, 'pype',
+                 '{}{}*'.format(vendor_ignore, os.path.sep)], shell=True)
+        t.echo("  - Building html ...")
+        execute(['sphinx-build', '-M', 'html',
+                 source_dir_setup, build_dir_setup],
+                shell=True)
+        execute(['sphinx-build', '-M', 'html',
+                 source_dir_pype, build_dir_pype],
+                shell=True)
+        t.echo(">>> Done. Documentation id generated:")
+        t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
+        t.echo("*** For pype: [ {} ]".format(build_dir_pype))

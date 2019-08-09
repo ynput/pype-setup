@@ -177,11 +177,11 @@ def eventserver(debug,
         args.append(ftrack_events_path)
 
     if no_stored_credentials:
-        args.append('-storecred')
+        args.append('-noloadcred')
         args.append(no_stored_credentials)
 
     if store_credentials:
-        args.append('-noloadcred')
+        args.append('-storecred')
         args.append(store_credentials)
 
     PypeLauncher().launch_eventservercli(args)
@@ -240,3 +240,11 @@ def test(pype):
         PypeLauncher().run_pype_tests()
     else:
         PypeLauncher().run_pype_setup_tests()
+
+
+@main.command()
+def make_docs():
+    """
+    This will generate documentation with Sphinx into `docs/build`
+    """
+    PypeLauncher().make_docs()

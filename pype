@@ -228,7 +228,11 @@ check_environment () {
     if [ "$f_offline" -ne 1 ]; then
       pip install -r "$PYPE_ROOT/pypeapp/requirements.txt"
     else
-      pip install -r "$PYPE_ROOT/pypeapp/requirements.txt" -f "$PYPE_ROOT/vendor/packages"
+      pip install -r "$PYPE_ROOT/pypeapp/requirements.txt" --no-index --find-links "$PYPE_ROOT/vendor/packages"
+    fi
+    if [ $? -ne 0 ] ; then
+      echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
+      return 1
     fi
   else
     echo -e "${BIGreen}OK${RST}"
@@ -509,6 +513,7 @@ main () {
   else
     echo -e "${BIGreen}FOUND${RST} - [${BIWhite} $PYPE_ENV ${RST}]"
     activate_venv $PYPE_ENV || return 1
+    check_environment || return 1
   fi
 
   if [ "$f_install" == 1 ] ; then
