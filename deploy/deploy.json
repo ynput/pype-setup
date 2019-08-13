@@ -1,6 +1,6 @@
 {
 	"PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
-  "init_env": ["global", "avalon", "ftrack", "deadline"],
+  "init_env": ["global", "avalon", "ftrack", "deadline", "clockify"],
   "repositories": [{
       "name": "avalon-core",
       "url": "git@github.com:pypeclub/avalon-core.git",
