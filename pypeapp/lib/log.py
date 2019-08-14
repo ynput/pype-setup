@@ -1,3 +1,17 @@
+"""
+Logging to console and to mongo. For mongo logging, you need to set either
+``PYPE_LOG_MONGO_URL`` to something like:
+
+.. example::
+   mongo://user:password@hostname:port/database/collection?authSource=avalon
+
+or set ``PYPE_LOG_MONGO_HOST`` and other variables.
+See :func:`_mongo_settings`
+
+Best place for it is in ``repos/pype-config/environments/global.json``
+"""
+
+
 import logging
 import os
 import datetime
@@ -5,6 +19,10 @@ import time
 import datetime as dt
 import platform
 import getpass
+try:
+    from urllib.parse import urlparse, parse_qs
+except ImportError:
+    from urlparse import urlparse, parse_qs
 
 try:
     from log4mongo.handlers import MongoHandler
@@ -16,7 +34,6 @@ else:
 from logging.handlers import TimedRotatingFileHandler
 from pypeapp.lib.Terminal import Terminal
 
-
 try:
     unicode
     _unicode = True
@@ -25,6 +42,48 @@ except NameError:
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
+
+
+def _mongo_settings():
+    host = None
+    port = None
+    username = None
+    password = None
+    collection = None
+    database = None
+    auth_db = ""
+
+    if os.environ.get('PYPE_LOG_MONGO_URL'):
+        result = urlparse(os.environ.get('PYPE_LOG_MONGO_URL'))
+
+        host = result.hostname
+        try:
+            port = result.port
+        except ValueError:
+            raise RuntimeError("invalid port specified")
+        username = result.username
+        password = result.password
+        try:
+            database = result.path.lstrip("/").split("/")[0]
+            collection = result.path.lstrip("/").split("/")[1]
+        except IndexError:
+            if not database:
+                raise RuntimeError("missing database name for logging")
+        try:
+            auth_db = parse_qs(result.query)['authSource'][0]
+        except KeyError:
+            # no auth db provided, mongo will use the one we are connecting to
+            pass
+    else:
+        host = os.environ.get('PYPE_LOG_MONGO_HOST')
+        port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
+        database = os.environ.get('PYPE_LOG_MONGO_DB')
+        username = os.environ.get('PYPE_LOG_MONGO_USER')
+        password = os.environ.get('PYPE_LOG_MONGO_PASSWORD')
+        collection = os.environ.get('PYPE_LOG_MONGO_COL')
+        auth_db = os.environ.get('PYPE_LOG_MONGO_AUTH_DB', 'avalon')
+
+    return host, port, database, username, password, collection, auth_db
 
 
 def _bootstrap_mongo_log():
@@ -41,6 +100,7 @@ def _bootstrap_mongo_log():
     if not host or not port or not database or not collection:
         # fail silently
         return
+
 
     print(">>> connecting to log [ {}:{} ]".format(host, port))
     client = pymongo.MongoClient(
