@@ -231,15 +231,17 @@ def texturecopy(debug, project, asset, path):
 
 @main.command()
 @click.option("--pype", is_flag=True, help="Run tests on pype")
-def test(pype):
+@click.option("-k", "--keyword", help="select tests by keyword to run",
+              type=click.STRING)
+def test(pype, keyword):
     """
     Run test suite. If --pype is not specified, tests are run against
     pype-setup.
     """
     if pype:
-        PypeLauncher().run_pype_tests()
+        PypeLauncher().run_pype_tests(keyword)
     else:
-        PypeLauncher().run_pype_setup_tests()
+        PypeLauncher().run_pype_setup_tests(keyword)
 
 
 @main.command()
@@ -248,3 +250,17 @@ def make_docs():
     This will generate documentation with Sphinx into `docs/build`
     """
     PypeLauncher().make_docs()
+
+
+@main.command()
+@click.option("--pype", is_flag=True, help="Run tests on pype")
+def coverage(pype):
+    """
+    Generate code coverage report. If --pype is not specified,
+    tests are run against pype-setup.
+    """
+
+    if pype:
+        PypeLauncher().pype_setup_coverage("pype")
+    else:
+        PypeLauncher().pype_setup_coverage("pypeapp")

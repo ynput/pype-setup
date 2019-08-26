@@ -610,7 +610,7 @@ class Deployment(object):
         # TODO(antirotor): This should be removed later as no changes
         # in requirements.txt should be made automatically. For that,
         # use `pype update-requirements` command
-        
+
         # term.echo(">>> Updating requirements ...")
         # try:
         #     out = subprocess.check_output(
@@ -682,4 +682,4 @@ class Deployment(object):
         config_path = deploy.get('PYPE_CONFIG').format(
             PYPE_ROOT=self._pype_root)
 
-        return files, config_path
+        return files, os.path.normpath(config_path)
