@@ -45,7 +45,7 @@ f_validate=0
 f_force=0
 f_mongodb=0
 f_update=0
-
+venv_activated=0
 # Process arguments
 # .
 
@@ -144,6 +144,7 @@ spinner () {
 # Activate virtual environment
 # Globals:
 #   colors
+#   venv_activated
 # Arguments:
 #   environment
 # Returns:
@@ -156,8 +157,24 @@ activate_venv () {
     echo -e "${BIRed}!!!${RST} Failed to activate."
     return 1
   fi
+  venv_activated=1
 }
 
+##############################################################################
+# Deactivate virtual environment
+# Globals:
+#   colors
+#   venv_activated
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+deactivate_venv () {
+  if [ $venv_activated -eq 1 ] ; then
+    echo -e "${BICyan}<--${RST} Deactivating environment [${BIWhite} $1 ${RST}]"
+    deactivate
+  fi
 ##############################################################################
 # Update requirements with stuff based on what is installed in current
 # active python (virtual) environment.
@@ -225,6 +242,7 @@ check_environment () {
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}FAILED${RST}"
     echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
+    test_offline
     if [ "$f_offline" -ne 1 ]; then
       pip install -r "$PYPE_ROOT/pypeapp/requirements.txt"
     else
@@ -239,7 +257,6 @@ upgrade_pip () {
   if [ "$f_offline" -ne 1 ] ; then
     echo -e "${BIGreen}>>>${RST} Updating pip ... \c"
     pip install --upgrade pip 2> /dev/null &
-    spinner
   fi
 }
 
@@ -415,7 +432,7 @@ detect_git () {
 ###############################################################################
 test_offline () {
   echo -e "${BIGreen}>>>${RST} Testing if we are online ... \c"
-  ping -q -w1 -c1 google.com &> /dev/null || { echo -e "${BIYellow}OFFLINE${RST}"; $f_offline=1; return 1; }
+  ping -q -w1 -c1 google.com &> /dev/null || { echo -e "${BIYellow}OFFLINE${RST}"; f_offline=1; return 1; }
   echo -e "${BIGreen}ONLINE${RST}"
 }
 
@@ -519,7 +536,6 @@ main () {
   # Update
   if [ "$f_update" == 1 ] ; then
     update_requirements || return 1
-    deactivate
     return 0
   fi
 
@@ -561,9 +577,8 @@ main () {
 
   echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
   python -m pypeapp $args
-  echo -e "${ICyan}<--${RST} Deactivating environment ..."
-  deactivate 2>&1 > /dev/null
   echo -e "${IPurple}xxx${RST} Finishing up. ${IWhite}Have a nice day!${RST}"
 }
 
 main "$args"
+deactivate_venv
