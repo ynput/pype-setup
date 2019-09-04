@@ -103,7 +103,7 @@ def get_presets(project=None):
 
     if not os.path.isdir(project_config_path):
         log.warning('Preset path for project {} not found: "{}"'.format(
-            project, config_path
+            project, project_config_path
         ))
         return default_data
     project_data = collect_json_from_path(project_config_path)
