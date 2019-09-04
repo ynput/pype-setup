@@ -124,6 +124,7 @@ if($env:PATH -NotLike "*$($env:PYPE_ROOT);*") {
   $env:PATH = "$($env:PYPE_ROOT);$($env:PATH)"
 }
 
+$env:PATH = "$($env:PYPE_ROOT)\vendor\bin\ffmpeg_exec\windows\bin;$($env:PATH)"
 
 function Start-Progress {
   param(
