@@ -112,6 +112,7 @@ export PATH=${PATH:="$PYPE_ROOT"}
 if [[ ":$PATH:" != *":$PYPE_ROOT:"* ]]; then
   export PATH="$PYPE_ROOT:$PATH"
 fi
+export PATH="$PYPE_ROOT/vendor/bin/ffmpeg_exec/linux/bin:$PATH"
 
 # Load colors definitions for easy output coloring
 source "$PYPE_ROOT/pypeapp/colors.sh"
