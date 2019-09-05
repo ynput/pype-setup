@@ -35,7 +35,7 @@ class PypeLauncher(object):
             t.echo("... Using Deadline webservice at\t[ {} ]".format(
                 os.environ.get("DEADLINE_REST_URL")))
         if os.environ.get('MUSTER_REST_URL'):
-            t.echo("... Using Muster at\t\t[ {} ]".format(
+            t.echo("... Using Muster at\t\t\t[ {} ]".format(
                 os.environ.get("DEADLINE_REST_URL")))
         if host:
             t.echo("... Logging to mongodb\t\t\t[ {}/{} ]".format(
@@ -144,7 +144,7 @@ class PypeLauncher(object):
         items = [pype_setup, "pypeapp", "tray.py"]
         fname = os.path.sep.join(items)
 
-        args = ["pythonw", "-d", fname]
+        args = ["python", "-d", fname]
         if sys.platform.startswith('linux'):
             subprocess.Popen(
                 args,
@@ -159,6 +159,7 @@ class PypeLauncher(object):
             )
 
         if sys.platform == 'win32':
+            args = ["pythonw", "-d", fname]
             subprocess.Popen(
                 args,
                 universal_newlines=True,
