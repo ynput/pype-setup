@@ -589,6 +589,8 @@ if ($deploy -eq $true) {
     exit 1
   } else {
     Write-Color -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
+    deactivate
+    exit
   }
 }
 
