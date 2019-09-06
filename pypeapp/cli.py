@@ -248,3 +248,11 @@ def make_docs():
     This will generate documentation with Sphinx into `docs/build`
     """
     PypeLauncher().make_docs()
+
+
+@main.command()
+def shell():
+    """
+    This will exit to shell but with all basic environment set
+    """
+    PypeLauncher().run_shell()

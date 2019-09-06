@@ -493,3 +493,15 @@ class PypeLauncher(object):
         t.echo(">>> Done. Documentation id generated:")
         t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
+
+    def run_shell(self):
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp import execute
+
+        self._initialize()
+        t = Terminal()
+        t.echo(">>> Running pype shell ...")
+        if sys.platform == 'win32':
+            execute(['powershell'], shell=True)
+        else:
+            execute(['bash'])
