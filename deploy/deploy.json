@@ -34,12 +34,12 @@
     {
       "name": "pype",
       "url": "git@bitbucket.org:pypeclub/pype.git",
-      "branch": "develop"
+      "tag": "2.2.0"
     },
     {
       "name": "pype-config",
       "url": "git@bitbucket.org:pypeclub/pype-config.git",
-      "branch": "develop"
+      "tag": "2.2.0"
     }
   ],
   "pip": [
