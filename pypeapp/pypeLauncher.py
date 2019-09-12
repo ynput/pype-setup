@@ -15,8 +15,10 @@ class PypeLauncher(object):
     def print_info(self):
         """ This will print additional information to console. """
         from pypeapp.lib.Terminal import Terminal
+        from pypeapp.lib.log import _mongo_settings
 
         t = Terminal()
+        host, port, database, username, password, collection, auth_db = _mongo_settings()
 
         t.echo("... Running pype from\t\t\t[ {} ]".format(
             os.environ.get('PYPE_ROOT')))
@@ -33,8 +35,20 @@ class PypeLauncher(object):
             t.echo("... Using Deadline webservice at\t[ {} ]".format(
                 os.environ.get("DEADLINE_REST_URL")))
         if os.environ.get('MUSTER_REST_URL'):
-            t.echo("... Using Muster at\t\t[ {} ]".format(
+            t.echo("... Using Muster at\t\t\t[ {} ]".format(
                 os.environ.get("DEADLINE_REST_URL")))
+        if host:
+            t.echo("... Logging to mongodb\t\t\t[ {}/{} ]".format(
+                host, database))
+            if port:
+                t.echo("  - port\t\t\t\t[ {} ]".format(port))
+            if username:
+                t.echo("  - user\t\t\t\t[ {} ]".format(username))
+            if collection:
+                t.echo("  - collection\t\t\t\t[ {} ]".format(collection))
+            if auth_db:
+                t.echo("  - auth source\t\t\t\t[ {} ]".format(auth_db))
+        print('\n')
 
     def _add_modules(self):
         """ Include in **PYTHONPATH** all necessary packages.
@@ -130,7 +144,7 @@ class PypeLauncher(object):
         items = [pype_setup, "pypeapp", "tray.py"]
         fname = os.path.sep.join(items)
 
-        args = ["pythonw", "-d", fname]
+        args = ["python", "-d", fname]
         if sys.platform.startswith('linux'):
             subprocess.Popen(
                 args,
@@ -145,6 +159,7 @@ class PypeLauncher(object):
             )
 
         if sys.platform == 'win32':
+            args = ["pythonw", "-d", fname]
             subprocess.Popen(
                 args,
                 universal_newlines=True,

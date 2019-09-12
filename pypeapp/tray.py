@@ -175,7 +175,8 @@ class TrayManager:
             action.setIcon(self.icon_failed)
             self.services_submenu.addAction(action)
             self.log.warning(
-                "{} - Module import Error: {}".format(title, str(ie))
+                "{} - Module import Error: {}".format(title, str(ie)),
+                exc_info=True
             )
             return False
         return True

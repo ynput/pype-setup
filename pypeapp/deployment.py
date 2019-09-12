@@ -24,6 +24,8 @@ import zipfile
 from pypeapp import Logger
 from pypeapp.lib.Terminal import Terminal
 import shutil
+import hashlib
+from six.moves.urllib.request import urlopen
 
 
 class DeployException(Exception):
@@ -558,16 +560,37 @@ class Deployment(object):
                 archive_file_path = tempfile.mkdtemp(basename + '_archive')
                 archive_file_path = os.path.join(archive_file_path, filename)
 
-                term.echo("  - downloading [ {} ]".format(item.get("url")))
-                success = self._download_file(
-                    item.get("url"), archive_file_path
-                )
+                if item.get("vendor"):
+                    source = os.path.join(
+                                os.environ.get("PYPE_ROOT"),
+                                'vendor', 'packages', item.get("vendor"))
+                    if not os.path.isfile(source):
+                        raise DeployException(
+                            "Local archive {} doesn't exist".format(source)
+                        )
+                    shutil.copyfile(source, archive_file_path)
 
-                if not success:
-                    raise DeployException(
-                        "Failed to download [ {} ]".format(item.get("url")), 130  # noqa: E501
+                if item.get("url"):
+                    term.echo("  - downloading [ {} ]".format(item.get("url")))
+                    success = self._download_file(
+                        item.get("url"), archive_file_path
                     )
 
+                    if not success:
+                        raise DeployException(
+                            "Failed to download [ {} ]".format(item.get("url")), 130  # noqa: E501
+                        )
+
+                # checksum
+                if item.get('md5_url'):
+                    response = urlopen(item.get('md5_url'))
+                    md5 = response.read().decode('ascii').split(" ")[0]
+                    calc = self.calculate_checksum(archive_file_path)
+                    if md5 != calc:
+                        raise DeployException(
+                            "Checksum failed {} != {} on {}".format(
+                                md5, calc, archive_file_path)
+                        )
                 # Extract files from archive
                 if archive_type in ['zip']:
                     zip_file = zipfile.ZipFile(archive_file_path)
@@ -586,8 +609,12 @@ class Deployment(object):
                         tar_type = 'r:bz2'
                     else:
                         tar_type = 'r:*'
-
-                    tar_file = tarfile.open(archive_file_path, tar_type)
+                    try:
+                        tar_file = tarfile.open(archive_file_path, tar_type)
+                    except tarfile.ReadError:
+                        raise DeployException(
+                            "corrupted archive"
+                        )
                     tar_file.extractall(path)
                     tar_file.close()
 
@@ -682,4 +709,23 @@ class Deployment(object):
         config_path = deploy.get('PYPE_CONFIG').format(
             PYPE_ROOT=self._pype_root)
 
-        return files, os.path.normpath(config_path)
+        return files, config_path
+
+    def calculate_checksum(self, fname):
+        """
+        Return md5 hex checksum of file
+
+        :param fname: file name
+        :type fname: str
+        :returns: md5 checkum hex encoded
+        :rtype: str
+        """
+        blocksize = 1 << 16  # 64kB
+        md5 = hashlib.md5()
+        with open(fname, 'rb') as f:
+            while True:
+                block = f.read(blocksize)
+                if not block:
+                    break
+                md5.update(block)
+        return md5.hexdigest()

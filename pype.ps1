@@ -66,6 +66,7 @@ $art = @'
 
 $arguments=$ARGS
 $traydebug=$false
+$venv_activated=$false
 # map double hyphens to single for powershell use
 if($arguments -eq "install") {
   $install=$true
@@ -124,6 +125,7 @@ if($env:PATH -NotLike "*$($env:PYPE_ROOT);*") {
   $env:PATH = "$($env:PYPE_ROOT);$($env:PATH)"
 }
 
+$env:PATH = "$($env:PYPE_ROOT)\vendor\bin\ffmpeg_exec\windows\bin;$($env:PATH)"
 
 function Start-Progress {
   param(
@@ -171,9 +173,26 @@ function Activate-Venv {
     Write-Host $_.Exception.Message
     exit 1
   }
+  $venv_activated=$true
   <#
   .SYNOPSIS
   Activate virtual environment
+
+  .PARAMETER Environment
+  Path to virtual environment.
+  #>
+}
+
+
+function Deactivate-Venv {
+  Write-Color -Text "<-- ", "Deactivating environment" -Color Cyan, Gray
+  if ($venv_activated -eq $true) {
+    deactivate
+  }
+
+  <#
+  .SYNOPSIS
+  Deactivate virtual environment
 
   .PARAMETER Environment
   Path to virtual environment.
@@ -437,7 +456,7 @@ function Download {
   Write-Color -Text "  - ", "For platform [ ", "win_amd64", " ]... " -Color Cyan, Gray, White, Gray
   & pip download -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" -d "$($env:PYPE_ROOT)\vendor\packages"
   Write-Color -Text "<-- ", "Deactivating environment ..." -Color Cyan, Gray
-  deactivate
+  Deactivate_venv
   Write-Color -Text "+++ ", "Terminating ..." -Color Magenta, Gray
   <#
   .SYNOPSIS
@@ -516,14 +535,14 @@ if ($needToInstall -eq $true) {
 
 if ($install -eq $true) {
   Write-Color -Text "*** ", "Installation complete. ", "Have a nice day!" -Color Green, White, Gray
-  deactivate
+  Deactivate_venv
   exit 0
 }
 
 # Update
 if ($update -eq $true) {
   Update-Requirements
-  deactivate
+  Deactivate_venv
   exit 0
 }
 
@@ -531,7 +550,7 @@ if ($update -eq $true) {
 # This will download pip packages to vendor/packages for later offline installation and exit
 if ($download -eq $true) {
   Download
-  deactivate
+  Deactivate_venv
   exit
 }
 
@@ -547,7 +566,7 @@ if ($validate -eq $true) {
     Write-Color -Text "!!! WARNING:", "Deployment is invalid." -Color Yellow, Gray
     Write-Color -Text "  * ", "Contact your system administrator to resolve this issue." -Color Yellow, Gray
     Write-Color -Text "  * ", "You can try to fix deployment with ", "pype deploy --force" -Color Green, Gray, White
-    deactivate
+    Deactivate_venv
     exit 0
   }
 }
@@ -558,7 +577,7 @@ if ($deploy -eq $true) {
   if ($offline -eq $true) {
     # If we are offline, we cannot deploy
     Write-Color -Text "!!! ", "Cannot deploy in offline mode." -Color Red, Gray
-    deactivate
+    Deactivate_venv
     exit 1
   }
   # if force set, then re-deploy
@@ -567,7 +586,7 @@ if ($deploy -eq $true) {
     Deploy-Pype -Force $force
     if ($LASTEXITCODE -ne 0) {
       Write-Color -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
-      deactivate
+      Deactivate_venv
       exit 1
     }
   } else {
@@ -575,7 +594,7 @@ if ($deploy -eq $true) {
     Deploy-Pype
     if ($LASTEXITCODE -ne 0) {
       Write-Color -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
-      deactivate
+      Deactivate_venv
       exit 1
     }
   }
@@ -584,10 +603,12 @@ if ($deploy -eq $true) {
   Validate-Pype
   if ($LASTEXITCODE -ne 0) {
     Write-Color -Text "!!! ", "Deployment is ", "INVALID" -Color Yellow, Gray, Red
-    deactivate
+    Deactivate_venv
     exit 1
   } else {
     Write-Color -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
+    deactivate
+    exit
   }
 }
 
@@ -595,4 +616,4 @@ Write-Color -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
 Write-Host ""
 & python -m "pypeapp" @arguments
 Write-Color -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
-deactivate
+Deactivate_venv
