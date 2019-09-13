@@ -231,15 +231,16 @@ def texturecopy(debug, project, asset, path):
 @click.option("--pype", is_flag=True, help="Run tests on pype")
 @click.option("-k", "--keyword", help="select tests by keyword to run",
               type=click.STRING)
-def test(pype, keyword):
+@click.argument("id", nargs=-1, type=click.STRING)
+def test(pype, keyword, id):
     """
     Run test suite. If --pype is not specified, tests are run against
     pype-setup.
     """
     if pype:
-        PypeLauncher().run_pype_tests(keyword)
+        PypeLauncher().run_pype_tests(keyword, id)
     else:
-        PypeLauncher().run_pype_setup_tests(keyword)
+        PypeLauncher().run_pype_setup_tests(keyword, id)
 
 
 @main.command()

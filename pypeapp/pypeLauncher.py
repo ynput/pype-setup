@@ -412,7 +412,7 @@ class PypeLauncher(object):
 
         uninstall()
 
-    def run_pype_tests(self, keyword=None):
+    def run_pype_tests(self, keyword=None, id=None):
         """ Run pytest on `pype/pype/tests` directory """
 
         from pypeapp.lib.Terminal import Terminal
@@ -422,13 +422,26 @@ class PypeLauncher(object):
         t = Terminal()
 
         t.echo(">>> Running test on pype ...")
+        args = ['-x', '--capture=sys', '--print',
+                '-W', 'ignore::DeprecationWarning']
 
-        pytest.main(['-x', '--capture=sys', '--print',
-                     '-W', 'ignore::DeprecationWarning',
-                     os.path.join(os.getenv('PYPE_ROOT'),
-                                  'repos', 'pype', 'pype', 'tests')])
+        if keyword:
+            t.echo("  - selecting [ {} ]".format(keyword))
+            args.append('-k')
+            args.append(keyword)
+            args.append(os.path.join(os.getenv('PYPE_ROOT'),
+                        'repos', 'pype', 'pype', 'tests'))
 
-    def run_pype_setup_tests(self, keyword=None):
+        elif id:
+            t.echo("  - selecting test ID [ {} ]".format(id))
+            args.append(id)
+        else:
+            args.append(os.path.join(os.getenv('PYPE_ROOT'),
+                        'repos', 'pype', 'pype', 'tests'))
+
+        pytest.main(args)
+
+    def run_pype_setup_tests(self, keyword=None, id=None):
         """ Run pytest on `tests` directory """
 
         from pypeapp.lib.Terminal import Terminal
@@ -445,8 +458,14 @@ class PypeLauncher(object):
             t.echo("  - selecting [ {} ]".format(keyword))
             args.append('-k')
             args.append(keyword)
+            args.append(os.path.join(os.getenv('PYPE_ROOT'), 'tests'))
 
-        args.append(os.path.join(os.getenv('PYPE_ROOT'), 'tests'))
+        elif id:
+            t.echo("  - selecting test ID [ {} ]".format(id))
+            args.append(id)
+        else:
+            args.append(os.path.join(os.getenv('PYPE_ROOT'), 'tests'))
+
         pytest.main(args)
 
     def pype_setup_coverage(self, pype):
