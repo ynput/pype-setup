@@ -176,6 +176,7 @@ deactivate_venv () {
     echo -e "${BICyan}<--${RST} Deactivating environment [${BIWhite} $1 ${RST}]"
     deactivate
   fi
+}
 ##############################################################################
 # Update requirements with stuff based on what is installed in current
 # active python (virtual) environment.
