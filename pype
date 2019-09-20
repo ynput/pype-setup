@@ -261,8 +261,8 @@ check_environment () {
 
 upgrade_pip () {
   if [ "$f_offline" -ne 1 ] ; then
-    echo -e "${BIGreen}>>>${RST} Updating pip ... \c"
-    pip install --upgrade pip 2> /dev/null &
+    echo -e "${BIGreen}>>>${RST} Updating pip ..."
+    pip install --upgrade pip 2> /dev/null
   fi
 }
 
