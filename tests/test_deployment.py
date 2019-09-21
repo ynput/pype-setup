@@ -229,11 +229,13 @@ class TestDeployment(object):
         data = self._valid_deploy_data
         monkeypatch.setitem(os.environ, 'PYPE_ROOT', d._pype_root)
         pype_config = data.get('PYPE_CONFIG').format(PYPE_ROOT=d._pype_root)
+        pprint(paths)
         for item in data.get('init_env'):
             path = os.path.join(
                 pype_config, "environments", item + '.json')
             path = os.path.normpath(path)
-            assert any(path in p for p in paths)
+            pprint(path)
+            assert paths[1] in path
 
     def test_deployment_clean(self, tmp_path):
         d = self.setup_deployment(tmp_path)
