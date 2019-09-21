@@ -69,3 +69,67 @@ class TestLogger():
 
         cap = capsys.readouterr()
         assert cap[1] == 1
+
+    def test_mongo_settings(self, monkeypatch, printer):
+        from pypeapp.lib.log import _mongo_settings
+        test_url_1 = 'mongodb://host:1111'
+        printer("testing {}".format(test_url_1))
+        monkeypatch.setitem(os.environ, 'PYPE_LOG_MONGO_URL', test_url_1)
+        with pytest.raises(RuntimeError) as excinfo:
+            host, port, database, username, password, collection, auth_db = _mongo_settings()
+        assert "missing database" in str(excinfo.value)
+
+        test_url_2 = 'mongodb://host:1111/database'
+        printer("testing {}".format(test_url_2))
+        monkeypatch.setitem(os.environ, 'PYPE_LOG_MONGO_URL', test_url_2)
+        host, port, database, username, password, collection, auth_db = _mongo_settings()
+        assert host == 'host'
+        assert port == 1111
+        assert database == 'database'
+        assert collection is None
+        assert username is None
+        assert password is None
+        assert auth_db == ''
+
+        test_url_3 = 'mongodb://host:1111/database/collection'
+        printer("testing {}".format(test_url_3))
+        monkeypatch.setitem(os.environ, 'PYPE_LOG_MONGO_URL', test_url_3)
+        host, port, database, username, password, collection, auth_db = _mongo_settings()
+        assert host == 'host'
+        assert port == 1111
+        assert database == 'database'
+        assert collection == 'collection'
+        assert username is None
+        assert password is None
+        assert auth_db == ''
+
+        test_url_4 = 'mongodb://user@host:1111/database/collection'
+        printer("testing {}".format(test_url_4))
+        monkeypatch.setitem(os.environ, 'PYPE_LOG_MONGO_URL', test_url_4)
+        host, port, database, username, password, collection, auth_db = _mongo_settings()
+        assert host == 'host'
+        assert port == 1111
+        assert database == 'database'
+        assert collection == 'collection'
+        assert username == 'user'
+        assert password is None
+        assert auth_db == ''
+
+        test_url_5 = 'mongodb://user:password@host:1111/database/collection?authSource=auth'
+        printer("testing {}".format(test_url_5))
+        monkeypatch.setitem(os.environ, 'PYPE_LOG_MONGO_URL', test_url_5)
+        host, port, database, username, password, collection, auth_db = _mongo_settings()
+        assert host == 'host'
+        assert port == 1111
+        assert database == 'database'
+        assert collection == 'collection'
+        assert username == 'user'
+        assert password == 'password'
+        assert auth_db == 'auth'
+
+        test_url_6 = 'mongodb://host:1d'
+        printer("testing {}".format(test_url_6))
+        monkeypatch.setitem(os.environ, 'PYPE_LOG_MONGO_URL', test_url_6)
+        with pytest.raises(RuntimeError) as excinfo:
+            host, port, database, username, password, collection, auth_db = _mongo_settings()
+        assert "invalid port" in str(excinfo.value)

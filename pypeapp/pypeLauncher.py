@@ -1,4 +1,3 @@
-import argparse
 import os
 import sys
 import platform
@@ -16,8 +15,10 @@ class PypeLauncher(object):
     def print_info(self):
         """ This will print additional information to console. """
         from pypeapp.lib.Terminal import Terminal
+        from pypeapp.lib.log import _mongo_settings
 
         t = Terminal()
+        host, port, database, username, password, collection, auth_db = _mongo_settings()
 
         t.echo("... Running pype from\t\t\t[ {} ]".format(
             os.environ.get('PYPE_ROOT')))
@@ -34,8 +35,20 @@ class PypeLauncher(object):
             t.echo("... Using Deadline webservice at\t[ {} ]".format(
                 os.environ.get("DEADLINE_REST_URL")))
         if os.environ.get('MUSTER_REST_URL'):
-            t.echo("... Using Muster at\t\t[ {} ]".format(
+            t.echo("... Using Muster at\t\t\t[ {} ]".format(
                 os.environ.get("DEADLINE_REST_URL")))
+        if host:
+            t.echo("... Logging to mongodb\t\t\t[ {}/{} ]".format(
+                host, database))
+            if port:
+                t.echo("  - port\t\t\t\t[ {} ]".format(port))
+            if username:
+                t.echo("  - user\t\t\t\t[ {} ]".format(username))
+            if collection:
+                t.echo("  - collection\t\t\t\t[ {} ]".format(collection))
+            if auth_db:
+                t.echo("  - auth source\t\t\t\t[ {} ]".format(auth_db))
+        print('\n')
 
     def _add_modules(self):
         """ Include in **PYTHONPATH** all necessary packages.
@@ -47,11 +60,10 @@ class PypeLauncher(object):
             .. note:: This will append, not overwrite existing paths
         """
         from pypeapp.deployment import Deployment
-        # from pypeapp import Logger
 
-        # log = Logger().get_logger('launcher')
         d = Deployment(os.environ.get('PYPE_ROOT', None))
         paths = d.get_deployment_paths()
+
         # add self
         paths.append(os.environ.get('PYPE_ROOT'))
 
@@ -89,10 +101,16 @@ class PypeLauncher(object):
         import acre
         os.environ['PLATFORM'] = platform.system().lower()
         tools_env = acre.get_tools(tools)
-        env = acre.compute(dict(tools_env), cleanup=False)
-        env = acre.merge(env, dict(os.environ))
+        pype_paths_env = dict()
+        for key, value in dict(os.environ).items():
+            if key.startswith('PYPE_'):
+                pype_paths_env[key] = value
+
+        env = acre.append(tools_env, pype_paths_env)
+        env = acre.compute(env, cleanup=True)
         os.environ = acre.append(dict(os.environ), env)
         os.environ = acre.compute(os.environ, cleanup=False)
+
 
     def launch_tray(self, debug=False):
         """ Method will launch tray.py
@@ -126,7 +144,7 @@ class PypeLauncher(object):
         items = [pype_setup, "pypeapp", "tray.py"]
         fname = os.path.sep.join(items)
 
-        args = ["pythonw", "-d", fname]
+        args = ["python", "-d", fname]
         if sys.platform.startswith('linux'):
             subprocess.Popen(
                 args,
@@ -141,6 +159,7 @@ class PypeLauncher(object):
             )
 
         if sys.platform == 'win32':
+            args = ["pythonw", "-d", fname]
             subprocess.Popen(
                 args,
                 universal_newlines=True,
@@ -161,12 +180,12 @@ class PypeLauncher(object):
         :rtype: int
 
         """
-        from pypeapp import Logger
         import subprocess
+        from pypeapp.lib.Terminal import Terminal
 
         self._initialize()
+        t = Terminal()
 
-        log = Logger().get_logger('mongodb')
         # Get database location.
         try:
             location = os.environ["AVALON_DB_DATA"]
@@ -179,16 +198,16 @@ class PypeLauncher(object):
 
         # Start server.
         if platform.system().lower() == "linux":
-            log.info("Local mongodb is running...")
-            log.info("Using port {} and db at {}".format(
+            t.echo("Local mongodb is running...")
+            t.echo("Using port {} and db at {}".format(
                 os.environ["AVALON_MONGO_PORT"], location))
             p = subprocess.Popen(
                 ["mongod", "--dbpath", location, "--port",
                  os.environ["AVALON_MONGO_PORT"]], close_fds=True
             )
         elif platform.system().lower() == "windows":
-            log.info("Local mongodb is running...")
-            log.info("Using port {} and db at {}".format(
+            t.echo("Local mongodb is running...")
+            t.echo("Using port {} and db at {}".format(
                 os.environ["AVALON_MONGO_PORT"], location))
             p = subprocess.Popen(
                 ["start", "Avalon MongoDB", "call", "mongod", "--dbpath",
@@ -303,8 +322,10 @@ class PypeLauncher(object):
         tools, config_path = d.get_environment_data()
 
         os.environ['PYPE_CONFIG'] = config_path
-        os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                                  'environments'))
+        os.environ['TOOL_ENV'] = os.path.normpath(
+            os.path.join(
+                config_path,
+                'environments'))
         self._add_modules()
         Storage().update_environment()
         self._load_default_environments(tools=tools)
@@ -348,37 +369,15 @@ class PypeLauncher(object):
         :param paths: paths to jsons
         :type paths: list
         """
-        # from pypeapp import execute
         from pypeapp import Logger
         from pypeapp.lib.Terminal import Terminal
-        from pypeapp.deployment import Deployment
-        import json
 
         t = Terminal()
 
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-        log = Logger().get_logger('publish')
-
-        # uninstall static part of AVALON environment
-        # FIXME: this is probably very wrong way to do it. Can acre adjust
-        # replace parts of environment instead of merging it?
-
-        pype_setup = os.getenv('PYPE_ROOT')
-        d = Deployment(pype_setup)
-
-        tools, config_path = d.get_environment_data()
-        os.environ['PYPE_CONFIG'] = config_path
-        avalon_path = os.path.join(os.environ.get("PYPE_CONFIG"),
-                                   "environments", "avalon.json")
-        with open(avalon_path) as av_env:
-            avalon_data = json.load(av_env)
-
-        t.echo(">>> Unsetting static AVALON environment variables ...")
-        for k, v in avalon_data.items():
-            os.environ[k] = ""
 
         self._initialize()
-
+        log = Logger().get_logger('publish')
         from pype import install, uninstall
         # Register target and host
         import pyblish.api
@@ -403,22 +402,14 @@ class PypeLauncher(object):
 
             import pyblish.util
             t.echo(">>> Running publish ...")
-            context = pyblish.util.publish()
 
-            if not context:
-                log.warning("Nothing collected.")
-                uninstall()
-                sys.exit(1)
-
-            # Collect errors, {plugin name: error}
-            error_results = [r for r in context.data["results"] if r["error"]]
-
-            if error_results:
-                log.error("Errors occurred ...")
-                for result in error_results:
+            # Error exit as soon as any error occurs.
+            for result in pyblish.util.publish_iter():
+                if result["error"]:
                     log.error(error_format.format(**result))
-                uninstall()
-                sys.exit(2)
+                    uninstall()
+                    sys.exit(1)
+
         uninstall()
 
     def run_pype_tests(self):
@@ -452,3 +443,54 @@ class PypeLauncher(object):
                      '-W', 'ignore::DeprecationWarning',
                      os.path.join(os.getenv('PYPE_ROOT'),
                                   'tests')])
+
+    def make_docs(self):
+        """
+        Generate documentation using Sphinx for both **pype-setup** and
+        **pype**.
+        """
+
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp import execute
+
+        self._initialize()
+        t = Terminal()
+
+        source_dir_setup = os.path.join(
+            os.environ.get("PYPE_ROOT"), "docs", "source")
+        build_dir_setup = os.path.join(
+            os.environ.get("PYPE_ROOT"), "docs", "build")
+
+        source_dir_pype = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "source")
+        build_dir_pype = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "build")
+
+        t.echo(">>> Generating documentation ...")
+        t.echo("  - Cleaning up ...")
+        execute(['sphinx-build', '-M', 'clean',
+                 source_dir_setup, build_dir_setup],
+                shell=True)
+        execute(['sphinx-build', '-M', 'clean',
+                 source_dir_pype, build_dir_pype],
+                shell=True)
+        t.echo("  - generating sources ...")
+        execute(['sphinx-apidoc', '-M', '-f', '-d', '4', '--ext-autodoc',
+                 '--ext-intersphinx', '--ext-viewcode', '-o',
+                 source_dir_setup, 'pypeapp'], shell=True)
+        vendor_ignore = os.path.join(
+            os.environ.get("PYPE_ROOT"), "repos", "pype", "pype", "vendor")
+        execute(['sphinx-apidoc', '-M', '-f', '-d', '6', '--ext-autodoc',
+                 '--ext-intersphinx', '--ext-viewcode', '-o',
+                 source_dir_pype, 'pype',
+                 '{}{}*'.format(vendor_ignore, os.path.sep)], shell=True)
+        t.echo("  - Building html ...")
+        execute(['sphinx-build', '-M', 'html',
+                 source_dir_setup, build_dir_setup],
+                shell=True)
+        execute(['sphinx-build', '-M', 'html',
+                 source_dir_pype, build_dir_pype],
+                shell=True)
+        t.echo(">>> Done. Documentation id generated:")
+        t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
+        t.echo("*** For pype: [ {} ]".format(build_dir_pype))

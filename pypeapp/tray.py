@@ -59,7 +59,7 @@ class TrayManager:
     services_submenu = None
 
     errors = []
-    items = get_presets().get('tray', {}).get('menu_items', [])
+    items = get_presets(first_run=True).get('tray', {}).get('menu_items', [])
     available_sourcetypes = ['python', 'file']
 
     def __init__(self, tray_widget, main_window):
@@ -175,7 +175,8 @@ class TrayManager:
             action.setIcon(self.icon_failed)
             self.services_submenu.addAction(action)
             self.log.warning(
-                "{} - Module import Error: {}".format(title, str(ie))
+                "{} - Module import Error: {}".format(title, str(ie)),
+                exc_info=True
             )
             return False
         return True
