@@ -507,21 +507,38 @@ class Deployment(object):
                              " worktree").format(path), 300)
 
                     # are we on correct branch?
-                    if not self._validate_is_branch(path,
-                        ritem.get('branch') or ritem.get('tag')):  # noqa: E128
+                    if not ritem.get('tag'):
+                        if not self._validate_is_branch(path,
+                                                        ritem.get('branch')):
 
-                        term.echo("  . switching to [ {} ] ...".format(
-                            ritem.get('branch') or ritem.get('tag')
-                        ))
-                        branch = repo.create_head(
-                                    ritem.get('branch') or ritem('tag'),
-                                    'HEAD')
+                            term.echo("  . switching to [ {} ] ...".format(
+                                ritem.get('branch')
+                            ))
+                            branch = repo.create_head(
+                                        ritem.get('branch'),
+                                        'HEAD')
 
-                        branch.checkout(force=force)
+                            branch.checkout(force=force)
 
                     # update repo
                     term.echo("  . updating ...")
-                    repo.remotes.origin.pull()
+                    repo.remotes.origin.fetch(tags=True, force=True)
+                    # build refspec
+                    if ritem.get('branch'):
+                        refspec = "refs/heads/{}".format(ritem.get('branch'))
+                        repo.remotes.origin.pull(refspec)
+                    elif ritem.get('tag'):
+                        tags = repo.tags
+                        if ritem.get('tag') not in tags:
+                            raise DeployException(
+                                ("Tag {} is missing on remote "
+                                 "origin").format(ritem.get('tag')))
+                        t = tags[ritem.get('tag')]
+                        term.echo(
+                            "  . tag: [{}, {} / {}]".format(
+                                t.name, t.commit, t.commit.committed_date))
+                        repo.remotes.origin.pull(ritem.get('tag'))
+
             else:
                 # path doesn't exist, clone
                 try:
