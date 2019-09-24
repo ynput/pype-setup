@@ -197,7 +197,7 @@ def publish(gui, debug, paths):
     More than one path is allowed.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = 3
+        os.environ['PYPE_DEBUG'] = '3'
     PypeLauncher().publish(gui, list(paths))
 
 
@@ -223,7 +223,7 @@ def texturecopy(debug, project, asset, path):
     Nothing is written to database.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = 3
+        os.environ['PYPE_DEBUG'] = '3'
     PypeLauncher().texture_copy(project, asset, path)
 
 
