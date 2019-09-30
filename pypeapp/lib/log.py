@@ -114,6 +114,7 @@ def _bootstrap_mongo_log():
     if collection not in collist:
         logdb.create_collection(collection, capped=True,
                                 max=5000, size=1073741824)
+    return logdb
 
 
 if _mongo_logging:
