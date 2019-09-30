@@ -36,7 +36,7 @@ class PypeLauncher(object):
                 os.environ.get("DEADLINE_REST_URL")))
         if os.environ.get('MUSTER_REST_URL'):
             t.echo("... Using Muster at\t\t\t[ {} ]".format(
-                os.environ.get("DEADLINE_REST_URL")))
+                os.environ.get("MUSTER_REST_URL")))
         if host:
             t.echo("... Logging to mongodb\t\t\t[ {}/{} ]".format(
                 host, database))
