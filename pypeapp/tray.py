@@ -74,18 +74,69 @@ class TrayManager:
         self.services_thread = None
 
     def process_presets(self):
-        """Start up method for TrayManager
+        """Add modules to tray by presets.
+
+        This is start up method for TrayManager. Loads presets and import
+        modules described in "menu_items.json". In `item_usage` key you can
+        specify by item's title or import path if you want to import it.
+        Example of "menu_items.json" file:
+            {
+                "item_usage": {
+                    "Statics Server": false
+                }
+            }, {
+                "item_import": [{
+                    "title": "Ftrack",
+                    "type": "module",
+                    "import_path": "pype.ftrack.tray",
+                    "fromlist": ["pype", "ftrack"]
+                }, {
+                    "title": "Statics Server",
+                    "type": "module",
+                    "import_path": "pype.services.statics_server",
+                    "fromlist": ["pype","services"]
+                }]
+            }
+        In this case `Statics Server` won't be used.
         """
-        self.process_items(self.items, self.tray_widget.menu)
+        # Backwards compatible presets loading
+        if isinstance(self.items, list):
+            items = self.items
+        else:
+            items = []
+            # Get booleans is module should be used
+            usages = self.items.get("item_usage") or {}
+            for item in self.items.get("item_import", []):
+                import_path = item.get("import_path")
+                title = item.get("title")
+
+                item_usage = usages.get(title)
+                if item_usage is None:
+                    item_usage = usages.get(import_path, True)
+
+                if item_usage:
+                    items.append(item)
+                else:
+                    if not title:
+                        title = import_path
+                    self.log.debug("{} - Module ignored".format(title))
+
+        if items:
+            self.process_items(items, self.tray_widget.menu)
+
         # Add services if they are
         if self.services_submenu is not None:
             self.tray_widget.menu.addMenu(self.services_submenu)
+
         # Add separator
-        self.add_separator(self.tray_widget.menu)
+        if items and self.services_submenu is not None:
+            self.add_separator(self.tray_widget.menu)
+
         # Add Exit action to menu
         aExit = QtWidgets.QAction("&Exit", self.tray_widget)
         aExit.triggered.connect(self.tray_widget.exit)
         self.tray_widget.menu.addAction(aExit)
+
         # Tell each module which modules were imported
         self.connect_modules()
         self.start_modules()
