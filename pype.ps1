@@ -281,7 +281,7 @@ function Bootstrap-Pype {
   {
     # ensure latest pip version
     Upgrade-Pip
-    Write-Color -Text ">>> ", "Bootstrapping Pype ... " -Color Green, Gray -NoNewLine
+    Write-Color -Text ">>> ", "Bootstrapping Pype ... " -Color Green, Gray
 
     # install essential dependecies
     Write-Color -Text "  - ", "Installing dependencies ... " -Color Cyan, Gray
@@ -313,7 +313,7 @@ function Deploy-Pype {
   # process pype deployment
   if ($help -eq $true) {
     & python -m "pypeapp" deploy --help
-    deactivate
+    Deactivate-Venv
     exit 0
   }
   if ($Force -eq $true) {
@@ -334,7 +334,7 @@ function Deploy-Pype {
 function Validate-Pype {
   if ($help -eq $true) {
       & python -m "pypeapp" validate --help
-      deactivate
+      Deactivate-Venv
       exit 0
   }
   & python -m "pypeapp" validate
@@ -606,7 +606,7 @@ if ($deploy -eq $true) {
     exit 1
   } else {
     Write-Color -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
-    deactivate
+    Deactivate-Venv
     exit
   }
 }
