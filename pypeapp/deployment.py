@@ -21,11 +21,12 @@ import requests
 import tempfile
 import tarfile
 import zipfile
-from pypeapp import Logger
-from pypeapp.lib.Terminal import Terminal
 import shutil
 import hashlib
 from six.moves.urllib.request import urlopen
+
+from pypeapp import Logger
+from pypeapp.lib.Terminal import Terminal
 
 
 class DeployException(Exception):
@@ -191,6 +192,7 @@ class Deployment(object):
         import git
         settings = self._determine_deployment_file()
         deploy = self._read_deployment_file(settings)
+        term = Terminal()
         if (not self._validate_schema(deploy)):
             raise DeployException(
                 "Invalid deployment file [ {} ]".format(settings), 200)
@@ -199,6 +201,8 @@ class Deployment(object):
         for ritem in deploy.get('repositories'):
             test_path = os.path.join(
                 self._pype_root, "repos", ritem.get('name'))
+
+            term.echo("  - validating [ {} ]".format(ritem.get('name')))
             # does repo directory exist?
             if not self._validate_is_directory(test_path):
                 if skip:
@@ -247,7 +251,7 @@ class Deployment(object):
                         ), 220)
             # check tag
             if ritem.get('tag'):
-                if self._validate_is_tag(test_path, ritem.get('tag')):
+                if not self._validate_is_tag(test_path, ritem.get('tag')):
                     raise DeployException(
                         'repo {0} head is not on tag {1}'.format(
                             ritem.get('name'),
@@ -344,7 +348,6 @@ class Deployment(object):
         import git
         repo = git.Repo(path)
         if str(repo.active_branch) != str(branch):
-            print("{} != {}".format(repo.active_branch, branch))
             return False
         return True
 
@@ -376,14 +379,10 @@ class Deployment(object):
         """
         import git
         # get tag
-        head = git.Repo(path).heads[0]
-        tags = head.tags
-        tag = next(
-            rtag for rtag in tags
-            if rtag["tag"] == tag)
-        if tag.commit.hexsha != head.commit.hexsha:
+        repo = git.Git(path)
+        rtag = repo.describe()
+        if rtag != tag:
             return False
-
         return True
 
     def _validate_origin(self, path: str, origin: str) -> bool:
@@ -644,7 +643,7 @@ class Deployment(object):
         for pitem in deploy.get('pip'):
             term.echo(" -- processing [ {} ]".format(pitem))
             try:
-                out = subprocess.check_output(
+                subprocess.check_output(
                     [sys.executable, '-m', 'pip', 'install', pitem])
             except subprocess.CalledProcessError as e:
                 raise DeployException(
