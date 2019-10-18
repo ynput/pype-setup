@@ -156,7 +156,7 @@ def eventserver(debug,
     provided credentials will be stored for later use.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = 3
+        os.environ['PYPE_DEBUG'] = "3"
     # map eventserver options
     # TODO: switch eventserver to click, normalize option names
     args = []
