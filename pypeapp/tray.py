@@ -46,6 +46,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         - Icon won't stay in tray after exit.
         """
         self.hide()
+        self.tray_man.on_exit()
         QtCore.QCoreApplication.exit()
 
 
@@ -352,6 +353,16 @@ class TrayManager:
         for obj in self.modules.values():
             if hasattr(obj, 'tray_start'):
                 obj.tray_start()
+
+    def on_exit(self):
+        for obj in self.modules.values():
+            if hasattr(obj, 'tray_exit'):
+                try:
+                    obj.tray_exit()
+                except Exception:
+                    self.log.error("Failed to exit module {}".format(
+                        obj.__class__.__name__
+                    ))
 
 
 class TrayMainWindow(QtWidgets.QMainWindow):
