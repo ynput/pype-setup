@@ -369,7 +369,6 @@ class PypeLauncher(object):
         :param paths: paths to jsons
         :type paths: list
         """
-        from pypeapp import Logger
         from pypeapp.lib.Terminal import Terminal
 
         t = Terminal()
@@ -377,7 +376,6 @@ class PypeLauncher(object):
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
         self._initialize()
-        log = Logger().get_logger('publish')
         from pype import install, uninstall
         # Register target and host
         import pyblish.api
@@ -389,7 +387,7 @@ class PypeLauncher(object):
         self._update_python_path()
 
         if not any(paths):
-            log.error("No publish paths specified")
+            t.echo("No publish paths specified")
             return False
 
         if paths:
@@ -406,7 +404,7 @@ class PypeLauncher(object):
             # Error exit as soon as any error occurs.
             for result in pyblish.util.publish_iter():
                 if result["error"]:
-                    log.error(error_format.format(**result))
+                    t.echo(error_format.format(**result))
                     uninstall()
                     sys.exit(1)
 
