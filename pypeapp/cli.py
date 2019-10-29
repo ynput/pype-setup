@@ -138,13 +138,16 @@ def mongodb():
               help="dont use stored credentials")
 @click.option("--store-credentials", is_flag=True,
               help="store provided credentials")
+@click.option("--oldway", is_flag=True,
+              help="run event server without mongo storing")
 def eventserver(debug,
                 ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
                 ftrack_events_path,
                 no_stored_credentials,
-                store_credentials):
+                store_credentials,
+                oldway):
     """
     This command launches ftrack event server.
 
@@ -181,6 +184,9 @@ def eventserver(debug,
 
     if store_credentials:
         args.append('-storecred')
+
+    if oldway:
+        args.append('-oldway')
 
     PypeLauncher().launch_eventservercli(args)
 
