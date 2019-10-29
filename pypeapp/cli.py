@@ -263,3 +263,17 @@ def coverage(pype):
         PypeLauncher().pype_setup_coverage("pype")
     else:
         PypeLauncher().pype_setup_coverage("pypeapp")
+
+
+@main.command()
+def clean():
+    """
+    This command deletes pyc python bytecode files.
+
+    Working throughout Pype directory, it will remove all pyc bytecode files.
+    This is normally not needed but there are cases when update of repostories
+    caused errors thanks to these files. If you encounter errors complaining
+    about `magic number`, run this command.
+    """
+    # This is implemented purely in shell script
+    pass
