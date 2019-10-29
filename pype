@@ -45,6 +45,7 @@ f_validate=0
 f_force=0
 f_mongodb=0
 f_update=0
+f_clean=0
 venv_activated=0
 # Process arguments
 # .
@@ -82,6 +83,9 @@ while :; do
       ;;
     update-requirements)
       f_update=1
+      ;;
+    clean)
+      f_clean=1
       ;;
     --)
       shift
@@ -472,6 +476,17 @@ download () {
 main () {
   art
   echo -e "${IGreen}***${RST} Welcome to ${BIWhite}Pype${RST}!"
+
+  # Clean pyc
+  if [ "$f_clean" == 1 ] ; then
+    echo -e "${IGreen}>>>${RST} Cleaning pyc ... \c"
+    find . -name '*.py?' -delete &
+    spinner
+    echo -e "${BIGreen}DONE{$RST}"
+    echo -e "${ICyan}<<<${RST} Terminating ${IWhite}Pype${RST} ..."
+    return 0
+  fi
+
   # Check invalid argument combination
   if [ "$f_deploy" == 1 ] ; then
     if [ "$f_offline" == 1 ] ; then
