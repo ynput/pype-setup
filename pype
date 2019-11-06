@@ -45,6 +45,7 @@ f_validate=0
 f_force=0
 f_mongodb=0
 f_update=0
+f_clean=0
 venv_activated=0
 # Process arguments
 # .
@@ -82,6 +83,9 @@ while :; do
       ;;
     update-requirements)
       f_update=1
+      ;;
+    clean)
+      f_clean=1
       ;;
     --)
       shift
@@ -130,15 +134,17 @@ source "$PYPE_ROOT/pypeapp/colors.sh"
 #   None
 ###############################################################################
 spinner () {
-  local pid=$! # Process Id of the previous running command
-  local spin='-\|/'
-  local i=0
-  while kill -0 $pid 2>/dev/null
-  do
-    i=$(( (i+1) %4 ))
-    printf "\r${spin:$i:1}"
-    sleep .1
-  done
+  local pid=$!
+   local delay=0.75
+   local spinstr='|/-\'
+   while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+       local temp=${spinstr#?}
+       printf " [%c]  " "$spinstr"
+       local spinstr=$temp${spinstr%"$temp"}
+       sleep $delay
+       printf "\b\b\b\b\b\b"
+   done
+   printf "    \b\b\b\b"
 }
 
 ###############################################################################
@@ -472,6 +478,17 @@ download () {
 main () {
   art
   echo -e "${IGreen}***${RST} Welcome to ${BIWhite}Pype${RST}!"
+
+  # Clean pyc
+  if [ "$f_clean" == 1 ] ; then
+    echo -e "${IGreen}>>>${RST} Cleaning pyc ... \c"
+    (find . -name '*.py?' -delete &)
+    spinner
+    echo -e "${BIGreen}DONE${RST}"
+    echo -e "${ICyan}<<<${RST} Terminating ${IWhite}Pype${RST} ..."
+    return 0
+  fi
+
   # Check invalid argument combination
   if [ "$f_deploy" == 1 ] ; then
     if [ "$f_offline" == 1 ] ; then
