@@ -92,21 +92,31 @@ def _bootstrap_mongo_log():
     """
     import pymongo
 
-    host = os.environ.get('PYPE_LOG_MONGO_HOST')
-    port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
-    database = os.environ.get('PYPE_LOG_MONGO_DB')
-    collection = os.environ.get('PYPE_LOG_MONGO_COL')
+    host, port, database, username, password, collection, auth_db = _mongo_settings()
 
     if not host or not port or not database or not collection:
         # fail silently
         return
 
+    user_pass = ""
+    if username and password:
+        user_pass = "{}:{}@".format(username, password)
 
-    print(">>> connecting to log [ {}:{} ]".format(host, port))
-    client = pymongo.MongoClient(
-        host=[host], port=port)
+    socket_path = "{}:{}".format(host, port)
 
-    # dblist = client.list_database_names()
+    dab = ""
+    if database:
+        dab = "/{}".format(database)
+
+    auth = ""
+    if auth_db:
+        auth = "?authSource={}".format(auth_db)
+
+    uri = "mongodb://{}{}{}{}".format(user_pass, socket_path, dab, auth)
+
+    print(">>> connecting to log [ {} ]".format(uri))
+
+    client = pymongo.MongoClient(uri)
 
     logdb = client[database]
 
@@ -114,6 +124,7 @@ def _bootstrap_mongo_log():
     if collection not in collist:
         logdb.create_collection(collection, capped=True,
                                 max=5000, size=1073741824)
+    return logdb
 
 
 if _mongo_logging:

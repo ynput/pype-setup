@@ -138,13 +138,16 @@ def mongodb():
               help="dont use stored credentials")
 @click.option("--store-credentials", is_flag=True,
               help="store provided credentials")
+@click.option("--legacy", is_flag=True,
+              help="run event server without mongo storing")
 def eventserver(debug,
                 ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
                 ftrack_events_path,
                 no_stored_credentials,
-                store_credentials):
+                store_credentials,
+                legacy):
     """
     This command launches ftrack event server.
 
@@ -156,7 +159,7 @@ def eventserver(debug,
     provided credentials will be stored for later use.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = 3
+        os.environ['PYPE_DEBUG'] = "3"
     # map eventserver options
     # TODO: switch eventserver to click, normalize option names
     args = []
@@ -182,6 +185,9 @@ def eventserver(debug,
     if store_credentials:
         args.append('-storecred')
 
+    if legacy:
+        args.append('-legacy')
+
     PypeLauncher().launch_eventservercli(args)
 
 
@@ -197,7 +203,7 @@ def publish(gui, debug, paths):
     More than one path is allowed.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = 3
+        os.environ['PYPE_DEBUG'] = '3'
     PypeLauncher().publish(gui, list(paths))
 
 
@@ -223,21 +229,24 @@ def texturecopy(debug, project, asset, path):
     Nothing is written to database.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = 3
+        os.environ['PYPE_DEBUG'] = '3'
     PypeLauncher().texture_copy(project, asset, path)
 
 
 @main.command()
 @click.option("--pype", is_flag=True, help="Run tests on pype")
-def test(pype):
+@click.option("-k", "--keyword", help="select tests by keyword to run",
+              type=click.STRING)
+@click.argument("id", nargs=-1, type=click.STRING)
+def test(pype, keyword, id):
     """
     Run test suite. If --pype is not specified, tests are run against
     pype-setup.
     """
     if pype:
-        PypeLauncher().run_pype_tests()
+        PypeLauncher().run_pype_tests(keyword, id)
     else:
-        PypeLauncher().run_pype_setup_tests()
+        PypeLauncher().run_pype_setup_tests(keyword, id)
 
 
 @main.command()
@@ -246,3 +255,31 @@ def make_docs():
     This will generate documentation with Sphinx into `docs/build`
     """
     PypeLauncher().make_docs()
+
+
+@main.command()
+@click.option("--pype", is_flag=True, help="Run tests on pype")
+def coverage(pype):
+    """
+    Generate code coverage report. If --pype is not specified,
+    tests are run against pype-setup.
+    """
+
+    if pype:
+        PypeLauncher().pype_setup_coverage("pype")
+    else:
+        PypeLauncher().pype_setup_coverage("pypeapp")
+
+
+@main.command()
+def clean():
+    """
+    This command deletes pyc python bytecode files.
+
+    Working throughout Pype directory, it will remove all pyc bytecode files.
+    This is normally not needed but there are cases when update of repostories
+    caused errors thanks to these files. If you encounter errors complaining
+    about `magic number`, run this command.
+    """
+    # This is implemented purely in shell script
+    pass

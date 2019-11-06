@@ -92,8 +92,11 @@ if($arguments -eq "validate") {
 if($arguments -eq "mongodb") {
   $mongodb=$true
 }
-if($argments -eq "update-requirements") {
+if($arguments -eq "update-requirements") {
   $update=$true
+}
+if($arguments -eq "clean") {
+  $clean=$true
 }
 
 
@@ -147,7 +150,7 @@ function Start-Progress {
     }
     Start-Sleep -Milliseconds 100
   }
-  Write-Host ''
+  $host.UI.RawUI.CursorPosition = $origpos
   $newPowerShell.EndInvoke($handle)
   $newPowerShell.Runspace.Close()
   $newPowerShell.Dispose()
@@ -281,7 +284,7 @@ function Bootstrap-Pype {
   {
     # ensure latest pip version
     Upgrade-Pip
-    Write-Color -Text ">>> ", "Bootstrapping Pype ... " -Color Green, Gray -NoNewLine
+    Write-Color -Text ">>> ", "Bootstrapping Pype ... " -Color Green, Gray
 
     # install essential dependecies
     Write-Color -Text "  - ", "Installing dependencies ... " -Color Cyan, Gray
@@ -313,7 +316,7 @@ function Deploy-Pype {
   # process pype deployment
   if ($help -eq $true) {
     & python -m "pypeapp" deploy --help
-    deactivate
+    Deactivate-Venv
     exit 0
   }
   if ($Force -eq $true) {
@@ -334,7 +337,7 @@ function Deploy-Pype {
 function Validate-Pype {
   if ($help -eq $true) {
       & python -m "pypeapp" validate --help
-      deactivate
+      Deactivate-Venv
       exit 0
   }
   & python -m "pypeapp" validate
@@ -470,6 +473,16 @@ function Download {
 
 Write-Color -Text $art -Color Cyan
 Write-Color -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White, Gray
+
+# Clean pyc
+if ($clean -eq $true) {
+  Write-Color -Text ">>> ", "Cleaning pyc ... " -Color Green, White, Gray -NoNewLine
+  Start-Progress ( Get-ChildItem -Filter '*.pyc' -Force -Recurse | Remove-Item -Force )
+  Write-Color -Text "DONE" -Color Green
+  Write-Color -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
+  exit 0
+}
+
 # Check invalid argument combination
 if ($offline -eq $true -and $deploy -eq $true) {
   Write-Color -Text "!!! ", "Invalid invocation. Cannot deploy in offline mode." -Color Red, Gray
@@ -606,7 +619,7 @@ if ($deploy -eq $true) {
     exit 1
   } else {
     Write-Color -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
-    deactivate
+    Deactivate-Venv
     exit
   }
 }
