@@ -191,6 +191,7 @@ function Deactivate-Venv {
   if ($venv_activated -eq $true) {
     Write-Color -Text "<-- ", "Deactivating environment" -Color Cyan, Gray
     deactivate
+    $venv_activated=$false
   }
 
   <#
@@ -271,6 +272,7 @@ function Upgrade-pip {
     Start-Progress {
       & python -m pip install --upgrade pip | out-null
     }
+    Write-Host ""
   }
   <#
   .SYNOPSIS
