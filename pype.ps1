@@ -479,7 +479,7 @@ Write-Color -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White,
 # Clean pyc
 if ($clean -eq $true) {
   Write-Color -Text ">>> ", "Cleaning pyc ... " -Color Green, White, Gray -NoNewLine
-  Start-Progress ( Get-ChildItem -Filter '*.pyc' -Force -Recurse | Remove-Item -Force )
+  Get-ChildItem -Filter '*.pyc' -Force -Recurse | Remove-Item -Force
   Write-Color -Text "DONE" -Color Green
   Write-Color -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
   exit 0
