@@ -60,5 +60,3 @@ websocket-client==0.55.0
 Werkzeug==0.16.0
 xlib==0.21
 git+https://bitbucket.org/ftrack/ftrack-python-api.git@8a455ae
-git+https://github.com/Colorbleed/maya-capture-gui.git
-git+https://github.com/abstractfactory/maya-capture.git
