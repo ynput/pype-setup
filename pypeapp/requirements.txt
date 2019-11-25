@@ -11,6 +11,7 @@ colorama==0.4.1
 commonmark==0.8.1
 coverage==4.5.2
 docutils==0.14
+datetime
 ffmpeg-python==0.2.0
 gitdb2==2.0.5
 GitPython==2.1.11
