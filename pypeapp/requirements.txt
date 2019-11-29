@@ -2,6 +2,7 @@ alabaster==0.7.12
 appdirs==1.4.3
 atomicwrites==1.3.0
 attrs==18.2.0
+arrow
 Babel==2.6.0
 certifi==2018.11.29
 chardet==3.0.4
@@ -13,6 +14,7 @@ coverage==4.5.2
 docutils==0.14
 datetime
 ffmpeg-python==0.2.0
+future
 gitdb2==2.0.5
 GitPython==2.1.11
 idna==2.8
@@ -60,4 +62,6 @@ urllib3==1.24.1
 websocket-client==0.55.0
 Werkzeug==0.16.0
 xlib==0.21
-git+https://bitbucket.org/ftrack/ftrack-python-api.git@8a455ae
+zope.interface
+wrapt
+ftrack-python-api==2.0.0rc1
