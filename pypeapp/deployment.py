@@ -380,7 +380,7 @@ class Deployment(object):
         import git
         # get tag
         repo = git.Git(path)
-        rtag = repo.describe()
+        rtag = repo.describe('--tags')
         if rtag != tag:
             return False
         return True

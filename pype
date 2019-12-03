@@ -181,6 +181,7 @@ deactivate_venv () {
   if [ $venv_activated -eq 1 ] ; then
     echo -e "${BICyan}<--${RST} Deactivating environment [${BIWhite} $1 ${RST}]"
     deactivate
+    venv-activated=0
   fi
 }
 ##############################################################################
@@ -246,7 +247,7 @@ install_environment () {
 ###############################################################################
 check_environment () {
   echo -e "${IGreen}>>>${RST} Validating environment dependencies ... \c"
-  diff pypeapp/requirements.txt <(pip freeze) > /dev/null
+  diff <(sort pypeapp/requirements.txt) <(pip freeze | sort) > /dev/null
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}FAILED${RST}"
     echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
@@ -465,9 +466,6 @@ download () {
     echo -e "${BIYellow}!!!${RST} Download failed"
     return 1
   fi
-  echo -e "${ICyan}<--${RST} Deactivating environment ..."
-  deactivate 2>&1 > /dev/null
-  echo -e "${IPurple}xxx${RST} Terminating ..."
   return 0
 }
 
@@ -482,8 +480,7 @@ main () {
   # Clean pyc
   if [ "$f_clean" == 1 ] ; then
     echo -e "${IGreen}>>>${RST} Cleaning pyc ... \c"
-    (find . -name '*.py?' -delete &)
-    spinner
+    find . -name '*.py?' -delete
     echo -e "${BIGreen}DONE${RST}"
     echo -e "${ICyan}<<<${RST} Terminating ${IWhite}Pype${RST} ..."
     return 0
@@ -576,6 +573,7 @@ main () {
     echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
     validate_pype || return 1
     echo -e "${BIGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+    return
   fi
 
   # Deploy
@@ -605,4 +603,4 @@ main () {
 }
 
 main "$args"
-deactivate_venv
+deactivate_venv $PYPE_ENV
