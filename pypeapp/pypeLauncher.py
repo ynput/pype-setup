@@ -18,7 +18,7 @@ class PypeLauncher(object):
         from pypeapp.lib.log import _mongo_settings
 
         t = Terminal()
-        host, port, database, username, password, collection, auth_db = _mongo_settings()
+        host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa: E501
 
         t.echo("... Running pype from\t\t\t[ {} ]".format(
             os.environ.get('PYPE_ROOT')))
@@ -110,7 +110,6 @@ class PypeLauncher(object):
         env = acre.compute(env, cleanup=True)
         os.environ = acre.append(dict(os.environ), env)
         os.environ = acre.compute(os.environ, cleanup=False)
-
 
     def launch_tray(self, debug=False):
         """ Method will launch tray.py
@@ -376,6 +375,12 @@ class PypeLauncher(object):
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
         self._initialize()
+
+        # find path from different platforms in environment and remap it to
+        # current platform paths. Only those paths specified in Storage
+        # will be remapped.
+        os.environ.update(self.path_remapper())
+
         from pype import install, uninstall
         # Register target and host
         import pyblish.api
@@ -494,9 +499,6 @@ class PypeLauncher(object):
         from pypeapp import execute
 
         self._initialize()
-        # find path from different platforms in environment and remap it to
-        # current platform paths.
-        os.environ.update(self.path_remapper())
         t = Terminal()
 
         source_dir_setup = os.path.join(
@@ -565,12 +567,17 @@ class PypeLauncher(object):
         :rtype: dict
         """
         from pypeapp.storage import Storage
+        from pypeapp.lib.Terminal import Terminal
+
+        t = Terminal()
+
         _platform_name = [
             ("win32", "windows"),
             ("linux", "linux"),
             ("darwin", "darwin")
         ]
 
+        _current_platform = [p[1] for p in _platform_name if p[0] == sys.platform][0]  # noqa: E501
         if not data:
             data = os.environ
 
@@ -578,26 +585,33 @@ class PypeLauncher(object):
             from_paths_platform = [source]
         else:
             from_paths_platform = ['windows', 'linux', 'darwin']
+            from_paths_platform.remove(_current_platform)
 
         if to:
             to_paths_platform = to
         else:
-            to_paths_platform = [p[1] for p in _platform_name if p[0] == sys.platform]  # noqa: E501
+            to_paths_platform = _current_platform  # noqa: E501
 
         result_strings = Storage().get_storage_vars(platform=to_paths_platform)
         remapped = {}
+        done_keys = []
         for p in from_paths_platform:
             search_strings = Storage().get_storage_vars(platform=p)
             for key, var in data.items():
                 # TODO: handle all cases. Normalized path, backslashes, ...
                 for skey, string in search_strings.items():
-                    if string in var:
+                    # skip empty strings
+                    if not string:
+                        continue
+                    if string in var and key not in done_keys:
                         out = var.replace(string, result_strings[skey])
                         if to_paths_platform == "win32":
                             out = os.path.normpath(out)
                         else:
                             out = out.replace("\\", "/")
+                        t.echo("  - Remapping [{}] -> [{}]".format(var, out))
                         remapped[key] = out
+                        done_keys.append(key)
                     else:
                         remapped[key] = var
 
