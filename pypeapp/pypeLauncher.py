@@ -494,6 +494,9 @@ class PypeLauncher(object):
         from pypeapp import execute
 
         self._initialize()
+        # find path from different platforms in environment and remap it to
+        # current platform paths.
+        os.environ.update(self.path_remapper())
         t = Terminal()
 
         source_dir_setup = os.path.join(
@@ -534,3 +537,68 @@ class PypeLauncher(object):
         t.echo(">>> Done. Documentation id generated:")
         t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
+
+    def path_remapper(self, data=None, source=None, to=None):
+        """
+        This will search existing environment for strings defined by variables
+        in storage setting for all platforms. If found, it will be replaced
+        with string from current platform.
+
+        For example, we have `PYPE_STORAGE_PATH` pointing on windows to
+        `V:\\Projects`. In environment setting, there is variable
+        `FOO="V:\\Projects\\Foo\\Bar\\baz"`. But we are on linux where
+        `PYPE_STORAGE_PATH` is defined as `/mnt/projects`. This method will
+        change `FOO` to point to `/mnt/projects/Foo/Bar/baz`.
+
+        This is useful on scenarios, where these variables are set on different
+        platform then one currently running.
+
+        :param data: Source data. By default it is `os.eviron`
+        :type data: dict
+        :param source: string defining plaform from which we want to remap.
+                     If not set, then all platforms other then current one will
+                     be searched.
+        :type source: dict
+        :param to: string defining platform to which we want to remap. If not
+                   set, we will remap to current platform.
+        :returns: modified data
+        :rtype: dict
+        """
+        from pypeapp.storage import Storage
+        _platform_name = [
+            ("win32", "windows"),
+            ("linux", "linux"),
+            ("darwin", "darwin")
+        ]
+
+        if not data:
+            data = os.environ
+
+        if source:
+            from_paths_platform = [source]
+        else:
+            from_paths_platform = ['windows', 'linux', 'darwin']
+
+        if to:
+            to_paths_platform = to
+        else:
+            to_paths_platform = [p[1] for p in _platform_name if p[0] == sys.platform]  # noqa: E501
+
+        result_strings = Storage().get_storage_vars(platform=to_paths_platform)
+        remapped = {}
+        for p in from_paths_platform:
+            search_strings = Storage().get_storage_vars(platform=p)
+            for key, var in data.items():
+                # TODO: handle all cases. Normalized path, backslashes, ...
+                for skey, string in search_strings.items():
+                    if string in var:
+                        out = var.replace(string, result_strings[skey])
+                        if to_paths_platform == "win32":
+                            out = os.path.normpath(out)
+                        else:
+                            out = out.replace("\\", "/")
+                        remapped[key] = out
+                    else:
+                        remapped[key] = var
+
+        return remapped
