@@ -178,7 +178,7 @@ class Storage:
             r = r[k]
         return r
 
-    def _format_var(self, data: dict) -> dict:
+    def _format_var(self, data, platform=None) -> dict:
         """ Format key name and get its value. This will get paths in
             dictionary, format them with prefix to resemble environment
             variable, use it as a key in dictionary and assign it proper
@@ -203,6 +203,11 @@ class Storage:
         out = {}
         for path in paths:
             # platform should be last item: path[-1]
+
+            if path[-1] == platform:
+                out.update(create_var(path, data))
+                continue
+
             if sys.platform == "win32" and path[-1] == "windows":
                 out.update(create_var(path, data))
             if sys.platform.startswith("linux") and path[-1] == "linux":
@@ -211,15 +216,27 @@ class Storage:
                 out.update(create_var(path, data))
         return out
 
-    def get_storage_vars(self):
-        """ Process storage json and returns formatted variables
+    def get_storage_dictionary(self):
+        """ Get content of storage file as dictionary
 
-            :returns: dictionary of formatted variables
+            :returns: content as dictionary
             :rtype: dict
         """
         paths = self._get_storage_paths()
         storage = self._read_storage_file(paths[0])
-        env = self._format_var(storage)
+
+        return storage
+
+    def get_storage_vars(self, platform=None):
+        """ Process storage json and returns formatted variables
+
+            :param platform: platform for which to get variables
+            :type platform: str
+            :returns: dictionary of formatted variables
+            :rtype: dict
+        """
+        storage = self.get_storage_dictionary()
+        env = self._format_var(storage, platform)
         return env
 
     def update_environment(self):

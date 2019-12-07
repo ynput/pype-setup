@@ -179,3 +179,10 @@ class TestStorage():
         env = s.get_storage_vars()
         assert env.get('PYPE_STUDIO_PROJECTS_PATH') == '//store/vfx/projects'
         assert env.get('PYPE_STUDIO_PROJECTS_MOUNT') == 'P:/vfx'
+
+    def test_get_storage_platform_vars(self,  tmp_path, monkeypatch):
+        self.setup_storage(self._valid_storage, tmp_path, monkeypatch)
+        s = Storage()
+        env = s.get_storage_vars(platform="linux")
+        assert env.get("PYPE_STUDIO_PROJECTS_PATH") == '/mnt/vfx/projects'
+        assert env.get("PYPE_STUDIO_PROJECTS_MOUNT") == '/studio/pojects/vfx'

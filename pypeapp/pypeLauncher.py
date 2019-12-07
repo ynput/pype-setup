@@ -18,7 +18,7 @@ class PypeLauncher(object):
         from pypeapp.lib.log import _mongo_settings
 
         t = Terminal()
-        host, port, database, username, password, collection, auth_db = _mongo_settings()
+        host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa: E501
 
         t.echo("... Running pype from\t\t\t[ {} ]".format(
             os.environ.get('PYPE_ROOT')))
@@ -110,7 +110,6 @@ class PypeLauncher(object):
         env = acre.compute(env, cleanup=True)
         os.environ = acre.append(dict(os.environ), env)
         os.environ = acre.compute(os.environ, cleanup=False)
-
 
     def launch_tray(self, debug=False):
         """ Method will launch tray.py
@@ -376,6 +375,12 @@ class PypeLauncher(object):
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
         self._initialize()
+
+        # find path from different platforms in environment and remap it to
+        # current platform paths. Only those paths specified in Storage
+        # will be remapped.
+        os.environ.update(self.path_remapper())
+
         from pype import install, uninstall
         # Register target and host
         import pyblish.api
@@ -534,3 +539,80 @@ class PypeLauncher(object):
         t.echo(">>> Done. Documentation id generated:")
         t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
+
+    def path_remapper(self, data=None, source=None, to=None):
+        """
+        This will search existing environment for strings defined by variables
+        in storage setting for all platforms. If found, it will be replaced
+        with string from current platform.
+
+        For example, we have `PYPE_STORAGE_PATH` pointing on windows to
+        `V:\\Projects`. In environment setting, there is variable
+        `FOO="V:\\Projects\\Foo\\Bar\\baz"`. But we are on linux where
+        `PYPE_STORAGE_PATH` is defined as `/mnt/projects`. This method will
+        change `FOO` to point to `/mnt/projects/Foo/Bar/baz`.
+
+        This is useful on scenarios, where these variables are set on different
+        platform then one currently running.
+
+        :param data: Source data. By default it is `os.eviron`
+        :type data: dict
+        :param source: string defining plaform from which we want to remap.
+                     If not set, then all platforms other then current one will
+                     be searched.
+        :type source: dict
+        :param to: string defining platform to which we want to remap. If not
+                   set, we will remap to current platform.
+        :returns: modified data
+        :rtype: dict
+        """
+        from pypeapp.storage import Storage
+        from pypeapp.lib.Terminal import Terminal
+
+        t = Terminal()
+
+        _platform_name = [
+            ("win32", "windows"),
+            ("linux", "linux"),
+            ("darwin", "darwin")
+        ]
+
+        _current_platform = [p[1] for p in _platform_name if p[0] == sys.platform][0]  # noqa: E501
+        if not data:
+            data = os.environ
+
+        if source:
+            from_paths_platform = [source]
+        else:
+            from_paths_platform = ['windows', 'linux', 'darwin']
+            from_paths_platform.remove(_current_platform)
+
+        if to:
+            to_paths_platform = to
+        else:
+            to_paths_platform = _current_platform  # noqa: E501
+
+        result_strings = Storage().get_storage_vars(platform=to_paths_platform)
+        remapped = {}
+        done_keys = []
+        for p in from_paths_platform:
+            search_strings = Storage().get_storage_vars(platform=p)
+            for key, var in data.items():
+                # TODO: handle all cases. Normalized path, backslashes, ...
+                for skey, string in search_strings.items():
+                    # skip empty strings
+                    if not string:
+                        continue
+                    if string in var and key not in done_keys:
+                        out = var.replace(string, result_strings[skey])
+                        if to_paths_platform == "win32":
+                            out = os.path.normpath(out)
+                        else:
+                            out = out.replace("\\", "/")
+                        t.echo("  - Remapping [{}] -> [{}]".format(var, out))
+                        remapped[key] = out
+                        done_keys.append(key)
+                    else:
+                        remapped[key] = var
+
+        return remapped
