@@ -21,7 +21,7 @@ idna==2.8
 imagesize==1.1.0
 Jinja2==2.10
 jsonschema==2.6.0
--e git://github.com/log4mongo/log4mongo-python.git@e1a56ec56c9f2e765cb1cef74aef598b6260610c#egg=log4mongo
+log4mongo
 MarkupSafe==1.1.0
 more-itertools==6.0.0
 OpenTimelineIO==0.10.0
