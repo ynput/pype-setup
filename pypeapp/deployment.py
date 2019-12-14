@@ -380,7 +380,7 @@ class Deployment(object):
         import git
         # get tag
         repo = git.Git(path)
-        rtag = repo.describe()
+        rtag = repo.describe('--tags')
         if rtag != tag:
             return False
         return True
@@ -722,8 +722,9 @@ class Deployment(object):
         deploy = self._read_deployment_file(settings)
 
         files = deploy.get("init_env")
-        config_path = deploy.get('PYPE_CONFIG').format(
-            PYPE_ROOT=self._pype_root)
+        config_path = os.path.normpath(
+            deploy.get('PYPE_CONFIG').format(
+                PYPE_ROOT=self._pype_root))
 
         return files, config_path
 
