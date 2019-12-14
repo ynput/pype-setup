@@ -119,7 +119,9 @@ fi
 export PATH="$PYPE_ROOT/vendor/bin/ffmpeg_exec/linux/bin:$PATH"
 
 # Load colors definitions for easy output coloring
-source "$PYPE_ROOT/pypeapp/colors.sh"
+if [[ ! -v PYPE_LOG_NO_COLORS ]]; then
+  source "$PYPE_ROOT/pypeapp/colors.sh"
+fi
 
 ###############################################################################
 # Display spinner for running job. Job must be running in a background.
