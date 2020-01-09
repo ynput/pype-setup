@@ -22,7 +22,6 @@ valid_data = {
     'comment': 'iAmComment'
 }
 
-
 valid_templates = {
     "resources": {
         "footage": "{root[resources]}/{nonExistent}/resources/footage"
@@ -31,7 +30,8 @@ valid_templates = {
         "file": "{project[code]}_{asset}_{task}_v{version:0>3}<_{comment}>.{ext}",
         "file2": "{project[code]}_{asset}_{task}_v{version:0>3}<_{nocomment}>.{ext}",
         "noDictKey": "{project[code]}_{asset[name]}_{task}_v{version:0>3}<_{nocomment}>.{ext}",
-        "path": "{root[work]}/{projaect[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version:0>3}/{project[code]}_{asset}_{subset}_v{version:0>3}.{representation}"
+        "path": "{root[work]}/{projaect[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version:0>3}/{project[code]}_{asset}_{subset}_v{version:0>3}.{representation}",
+        "multiple_optional": "{project[code]}</{asset}></{hierarchy}><_v{version:0>3}><_{nocomment}>.{ext}"
     },
     "avalon": {
         "workfile": "{asset}_{task}_v{version:0>3}<_{comment}>",
@@ -92,3 +92,4 @@ def test_anatomy(anatomy_file, monkeypatch):
 
     assert b['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
     assert b['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
+    assert b['work']['multiple_optional'] == "PRJ/BOB/asset/characters_v001.ABC"
