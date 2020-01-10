@@ -332,4 +332,8 @@ def launch(app, project, asset, task,
     if user:
         os.environ["PYPE_USERNAME"] = user
 
+    # test required
+    if not project or not asset or not task:
+        print("!!! Missing required arguments")
+
     PypeLauncher().run_application(app, project, asset, task, tools, arguments)
