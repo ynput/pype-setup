@@ -291,6 +291,7 @@ def clean():
 @click.option("-a", "--asset", help="Asset name", required=True)
 @click.option("-t", "--task", help="Task name", required=True)
 @click.option("--tools", help="List of tools to add")
+@click.option("-u", "--user", help="Pype user name")
 @click.option("-fs",
               "--ftrack-server",
               help="Registered application name")
@@ -302,7 +303,7 @@ def clean():
               help="Registered application name")
 @click.argument('arguments', nargs=-1)
 def launch(app, project, asset, task,
-           ftrack_server, ftrack_user, ftrack_key, tools, arguments):
+           ftrack_server, ftrack_user, ftrack_key, tools, arguments, user):
     """
     Launch registered application name in Pype context.
 
@@ -320,5 +321,8 @@ def launch(app, project, asset, task,
 
     if ftrack_server:
         os.environ["FTRACK_API_KEY"] = ftrack_key
+
+    if user:
+        os.environ["PYPE_USERNAME"] = user
 
     PypeLauncher().run_application(app, project, asset, task, tools, arguments)
