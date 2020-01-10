@@ -283,3 +283,42 @@ def clean():
     """
     # This is implemented purely in shell script
     pass
+
+
+@main.command(context_settings={"ignore_unknown_options": True})
+@click.option("--app", help="Registered application name", required=True)
+@click.option("-p", "--project", help="Project name", required=True)
+@click.option("-a", "--asset", help="Asset name", required=True)
+@click.option("-t", "--task", help="Task name", required=True)
+@click.option("--tools", help="List of tools to add")
+@click.option("-fs",
+              "--ftrack-server",
+              help="Registered application name")
+@click.option("-fu",
+              "--ftrack-user",
+              help="Registered application name")
+@click.option("-fk",
+              "--ftrack-key",
+              help="Registered application name")
+@click.argument('arguments', nargs=-1)
+def launch(app, project, asset, task,
+           ftrack_server, ftrack_user, ftrack_key, tools, arguments):
+    """
+    Launch registered application name in Pype context.
+
+    You can define applications in pype-config toml files. Project, asset name
+    and task name must be provided (even if they are not used by app itself).
+    Optionally you can specify ftrack credentials if needed.
+
+    ARGUMENTS are passed to launched application.
+    """
+    if ftrack_server:
+        os.environ["FTRACK_SERVER"] = ftrack_server
+
+    if ftrack_server:
+        os.environ["FTRACK_API_USER"] = ftrack_user
+
+    if ftrack_server:
+        os.environ["FTRACK_API_KEY"] = ftrack_key
+
+    PypeLauncher().run_application(app, project, asset, task, tools, arguments)

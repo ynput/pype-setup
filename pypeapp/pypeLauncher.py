@@ -9,9 +9,6 @@ class PypeLauncher(object):
         Most of its methods are called by :mod:`cli` module.
     """
 
-    _kwargs = None
-    _args = None
-
     def print_info(self):
         """ This will print additional information to console. """
         from pypeapp.lib.Terminal import Terminal
@@ -555,7 +552,7 @@ class PypeLauncher(object):
         This is useful on scenarios, where these variables are set on different
         platform then one currently running.
 
-        :param data: Source data. By default it is `os.eviron`
+        :param data: Source data. By default it is `os.environ`
         :type data: dict
         :param source: string defining plaform from which we want to remap.
                      If not set, then all platforms other then current one will
@@ -616,3 +613,190 @@ class PypeLauncher(object):
                         remapped[key] = var
 
         return remapped
+
+    def run_application(self, app, project, asset, task, tools, arguments):
+        """
+        Run application in project/asset/task context with default or
+        specified tools enviornment. This uses pre-defined launcher in
+        `pype-config/launchers` where there must be *toml* file with
+        definition and in platform directory its launcher shell script or
+        binary executables. Arguments will be passed to this script or
+        executable.
+
+        :param app: Full application name (`maya_2018`)
+        :type app: Str
+        :param project: Project name
+        :type project: Str
+        :param asset: Asset name
+        :type asset: Str
+        :param task: Task name
+        :type task: Str
+        :param tools: Comma separated list of tools (`"mtoa_2.1.0,yeti_4"`)
+        :type tools: Str
+        :param arguments: List of other arguments passed to app
+        :type: List
+        :rtype: None
+        """
+        import toml
+
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp import Anatomy
+
+        t = Terminal()
+
+        self._initialize()
+        self._update_python_path()
+
+        import acre
+        from avalon import lib
+        from pype import lib as pypelib
+
+        # find path from different platforms in environment and remap it to
+        # current platform paths. Only those paths specified in Storage
+        # will be remapped.
+        os.environ.update(self.path_remapper())
+
+        abspath = lib.which_app(app)
+        if abspath is None:
+            t.echo("!!! Application [ {} ] is not registered.".format(app))
+            t.echo("*** Please define its toml file.")
+            return
+
+        app_toml = toml.load(abspath)
+
+        executable = app_toml['executable']
+        app_dir = app_toml['application_dir']
+        # description = app_toml.get('description', None)
+        # preactions = app_toml.get('preactions', [])
+
+        launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
+
+        database = pypelib.get_avalon_database()
+
+        avalon_project = database[project].find_one({
+            "type": "project"
+        })
+
+        if avalon_project is None:
+            t.echo(
+                "!!! Project [ {} ] doesn't exists in Avalon.".format(project))
+            return False
+
+        # get asset from db
+        avalon_asset = database[project].find_one({
+            "type": "asset",
+            "name": asset
+        })
+
+        avalon_tools = avalon_project["data"]["tools_env"]
+        if tools:
+            avalon_tools = tools.split(",") or []
+
+        data = {
+            "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
+            "project": {
+                "name": project,
+                "code": avalon_project['data']['code']
+            },
+            "task": task,
+            "asset": asset,
+            "app": app_dir,
+            "hierarchy": avalon_asset["data"]["parents"] or "",
+        }
+
+        anatomy = Anatomy()
+        anatomy = anatomy.format(data)
+        work_template = anatomy["work"]["folder"]
+        workdir = os.path.normpath(work_template)
+
+        # set environments for Avalon
+        os.environ["AVALON_PROJECT"] = project
+        os.environ["AVALON_SILO"] = None
+        os.environ["AVALON_ASSET"] = asset
+        os.environ["AVALON_TASK"] = task
+        os.environ["AVALON_APP"] = app.split("_")[0]
+        os.environ["AVALON_APP_NAME"] = app
+        os.environ["AVALON_WORKDIR"] = workdir
+
+        try:
+            os.makedirs(workdir)
+        except FileExistsError:
+            pass
+
+        tools_attr = [os.environ["AVALON_APP"], os.environ["AVALON_APP_NAME"]]
+        tools_attr += avalon_tools
+
+        tools_env = acre.get_tools(tools_attr)
+        env = acre.compute(tools_env)
+
+        env = acre.merge(env, current_env=dict(os.environ))
+
+        launchers_path = os.path.join(launchers_path,
+                                      platform.system().lower())
+        execfile = None
+
+        if sys.platform == "win32":
+            # test all avaliable executable format, find first and use it
+            for ext in os.environ["PATHEXT"].split(os.pathsep):
+                fpath = os.path.join(launchers_path.strip('"'),
+                                     executable + ext)
+                if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+                    execfile = fpath
+                    break
+
+                # Run SW if was found executable
+            if execfile is not None:
+                try:
+                    t.echo(">>> Running [ {} {} ]".format(executable,
+                                                          " ".join(arguments)))
+                    args = [execfile]
+                    args.extend(arguments)
+                    pypelib._subprocess(args=args,
+                                        env=env, shell=True)
+                except ValueError as e:
+                    t.echo("!!! Error while launching application:")
+                    t.echo(e)
+                    return
+            else:
+                t.echo(
+                    "!!! cannot find application launcher [ {} ]".format(app))
+                return
+
+        if sys.platform.startswith('linux'):
+            execfile = os.path.join(launchers_path.strip('"'), executable)
+            if os.path.isfile(execfile):
+                try:
+                    fp = open(execfile)
+                except PermissionError as p:
+                    t.echo("!!! Access denied on launcher [ {} ]".format(app))
+                    t.echo(p)
+                    return
+
+                fp.close()
+                # check executable permission
+                if not os.access(execfile, os.X_OK):
+                    t.echo("!!! No executable permission on [ {} ]".format(
+                        execfile))
+                    return
+            else:
+                t.echo("!!! Launcher doesn\'t exist [ {} ]".format(
+                    execfile))
+                return
+
+            # Run SW if was found executable
+            if execfile is not None:
+                args = ['bash', execfile]
+                args.extend(arguments)
+                t.echo(">>> Running [ {} ]".format(" ".join(args)))
+                try:
+                    pypelib._subprocess(
+                        '/usr/bin/env', args=args, env=env
+                    )
+                except ValueError as e:
+                    t.echo("!!! Error while launching application:")
+                    t.echo(e)
+                    return
+            else:
+                t.echo(
+                    "!!! cannot find application launcher [ {} ]".format(app))
+                return
