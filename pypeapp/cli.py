@@ -286,21 +286,28 @@ def clean():
 
 
 @main.command(context_settings={"ignore_unknown_options": True})
-@click.option("--app", help="Registered application name", required=True)
-@click.option("-p", "--project", help="Project name", required=True)
-@click.option("-a", "--asset", help="Asset name", required=True)
-@click.option("-t", "--task", help="Task name", required=True)
+@click.option("--app", help="Registered application name")
+@click.option("-p", "--project", help="Project name",
+              default=lambda: os.environ.get('AVALON_PROJECT', ''))
+@click.option("-a", "--asset", help="Asset name",
+              default=lambda: os.environ.get('AVALON_ASSET', ''))
+@click.option("-t", "--task", help="Task name",
+              default=lambda: os.environ.get('AVALON_TASK', ''))
 @click.option("--tools", help="List of tools to add")
-@click.option("-u", "--user", help="Pype user name")
+@click.option("-u", "--user", help="Pype user name",
+              default=lambda: os.environ.get('PYPE_USERNAME', ''))
 @click.option("-fs",
               "--ftrack-server",
-              help="Registered application name")
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_SERVER', ''))
 @click.option("-fu",
               "--ftrack-user",
-              help="Registered application name")
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_API_USER', ''))
 @click.option("-fk",
               "--ftrack-key",
-              help="Registered application name")
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_API_KEY', ''))
 @click.argument('arguments', nargs=-1)
 def launch(app, project, asset, task,
            ftrack_server, ftrack_user, ftrack_key, tools, arguments, user):
