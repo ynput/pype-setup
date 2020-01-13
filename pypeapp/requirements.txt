@@ -21,7 +21,7 @@ idna==2.8
 imagesize==1.1.0
 Jinja2==2.10
 jsonschema==2.6.0
-log4mongo
+log4mongo==1.6.2
 MarkupSafe==1.1.0
 more-itertools==6.0.0
 OpenTimelineIO==0.10.0
@@ -66,4 +66,3 @@ Werkzeug==0.16.0
 xlib==0.21
 zope.interface
 wrapt
-ftrack-python-api==2.0.0rc1
