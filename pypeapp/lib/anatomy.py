@@ -167,10 +167,12 @@ class Anatomy:
         for group in pattern.findall(template):
             try:
                 group.format(**data)
+                # group without `<` and `>`
+                replacement = group[1:-1]
             except KeyError:
-                invalid_optionals.append(group)
-        for group in invalid_optionals:
-            template = template.replace(group, "")
+                replacement = ""
+
+            template = template.replace(group, replacement)
 
         solved = format_map(template, data)
 

@@ -25,6 +25,7 @@ log4mongo
 MarkupSafe==1.1.0
 more-itertools==6.0.0
 OpenTimelineIO==0.10.0
+pathlib2==2.3.5
 packaging==19.0
 Pillow==6.0.0
 pico==2.0.5
@@ -47,11 +48,12 @@ Qt.py==1.1.0
 recommonmark==0.5.0
 requests==2.21.0
 ruamel.yaml==0.15.92
+scandir==1.10.0
 sip==4.19.8
 six==1.12.0
 smmap2==2.0.5
 snowballstemmer==1.2.1
-speedcopy==1.0.4
+speedcopy==2.0.0
 Sphinx==1.8.4
 sphinx-rtd-theme==0.4.3
 sphinxcontrib-websupport==1.1.0
