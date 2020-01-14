@@ -287,14 +287,14 @@ def clean():
 
 @main.command(context_settings={"ignore_unknown_options": True})
 @click.option("--app", help="Registered application name")
-@click.option("-p", "--project", help="Project name",
+@click.option("--project", help="Project name",
               default=lambda: os.environ.get('AVALON_PROJECT', ''))
-@click.option("-a", "--asset", help="Asset name",
+@click.option("--asset", help="Asset name",
               default=lambda: os.environ.get('AVALON_ASSET', ''))
-@click.option("-t", "--task", help="Task name",
+@click.option("--task", help="Task name",
               default=lambda: os.environ.get('AVALON_TASK', ''))
 @click.option("--tools", help="List of tools to add")
-@click.option("-u", "--user", help="Pype user name",
+@click.option("--user", help="Pype user name",
               default=lambda: os.environ.get('PYPE_USERNAME', ''))
 @click.option("-fs",
               "--ftrack-server",
@@ -335,5 +335,6 @@ def launch(app, project, asset, task,
     # test required
     if not project or not asset or not task:
         print("!!! Missing required arguments")
+        return
 
     PypeLauncher().run_application(app, project, asset, task, tools, arguments)

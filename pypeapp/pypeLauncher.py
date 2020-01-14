@@ -638,6 +638,7 @@ class PypeLauncher(object):
         :rtype: None
         """
         import toml
+        import subprocess
 
         from pypeapp.lib.Terminal import Terminal
         from pypeapp import Anatomy
@@ -730,6 +731,7 @@ class PypeLauncher(object):
         env = acre.compute(tools_env)
 
         env = acre.merge(env, current_env=dict(os.environ))
+        env = {k: str(v) for k, v in env.items()}
 
         launchers_path = os.path.join(launchers_path,
                                       platform.system().lower())
@@ -750,9 +752,23 @@ class PypeLauncher(object):
                     t.echo(">>> Running [ {} {} ]".format(executable,
                                                           " ".join(arguments)))
                     args = [execfile]
-                    args.extend(arguments)
-                    pypelib._subprocess(args=args,
-                                        env=env, shell=True)
+                    p = subprocess.Popen(args,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.STDOUT,
+                                         env=env,
+                                         shell=True,
+                                         bufsize=1,
+                                         encoding='utf-8',
+                                         errors='replace')
+                    while True:
+                        realtime_output = p.stdout.readline()
+
+                        if realtime_output == '' and p.poll() is not None:
+                            break
+
+                        if realtime_output:
+                            print(realtime_output.strip(), flush=True)
+
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
                     t.echo(e)
@@ -785,13 +801,26 @@ class PypeLauncher(object):
 
             # Run SW if was found executable
             if execfile is not None:
-                args = ['bash', execfile]
+                args = ['/usr/bin/env', 'bash', execfile]
                 args.extend(arguments)
                 t.echo(">>> Running [ {} ]".format(" ".join(args)))
                 try:
-                    pypelib._subprocess(
-                        '/usr/bin/env', args=args, env=env
-                    )
+                    p = subprocess.Popen(args,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.STDOUT,
+                                         env=env,
+                                         shell=True,
+                                         bufsize=1,
+                                         encoding='utf-8',
+                                         errors='replace')
+                    while True:
+                        realtime_output = p.stdout.readline()
+
+                        if realtime_output == '' and p.poll() is not None:
+                            break
+
+                        if realtime_output:
+                            print(realtime_output.strip(), flush=True)
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
                     t.echo(e)

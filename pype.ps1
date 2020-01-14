@@ -169,12 +169,34 @@ function Log-Msg {
         [int] $LinesAfter = 0,
         [int] $StartSpaces = 0,
         [alias ('L')] [string] $LogFile = '',
-        [Alias('DateFormat', 'TimeFormat')][string] $DateTimeFormat = 'yyyy-MM-dd HH:mm:ss',
+        [alias('DateFormat', 'TimeFormat')][string] $DateTimeFormat = 'yyyy-MM-dd HH:mm:ss',
         [alias ('LogTimeStamp')][bool] $LogTime = $true,
         [ValidateSet('unknown', 'string', 'unicode', 'bigendianunicode', 'utf8', 'utf7', 'utf32', 'ascii', 'default', 'oem')][string]$Encoding = 'Unicode',
         [switch] $ShowTime,
         [switch] $NoNewLine
     )
+
+  if (-not (Get-Command 'Write-Color' -errorAction SilentlyContinue))
+  {
+      function Write-Color {
+        param (
+              [alias ('T')] [String[]]$Text,
+              [alias ('C', 'ForegroundColor', 'FGC')] [ConsoleColor[]]$Color = [ConsoleColor]::White,
+              [alias ('B', 'BGC')] [ConsoleColor[]]$BackGroundColor = $null,
+              [alias ('Indent')][int] $StartTab = 0,
+              [int] $LinesBefore = 0,
+              [int] $LinesAfter = 0,
+              [int] $StartSpaces = 0,
+              [alias ('L')] [string] $LogFile = '',
+              [alias('DateFormat', 'TimeFormat')][string] $DateTimeFormat = 'yyyy-MM-dd HH:mm:ss',
+              [alias ('LogTimeStamp')][bool] $LogTime = $true,
+              [ValidateSet('unknown', 'string', 'unicode', 'bigendianunicode', 'utf8', 'utf7', 'utf32', 'ascii', 'default', 'oem')][string]$Encoding = 'Unicode',
+              [switch] $ShowTime,
+              [switch] $NoNewLine
+          )
+        Write-Host $Text
+      }
+  }
 
   if (Test-Path 'env:PYPE_LOG_NO_COLORS') {
     if ($NoNewLine -eq $true) {
