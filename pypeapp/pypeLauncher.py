@@ -393,7 +393,11 @@ class PypeLauncher(object):
             return False
 
         if paths:
-            os.environ["PYPE_PUBLISH_PATHS"] = os.pathsep.join(paths)
+            remapped_path = self.path_remapper(
+                {
+                    "PYPE_PUBLISH_PATHS": os.pathsep.join(paths)
+                })
+            os.environ.update(remapped_path)
 
         if gui:
             import pyblish_qml
@@ -576,7 +580,7 @@ class PypeLauncher(object):
 
         _current_platform = [p[1] for p in _platform_name if p[0] == sys.platform][0]  # noqa: E501
         if not data:
-            data = os.environ
+            data = os.environ.copy()
 
         if source:
             from_paths_platform = [source]
