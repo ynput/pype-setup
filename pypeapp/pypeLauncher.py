@@ -752,23 +752,8 @@ class PypeLauncher(object):
                     t.echo(">>> Running [ {} {} ]".format(executable,
                                                           " ".join(arguments)))
                     args = [execfile]
-                    p = subprocess.Popen(args,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT,
-                                         env=env,
-                                         shell=True,
-                                         bufsize=1,
-                                         encoding='utf-8',
-                                         errors='replace')
-                    while True:
-                        realtime_output = p.stdout.readline()
-
-                        if realtime_output == '' and p.poll() is not None:
-                            break
-
-                        if realtime_output:
-                            print(realtime_output.strip())
-                            sys.stdout.flush()
+                    args.extend(arguments)
+                    subprocess.run(args)
 
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
@@ -806,23 +791,7 @@ class PypeLauncher(object):
                 args.extend(arguments)
                 t.echo(">>> Running [ {} ]".format(" ".join(args)))
                 try:
-                    p = subprocess.Popen(args,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT,
-                                         env=env,
-                                         shell=True,
-                                         bufsize=1,
-                                         encoding='utf-8',
-                                         errors='replace')
-                    while True:
-                        realtime_output = p.stdout.readline()
-
-                        if realtime_output == '' and p.poll() is not None:
-                            break
-
-                        if realtime_output:
-                            print(realtime_output.strip())
-                            sys.stdout.flush()
+                    subprocess.run(args)
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
                     t.echo(e)

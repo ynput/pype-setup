@@ -8,7 +8,7 @@ except ImportError:
     print("yaml module wasn't found, skipping anatomy")
 else:
     directory = os.path.join(
-        os.environ["PYPE_ENV"], "Lib", "site-packages", "ruamel"
+        os.environ.get("PYPE_ENV", ""), "Lib", "site-packages", "ruamel"
     )
     file_path = os.path.join(directory, "__init__.py")
     if os.path.exists(directory) and not os.path.exists(file_path):
