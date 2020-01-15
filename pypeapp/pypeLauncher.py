@@ -767,7 +767,8 @@ class PypeLauncher(object):
                             break
 
                         if realtime_output:
-                            print(realtime_output.strip(), flush=True)
+                            print(realtime_output.strip())
+                            sys.stdout.flush()
 
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
@@ -820,7 +821,8 @@ class PypeLauncher(object):
                             break
 
                         if realtime_output:
-                            print(realtime_output.strip(), flush=True)
+                            print(realtime_output.strip())
+                            sys.stdout.flush()
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
                     t.echo(e)
