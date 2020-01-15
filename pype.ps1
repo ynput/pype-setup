@@ -519,6 +519,15 @@ function Download {
   #>
 }
 
+function Localize-Bin {
+  Log-Msg -Text ">>> ", "Localizing [ ", "vendor/bin", " ]" -Color Green, Gray, White, Gray
+  Copy-Item -Force -Recurse "$($env:PYPE_ROOT)\vendor\bin\" -Destination "$($env:PYPE_ENV)\localized\"
+  <#
+  .SYNOPSIS
+  Copy stuff in vendor/bin to $PYPE_ENV/localized
+  #>
+}
+
 # -----------------------------------------------------------------------------
 # main
 # -----------------------------------------------------------------------------
@@ -590,6 +599,9 @@ if ($needToInstall -eq $true) {
 
   # bootstrap pype
   Bootstrap-Pype
+
+  # localize bin
+  Localize-Bin
 
 } else {
   Log-Msg -Text "FOUND", " - [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray

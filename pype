@@ -471,6 +471,22 @@ download () {
   return 0
 }
 
+##############################################################################
+# Copy vendor/bin to local pype env
+# Globals:
+#   PYPE_ENV
+#   PYPE_ROOT
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+localize_bin () {
+  echo -e "${IGreen}>>>${RST} Localizing [ ${BIWhite}vendor/bin${RST} ] ..."
+  mkdir -p $PYPE_ENV/localized
+  cp -aR $PYPE_ROOT/vendor/bin/* $PYPE_ENV/localized/
+}
+
 # -----------------------------------------------------------------------------
 # main
 # -----------------------------------------------------------------------------

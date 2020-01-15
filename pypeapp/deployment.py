@@ -746,3 +746,23 @@ class Deployment(object):
                     break
                 md5.update(block)
         return md5.hexdigest()
+
+    def localize_package(self, path):
+        """
+        Copy package directory to pype environment "localized" folder.
+        Useful for storing binaries that are not accessible when calling over
+        UNC paths or similar scenarios.
+
+        :param path: source
+        :type path: str
+        """
+        package_name = path.split(os.path.sep)[-1]
+        destination = os.path.join(
+            os.environ.get("PYPE_ENV"),
+            "localized", package_name)
+        if os.path.isdir(destination):
+            term = Terminal()
+            term.echo("*** destination already exists "
+                      "[ {} ], removing".format(destination))
+            shutil.rmtree(destination)
+        shutil.copytree(path, destination)
