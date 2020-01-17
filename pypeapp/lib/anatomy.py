@@ -97,15 +97,27 @@ class Anatomy:
     :param project_name: Project name to look on project's anatomy overrides.
     :type project_name: str
     '''
-    _anatomy = None
 
-    def __init__(self, project=None):
+    def __init__(self, project=None, keep_updated=False):
         if not project:
             project = os.environ.get('AVALON_PROJECT', None)
+
+        self._anatomy = None
         self.project_name = project
+        self.keep_updated = keep_updated
+
+    def __setattr__(self, attr, value):
+        if attr == "project_name":
+            self._anatomy = None
+        super(Anatomy, self).__setattr__(attr, value)
 
     @property
     def templates(self):
+        if self.keep_updated:
+            project = os.environ.get("AVALON_PROJECT", None)
+            if project is not None and project != self.project_name:
+                self.project_name = project
+
         if self._anatomy is None:
             self._anatomy = self._discover()
         return self._anatomy
