@@ -25,8 +25,11 @@ def get_datetime_data(datetime_obj=None):
     "mmmm" - <Month name> full month name. e.g.: `January`, ...
     "yy" - <Year number> shortened year. e.g.: `19`, `20`, ...
     "yyyy" - <Year number> full year. e.g.: `2019`, `2020`, ...
-    "H" - <Hours number> shortened hours.
-    "HH" - <Hours number> with 2 digits.
+    "H" - <Hours number 24-hour> shortened hours.
+    "HH" - <Hours number 24-hour> with 2 digits.
+    "h" - <Hours number 12-hour> shortened hours.
+    "hh" - <Hours number 12-hour> with 2 digits.
+    "ht" - <Midday type> AM or PM.
     "M" - <Minutes number> shortened minutes.
     "MM" - <Minutes number> with 2 digits.
     "S" - <Seconds number> shortened seconds.
@@ -47,6 +50,8 @@ def get_datetime_data(datetime_obj=None):
     week_name_short = datetime_obj.strftime("%a")
 
     hours = datetime_obj.strftime("%H")
+    hours_midday = datetime_obj.strftime("%I")
+    hour_midday_type = datetime_obj.strftime("%p")
     minutes = datetime_obj.strftime("%M")
     seconds = datetime_obj.strftime("%S")
 
@@ -63,6 +68,9 @@ def get_datetime_data(datetime_obj=None):
         "yyyy": str(year),
         "H": str(int(hours)),
         "HH": str(hours),
+        "h": str(int(hours_midday)),
+        "hh": str(hours_midday),
+        "ht": hour_midday_type,
         "M": str(int(minutes)),
         "MM": str(minutes),
         "S": str(int(seconds)),
