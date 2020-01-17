@@ -1,5 +1,6 @@
 import os
 import re
+import copy
 
 from . import config
 try:
@@ -284,7 +285,7 @@ class Anatomy:
 
         return output
 
-    def format_all(self, data, only_keys=True):
+    def format_all(self, in_data, only_keys=True):
         ''' Solves anatomy based on entered data.
         :param data: Containing keys to be filled into template.
         :type data: dict
@@ -294,9 +295,19 @@ class Anatomy:
         :rtype: dictionary
         Returnes dictionary split into 3 categories: solved/partial/unsolved
         '''
+        # Create a copy of inserted data
+        data = copy.deepcopy(in_data)
+
+        # Add environment variable to data
         if only_keys is False:
             for k, v in os.environ.items():
                 data['$'+k] = v
+
+        # Do not override keys if they are already set
+        for key, value in config.get_datetime_data():
+            if key not in data:
+                data[key] = value
+
         return self.solve_dict(self.templates, data, only_keys)
 
     def format(self, data, only_keys=True):
