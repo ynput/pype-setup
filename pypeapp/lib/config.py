@@ -46,8 +46,8 @@ def get_datetime_data(datetime_obj=None):
     month_name_short = datetime_obj.strftime("%b")
     day = datetime_obj.strftime("%d")
 
-    week_name_full = datetime_obj.strftime("%A")
-    week_name_short = datetime_obj.strftime("%a")
+    weekday_full = datetime_obj.strftime("%A")
+    weekday_short = datetime_obj.strftime("%a")
 
     hours = datetime_obj.strftime("%H")
     hours_midday = datetime_obj.strftime("%I")
@@ -58,8 +58,8 @@ def get_datetime_data(datetime_obj=None):
     return {
         "d": str(int(day)),
         "dd": str(day),
-        "ddd": week_name_short,
-        "dddd": week_name_full,
+        "ddd": weekday_short,
+        "dddd": weekday_full,
         "m": str(int(month)),
         "mm": str(month),
         "mmm": month_name_short,
