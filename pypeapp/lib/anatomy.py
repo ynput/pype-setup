@@ -316,9 +316,10 @@ class Anatomy:
                 data['$'+k] = v
 
         # Do not override keys if they are already set
-        for key, value in config.get_datetime_data():
+        datetime_data = config.get_datetime_data()
+        for key in datetime_data:
             if key not in data:
-                data[key] = value
+                data[key] = datetime_data[key]
 
         return self.solve_dict(self.templates, data, only_keys)
 
