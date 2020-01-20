@@ -103,13 +103,9 @@ class Anatomy:
             project = os.environ.get('AVALON_PROJECT', None)
 
         self._anatomy = None
+        self.loaded_project = None
         self.project_name = project
         self.keep_updated = keep_updated
-
-    def __setattr__(self, attr, value):
-        if attr == "project_name":
-            self._anatomy = None
-        super(Anatomy, self).__setattr__(attr, value)
 
     @property
     def templates(self):
@@ -118,8 +114,12 @@ class Anatomy:
             if project is not None and project != self.project_name:
                 self.project_name = project
 
+        if self.project_name != self.loaded_project:
+            self._anatomy = None
+
         if self._anatomy is None:
             self._anatomy = self._discover()
+            self.loaded_project = self.project_name
         return self._anatomy
 
     def _discover(self):
@@ -317,9 +317,9 @@ class Anatomy:
 
         # Do not override keys if they are already set
         datetime_data = config.get_datetime_data()
-        for key in datetime_data:
+        for key, value in datetime_data.items():
             if key not in data:
-                data[key] = datetime_data[key]
+                data[key] = value
 
         return self.solve_dict(self.templates, data, only_keys)
 
