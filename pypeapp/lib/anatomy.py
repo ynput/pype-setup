@@ -1,6 +1,5 @@
 import os
 import re
-import copy
 
 from . import config
 try:
@@ -97,8 +96,9 @@ class Anatomy:
     :param project_name: Project name to look on project's anatomy overrides.
     :type project_name: str
     '''
+    _anatomy = None
 
-    def __init__(self, project=None, keep_updated=False):
+    def __init__(self, project=None):
         if not project:
             project = os.environ.get('AVALON_PROJECT', None)
 
@@ -297,7 +297,7 @@ class Anatomy:
 
         return output
 
-    def format_all(self, in_data, only_keys=True):
+    def format_all(self, data, only_keys=True):
         ''' Solves anatomy based on entered data.
         :param data: Containing keys to be filled into template.
         :type data: dict
@@ -307,10 +307,6 @@ class Anatomy:
         :rtype: dictionary
         Returnes dictionary split into 3 categories: solved/partial/unsolved
         '''
-        # Create a copy of inserted data
-        data = copy.deepcopy(in_data)
-
-        # Add environment variable to data
         if only_keys is False:
             for k, v in os.environ.items():
                 data['$'+k] = v
