@@ -283,3 +283,12 @@ def clean():
     """
     # This is implemented purely in shell script
     pass
+
+
+@main.command()
+def validate_config():
+    """
+    This will validate all json configuration files for errors.
+    """
+
+    PypeLauncher().validate_jsons()

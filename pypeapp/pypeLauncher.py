@@ -616,3 +616,33 @@ class PypeLauncher(object):
                         remapped[key] = var
 
         return remapped
+
+    def validate_jsons(self):
+        import json
+        import glob
+        from pypeapp.lib.Terminal import Terminal
+
+        t = Terminal()
+
+        t.echo(">>> validating ...")
+        files = [f for f in glob.glob(
+            os.environ.get("PYPE_ROOT") + os.path.sep + "**/*.json",
+            recursive=True)]
+
+        failures = 0
+        for f in files:
+            t.echo("  - {}".format(f))
+            with open(f, "r") as jf:
+                json_str = jf.read()
+            try:
+                json.loads(json_str)
+            except json.decoder.JSONDecodeError as e:
+                t.echo("!!! failed on [ {} ]".format(f))
+                t.echo(str(e))
+                failures += 1
+
+        if failures > 0:
+            t.echo(
+                "!!! Failed on [ {} ] file(s), see log above.".format(failures))
+        else:
+            t.echo(">>> All OK.")
