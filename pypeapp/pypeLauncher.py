@@ -606,7 +606,7 @@ class PypeLauncher(object):
                         continue
                     if string in var and key not in done_keys:
                         out = var.replace(string, result_strings[skey])
-                        if to_paths_platform == "win32":
+                        if to_paths_platform in ["win32", "windows"]:
                             out = os.path.normpath(out)
                         else:
                             out = out.replace("\\", "/")

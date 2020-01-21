@@ -1,5 +1,6 @@
 import os
 import re
+import copy
 
 from . import config
 try:
@@ -96,17 +97,29 @@ class Anatomy:
     :param project_name: Project name to look on project's anatomy overrides.
     :type project_name: str
     '''
-    _anatomy = None
 
-    def __init__(self, project=None):
+    def __init__(self, project=None, keep_updated=False):
         if not project:
             project = os.environ.get('AVALON_PROJECT', None)
+
+        self._anatomy = None
+        self.loaded_project = None
         self.project_name = project
+        self.keep_updated = keep_updated
 
     @property
     def templates(self):
+        if self.keep_updated:
+            project = os.environ.get("AVALON_PROJECT", None)
+            if project is not None and project != self.project_name:
+                self.project_name = project
+
+        if self.project_name != self.loaded_project:
+            self._anatomy = None
+
         if self._anatomy is None:
             self._anatomy = self._discover()
+            self.loaded_project = self.project_name
         return self._anatomy
 
     def _discover(self):
@@ -167,10 +180,12 @@ class Anatomy:
         for group in pattern.findall(template):
             try:
                 group.format(**data)
+                # group without `<` and `>`
+                replacement = group[1:-1]
             except KeyError:
-                invalid_optionals.append(group)
-        for group in invalid_optionals:
-            template = template.replace(group, "")
+                replacement = ""
+
+            template = template.replace(group, replacement)
 
         solved = format_map(template, data)
 
@@ -282,7 +297,7 @@ class Anatomy:
 
         return output
 
-    def format_all(self, data, only_keys=True):
+    def format_all(self, in_data, only_keys=True):
         ''' Solves anatomy based on entered data.
         :param data: Containing keys to be filled into template.
         :type data: dict
@@ -292,9 +307,20 @@ class Anatomy:
         :rtype: dictionary
         Returnes dictionary split into 3 categories: solved/partial/unsolved
         '''
+        # Create a copy of inserted data
+        data = copy.deepcopy(in_data)
+
+        # Add environment variable to data
         if only_keys is False:
             for k, v in os.environ.items():
                 data['$'+k] = v
+
+        # Do not override keys if they are already set
+        datetime_data = config.get_datetime_data()
+        for key, value in datetime_data.items():
+            if key not in data:
+                data[key] = value
+
         return self.solve_dict(self.templates, data, only_keys)
 
     def format(self, data, only_keys=True):

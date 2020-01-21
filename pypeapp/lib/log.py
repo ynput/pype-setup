@@ -207,12 +207,12 @@ class PypeFormatter(logging.Formatter):
         out = formatter.format(record)
         if record.exc_info is not None:
             line_len = len(str(record.exc_info[1]))
-            out = "{}\n{}\n{}\n{}\n{}".format(out,
-                                              "-" * line_len,
-                                              str(record.exc_info[1]),
-                                              "=" * line_len,
-                                              self.formatException(
-                                                record.exc_info))
+            out = "{}\n{}\n{}\n{}".format(
+                line_len * "=",
+                str(record.exc_info[1]),
+                line_len * "=",
+                self.formatException(record.exc_info)
+            )
         return out
 
 
