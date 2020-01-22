@@ -757,7 +757,7 @@ class PypeLauncher(object):
                                                           " ".join(arguments)))
                     args = [execfile]
                     args.extend(arguments)
-                    subprocess.run(args)
+                    subprocess.run(args, env=env)
 
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
@@ -795,7 +795,7 @@ class PypeLauncher(object):
                 args.extend(arguments)
                 t.echo(">>> Running [ {} ]".format(" ".join(args)))
                 try:
-                    subprocess.run(args)
+                    subprocess.run(args, env=env)
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
                     t.echo(e)
