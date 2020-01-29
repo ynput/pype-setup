@@ -211,6 +211,7 @@ class Anatomy:
     key_pattern = re.compile(r"(\{.*?[^{0]*\})")
     key_padding_pattern = re.compile(r"([^:]+)\S+[><]\S+")
     sub_dict_pattern = re.compile(r"([^\[\]]+)")
+    optional_pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
 
     def __init__(self, project=None, keep_updated=False):
         if not project:
@@ -289,37 +290,49 @@ class Anatomy:
         """
 
         # Remove optional missing keys
-        pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
         missing_keys = []
         invalid_types = []
-        for group in pattern.findall(template):
-            # group without `<` and `>`
-            key = group[1:-1]
+        for optional_group in self.optional_pattern.findall(template):
+            _missing_keys = []
+            _invalid_types = []
+            for optional_key in self.key_pattern.findall(optional_group):
+                key = str(optional_key[1:-1])
+                key_padding = list(
+                    self.key_padding_pattern.findall(key)
+                )
+                if key_padding:
+                    key = key_padding[0]
 
-            validation_result = self._validate_data_key(key, data)
-            missing_key = validation_result["missing_key"]
-            invalid_type = validation_result["invalid_type"]
-            valid = True
-            if missing_key is not None:
-                missing_keys.append(missing_key)
-                valid = False
+                validation_result = self._validate_data_key(
+                    key, data
+                )
+                missing_key = validation_result["missing_key"]
+                invalid_type = validation_result["invalid_type"]
 
-            if invalid_type is not None:
-                invalid_types.append(invalid_type)
-                valid = False
-
-            if valid:
-                try:
-                    key.format(**data)
-                except KeyError:
-                    missing_keys.append(key[1:-1])
+                valid = True
+                if missing_key is not None:
+                    _missing_keys.append(missing_key)
                     valid = False
 
+                if invalid_type is not None:
+                    _invalid_types.append(invalid_type)
+                    valid = False
+
+                if valid:
+                    try:
+                        optional_key.format(**data)
+                    except KeyError:
+                        _missing_keys.append(key)
+                        valid = False
+
+            valid = len(_invalid_types) == 0 and len(_missing_keys) == 0
+            missing_keys.extend(_missing_keys)
+            invalid_types.extend(_invalid_types)
             replacement = ""
             if valid:
-                replacement = key
+                replacement = optional_group[1:-1]
 
-            template = template.replace(group, replacement)
+            template = template.replace(optional_group, replacement)
         return (template, missing_keys, invalid_types)
 
     def _validate_data_key(self, key, data):
@@ -327,6 +340,7 @@ class Anatomy:
             "missing_key": None,
             "invalid_type": None
         }
+
         # check if key expects subdictionary keys (e.g. project[name])
         key_subdict = list(self.sub_dict_pattern.findall(key))
         used_keys = []
@@ -462,7 +476,6 @@ class Anatomy:
         :rtype: dictionary
         '''
         output = collections.defaultdict(dict)
-
         for key, orig_value in templates.items():
             if isinstance(orig_value, StringType):
                 output[key] = self._format(orig_value, data)
