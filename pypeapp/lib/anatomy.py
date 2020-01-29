@@ -99,6 +99,78 @@ class AnatomyResult(str):
                 _invalid_types[key] = val
         new_obj.invalid_types = _invalid_types
         return new_obj
+
+
+class AnatomyDict(dict):
+    """Holds and wrap AnatomyResults for easy bug report."""
+
+    def __init__(self, in_data, key=None, parent=None, strict=None):
+        super(AnatomyDict, self).__init__()
+        for _key, _value in in_data.items():
+            if not isinstance(_value, AnatomyResult):
+                _value = self.__class__(_value, _key, self)
+            self[_key] = _value
+
+        self.key = key
+        self.parent = parent
+        self.strict = strict
+        if self.parent is None and strict is None:
+            self.strict = True
+
+    def __getitem__(self, key):
+        # Raise error about missing key in anatomy.yaml
+        if key not in self.keys():
+            hier = self.hierarchy()
+            hier.append(key)
+            raise AnatomyMissingKey(hier)
+
+        value = super(AnatomyDict, self).__getitem__(key)
+        if isinstance(value, self.__class__):
+            return value
+
+        # Raise exception when expected solved anatomy template and it is not.
+        if self.raise_on_unsolved and not value.solved:
+            raise AnatomyUnsolved(
+                value.template, value.missing_keys, value.invalid_types
+            )
+        return value
+
+    @property
+    def raise_on_unsolved(self):
+        """To affect this change `strict` attribute."""
+        if self.strict is not None:
+            return self.strict
+        return self.parent.raise_on_unsolved
+
+    def hierarchy(self):
+        """Return dictionary keys one by one to root parent."""
+        if self.parent is None:
+            return []
+
+        hier_keys = []
+        par_hier = self.parent.hierarchy()
+        if par_hier:
+            hier_keys.extend(par_hier)
+        hier_keys.append(self.key)
+
+        return hier_keys
+
+    @property
+    def missing_keys(self):
+        """Return missing keys for all children templates."""
+        missing_keys = []
+        for value in self.values():
+            missing_keys.extend(value.missing_keys)
+        return list(set(missing_keys))
+
+    @property
+    def used_values(self):
+        """Return used values for all children templates."""
+        used_values = {}
+        for value in self.values():
+            used_values = config.update_dict(used_values, value.used_values)
+        return used_values
+
 class Anatomy:
     ''' Anatomy module help get anatomy and format anatomy with entered data.
 
