@@ -1,6 +1,12 @@
 import os
 import re
 import copy
+import collections
+import numbers
+try:
+    StringType = basestring
+except NameError:
+    StringType = str
 
 from . import config
 try:
@@ -187,6 +193,9 @@ class Anatomy:
     :param project_name: Project name to look on project's anatomy overrides.
     :type project_name: str
     '''
+    key_pattern = re.compile(r"(\{.*?[^{0]*\})")
+    key_padding_pattern = re.compile(r"([^:]+)\S+[><]\S+")
+    sub_dict_pattern = re.compile(r"([^\[\]]+)")
 
     def __init__(self, project=None, keep_updated=False):
         if not project:
