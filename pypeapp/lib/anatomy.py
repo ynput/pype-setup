@@ -384,62 +384,30 @@ class Anatomy:
 
         return format_map(solved, subdict)
 
-    def solve_dict(self, input, data, only_keys=True):
-        ''' Solves anatomy and split results into:
-        - :'solved': Fully solved anatomy strings (missing environs don't
-        affect result if `only_keys` is `True`).
-        - :'partial': At least one key was filled but still
-                      remain keys to fill.
-        - :'unsolved': Nothing has changed in these strings.
+    def solve_dict(self, templates, data):
+        ''' Solves anatomy templates with entered data.
 
-        :param input: All Anatomy templates which will be formatted.
-        :type input: dict
+        :param templates: All Anatomy templates which will be formatted.
+        :type templates: dict
         :param data: Containing keys to be filled into template.
         :type data: dict
-        :param only_keys: Decides if environ will be used to fill anatomy
-                          or only keys in data.
-        :type only_keys: bool
         :rtype: dictionary
         '''
-        check_regex_keys = r'\{[^\}]*\}'
-        check_regex_env = r'\{\$[^\}]*\}'
-        output = {
-            'solved': {},
-            'partial': {},
-            'unsolved': {}
-        }
+        output = collections.defaultdict(dict)
 
-        for key, orig_value in input.items():
-            if isinstance(orig_value, dict):
-                for s_key, s_value in self.solve_dict(
-                    orig_value, data, only_keys
-                ).items():
-                    for sk_key, sk_value in s_value.items():
-                        if not isinstance(output[s_key], dict):
-                            output[s_key] = {}
-                        if key not in output[s_key]:
-                            output[s_key][key] = {}
+        for key, orig_value in templates.items():
+            if isinstance(orig_value, StringType):
+                output[key] = self._format(orig_value, data)
+                continue
 
-                        output[s_key][key].update({sk_key: sk_value})
+            # Check if orig_value has items attribute (any dict inheritance)
+            if not hasattr(orig_value, "items"):
+                # TODO we should handle this case
+                output[key] = orig_value
+                continue
 
-            else:
-                value = self._format(orig_value, data)
-                solved = True
-                matches = re.findall(check_regex_keys, value)
-                if only_keys is True:
-                    for match in matches:
-                        if len(re.findall(check_regex_env, match)) == 0:
-                            solved = False
-                            break
-                else:
-                    if len(matches) > 0:
-                        solved = False
-                if solved is True:
-                    output['solved'][key] = value
-                elif orig_value == value:
-                    output['unsolved'][key] = value
-                else:
-                    output['partial'][key] = value
+            for s_key, s_value in self.solve_dict(orig_value, data).items():
+                output[key][s_key] = s_value
 
         return output
 
