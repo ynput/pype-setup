@@ -354,7 +354,7 @@ class Anatomy:
         result["invalid_type"] = {key: type(value)}
         return result
 
-    def _format(self, template, data):
+    def _format(self, orig_template, data):
         ''' Figure out with whole formatting.
         Separate advanced keys (*Like '{project[name]}') from string which must
         be formatted separatelly in case of missing or incomplete keys in data.
@@ -363,34 +363,70 @@ class Anatomy:
         :type template: str
         :param data: Containing keys to be filled into template.
         :type data: dict
-        :rtype: str
+        :rtype: AnatomyResult
         '''
+        template, missing_optional, invalid_optional = (
+            self._filter_optional(orig_template, data)
+        )
+        # Remove optional missing keys
+        used_values = {}
+        invalid_required = []
+        missing_required = []
+        replace_keys = []
+        for group in self.key_pattern.findall(template):
+            orig_key = group[1:-1]
+            key = str(orig_key)
+            key_padding = list(self.key_padding_pattern.findall(key))
+            if key_padding:
+                key = key_padding[0]
 
-        partial_data = PartialDict(data)
+            validation_result = self._validate_data_key(key, data)
+            missing_key = validation_result["missing_key"]
+            invalid_type = validation_result["invalid_type"]
 
-        # remove subdict items from string (like 'project[name]')
-        subdict = PartialDict()
-        count = 1
-        store_pattern = 5*'_'+'{:0>3}'
-        regex_patern = r"\{\w*\[[^\}]*\]\}"
-        matches = re.findall(regex_patern, template)
+            if invalid_type is not None:
+                invalid_required.append(invalid_type)
+                replace_keys.append(key)
+                continue
 
-        for match in matches:
-            key = store_pattern.format(count)
-            subdict[key] = match
-            template = template.replace(match, '{'+key+'}')
-            count += 1
-        # solve fillind keys with optional keys
-        solved = self._solve_with_optional(template, partial_data)
-        # try to solve subdict and replace them back to string
-        for k, v in subdict.items():
+            if missing_key is not None:
+                missing_required.append(missing_key)
+                replace_keys.append(key)
+                continue
+
             try:
-                v = format_map(v, data)
-            except (KeyError, TypeError):
-                pass
-            subdict[k] = v
+                value = group.format(**data)
+                used_values[key] = value
+            except (TypeError, KeyError):
+                missing_required.append(key)
+                replace_keys.append(key)
 
-        return format_map(solved, subdict)
+        final_data = copy.deepcopy(data)
+        for key in replace_keys:
+            key_subdict = list(self.sub_dict_pattern.findall(key))
+            if len(key_subdict) <= 1:
+                final_data[key] = "{" + key + "}"
+                continue
+
+            replace_key_dst = "---".join(key_subdict)
+            replace_key_dst_curly = "{" + replace_key_dst + "}"
+            replace_key_src_curly = "{" + key + "}"
+            template = template.replace(
+                replace_key_src_curly, replace_key_dst_curly
+            )
+            final_data[replace_key_dst] = replace_key_src_curly
+
+        solved = len(missing_required) == 0 and len(invalid_required) == 0
+
+        missing_keys = missing_required + missing_optional
+        invalid_types = invalid_required + invalid_optional
+
+        filled_template = template.format(**final_data)
+        result = AnatomyResult(
+            filled_template, orig_template, solved,
+            used_values, missing_keys, invalid_types
+        )
+        return result
 
     def solve_dict(self, templates, data):
         ''' Solves anatomy templates with entered data.
