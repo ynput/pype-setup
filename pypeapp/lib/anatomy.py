@@ -63,6 +63,42 @@ class AnatomyUnsolved(Exception):
         super(AnatomyUnsolved, self).__init__(
             self.msg.format(template, missing_keys_msg, invalid_types_msg)
         )
+
+
+class AnatomyResult(str):
+    """Result (formatted template) of anatomy with most of information in.
+
+    used_values <dict>
+        - Dictionary of template filling data (only used keys).
+    solved <bool>
+        - For check if all required keys were filled.
+    template <str>
+        - Original template.
+    missing_keys <list>
+        - Missing keys that were not in the data.
+        - With optional keys.
+    invalid_types <dict {key: type}>
+        - Key was found in data, but value had not allowed DataType.
+        - Allowed data types are `numbers` and `str`(`basestring`)
+    """
+
+    def __new__(
+        cls, filled_template, template, solved,
+        used_values, missing_keys, invalid_types
+    ):
+        new_obj = super(AnatomyResult, cls).__new__(cls, filled_template)
+        new_obj.used_values = used_values
+        new_obj.solved = solved
+        new_obj.template = template
+        new_obj.missing_keys = list(set(missing_keys))
+        _invalid_types = {}
+        for invalid_type in invalid_types:
+            for key, val in invalid_type.items():
+                if key in _invalid_types:
+                    continue
+                _invalid_types[key] = val
+        new_obj.invalid_types = _invalid_types
+        return new_obj
 class Anatomy:
     ''' Anatomy module help get anatomy and format anatomy with entered data.
 
