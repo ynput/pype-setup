@@ -252,43 +252,51 @@ class Anatomy:
             anatomy = config.update_dict(anatomy, proj_anatomy)
         return anatomy
 
-    def _solve_with_optional(self, template, data):
-        """
-        Solving optional elements in template string regarding to available
-        keys in used data object.
+    def _filter_optional(self, template, data):
+        """Filter invalid optional keys.
+
+        Invalid keys may be missing keys of with invalid value DataType.
 
         :param template: Anatomy template which will be formatted.
         :type template: str
         :param data: Containing keys to be filled into template.
-        :type data: PartialDict
+        :type data: dict
         :rtype: str
         """
 
         # Remove optional missing keys
         pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
-        invalid_optionals = []
+        missing_keys = []
+        invalid_types = []
         for group in pattern.findall(template):
-            try:
-                group.format(**data)
-                # group without `<` and `>`
-                replacement = group[1:-1]
-            except KeyError:
-                replacement = ""
+            # group without `<` and `>`
+            key = group[1:-1]
+
+            validation_result = self._validate_data_key(key, data)
+            missing_key = validation_result["missing_key"]
+            invalid_type = validation_result["invalid_type"]
+            valid = True
+            if missing_key is not None:
+                missing_keys.append(missing_key)
+                valid = False
+
+            if invalid_type is not None:
+                invalid_types.append(invalid_type)
+                valid = False
+
+            if valid:
+                try:
+                    key.format(**data)
+                except KeyError:
+                    missing_keys.append(key[1:-1])
+                    valid = False
+
+            replacement = ""
+            if valid:
+                replacement = key
 
             template = template.replace(group, replacement)
-
-        solved = format_map(template, data)
-
-        # solving after format optional in second round
-        for catch in re.compile(r"(<.*?[^{0]*>)[^0-9]*?").findall(solved):
-            if "{" in catch:
-                # remove all optional
-                solved = solved.replace(catch, "")
-            else:
-                # Remove optional symbols
-                solved = solved.replace(catch, catch[1:-1])
-
-        return solved
+        return (template, missing_keys, invalid_types)
 
     def _validate_data_key(self, key, data):
         result = {
