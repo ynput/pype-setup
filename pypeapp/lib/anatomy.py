@@ -177,6 +177,21 @@ class AnatomyDict(dict):
             used_values = config.update_dict(used_values, value.used_values)
         return used_values
 
+    def get_solved(self):
+        """Get only solved templates."""
+        result = {}
+        for key, value in self.items():
+            if isinstance(value, self.__class__):
+                value = value.get_solved()
+                if not value:
+                    continue
+                result[key] = value
+
+            elif value.solved:
+                result[key] = value
+        return self.__class__(result, key=self.key, parent=self.parent)
+
+
 class Anatomy:
     ''' Anatomy module help get anatomy and format anatomy with entered data.
 
