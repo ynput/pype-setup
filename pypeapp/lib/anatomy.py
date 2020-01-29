@@ -20,66 +20,6 @@ else:
         )
         open(file_path, "a").close()
 
-"""''.format_map() in Python 2.x"""
-
-try:
-    ''.format_map({})
-except AttributeError:  # Python < 3.2
-    import string
-
-    def format_map(format_string, mapping, _format=string.Formatter().vformat):
-        return _format(format_string, None, mapping)
-    del string
-
-    # XXX works on CPython 2.6
-    # http://stackoverflow.com/questions/2444680/how-do-i-add-my-own-custom-attributes-to-existing-built-in-python-types-like-a/2450942#2450942
-    import ctypes as c
-
-    class PyObject_HEAD(c.Structure):
-        _fields_ = [
-            ('HEAD', c.c_ubyte *
-                (object.__basicsize__ - c.sizeof(c.c_void_p))),
-            ('ob_type', c.c_void_p)
-        ]
-
-    _get_dict = c.pythonapi._PyObject_GetDictPtr
-    _get_dict.restype = c.POINTER(c.py_object)
-    _get_dict.argtypes = [c.py_object]
-
-    def get_dict(object):
-        return _get_dict(object).contents.value
-
-    get_dict(str)['format_map'] = format_map
-else:  # Python 3.2+
-    def format_map(format_string, mapping):
-        return format_string.format_map(mapping)
-
-
-class PartialDict(dict):
-    ''' Modified dict class as helper.
-
-    If is used as input data for string formatting
-    missing keys won't change in string.
-
-    .. code-block:: python
-
-       data = PartialDict({
-            'project': 'Turtle King'
-       })
-       string = '{project} will raise on {date}'
-       result = string.format(data)
-
-       result >> 'Turtle King will raise on {date}'
-    '''
-    def __getitem__(self, item):
-        out = super(PartialDict, self).__getitem__(item)
-        if isinstance(out, dict):
-            return '{'+item+'}'
-        return out
-
-    def __missing__(self, key):
-        return '{'+key+'}'
-
 
 class Anatomy:
     ''' Anatomy module help get anatomy and format anatomy with entered data.
