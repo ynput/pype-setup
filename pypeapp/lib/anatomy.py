@@ -21,6 +21,48 @@ else:
         open(file_path, "a").close()
 
 
+class AnatomyMissingKey(Exception):
+    """Exception for cases when key does not exist in Anatomy."""
+
+    msg = "Anatomy key does not exist: `anatomy{0}`."
+
+    def __init__(self, parents):
+        parent_join = "".join(["[\"{0}\"]".format(key) for key in parents])
+        super(AnatomyMissingKey, self).__init__(
+            self.msg.format(parent_join)
+        )
+
+
+class AnatomyUnsolved(Exception):
+    """Exception for unsolved template when strict is set to True."""
+
+    msg = (
+        "Anatomy template \"{0}\" is unsolved.{1}{2}"
+    )
+    invalid_types_msg = " Keys with invalid DataType: `{0}`."
+    missing_keys_msg = " Missing keys: \"{0}\"."
+
+    def __init__(self, template, missing_keys, invalid_types):
+        invalid_type_items = []
+        for _key, _type in invalid_types.items():
+            invalid_type_items.append(
+                "\"{0}\" {1}".format(_key, str(_type))
+            )
+
+        invalid_types_msg = ""
+        if invalid_type_items:
+            invalid_types_msg = self.invalid_types_msg.format(
+                ", ".join(invalid_type_items)
+            )
+
+        missing_keys_msg = ""
+        if missing_keys:
+            missing_keys_msg = self.missing_keys_msg.format(
+                ", ".join(missing_keys)
+            )
+        super(AnatomyUnsolved, self).__init__(
+            self.msg.format(template, missing_keys_msg, invalid_types_msg)
+        )
 class Anatomy:
     ''' Anatomy module help get anatomy and format anatomy with entered data.
 
