@@ -490,7 +490,7 @@ class Anatomy:
 
         return self.solve_dict(self.templates, data, only_keys)
 
-    def format(self, data, only_keys=True):
+    def format(self, in_data, only_keys=True):
         ''' Solves anatomy based on entered data.
         :param data: Containing keys to be filled into template.
         :type data: dict
@@ -500,4 +500,14 @@ class Anatomy:
         :rtype: dictionary
         Returnes only solved
         '''
-        return self.format_all(data, only_keys)['solved']
+        # Create a copy of inserted data
+        data = copy.deepcopy(in_data)
+
+        # Add environment variable to data
+        if only_keys is False:
+            for key, val in os.environ.items():
+                data["$" + key] = val
+
+        solved = self.solve_dict(self.templates, data)
+
+        return AnatomyDict(solved)
