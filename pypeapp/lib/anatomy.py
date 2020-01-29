@@ -290,6 +290,62 @@ class Anatomy:
 
         return solved
 
+    def _validate_data_key(self, key, data):
+        result = {
+            "missing_key": None,
+            "invalid_type": None
+        }
+        # check if key expects subdictionary keys (e.g. project[name])
+        key_subdict = list(self.sub_dict_pattern.findall(key))
+        used_keys = []
+        if len(key_subdict) <= 1:
+            if key not in data:
+                result["missing_key"] = key
+                return result
+
+            used_keys.append(key)
+            value = data[key]
+
+        else:
+            value = copy.deepcopy(data)
+            valid = True
+            for sub_key in key_subdict:
+                if (
+                    value is None or
+                    not hasattr(value, "items") or
+                    sub_key not in value
+                ):
+                    valid = False
+                    break
+
+                used_keys.append(sub_key)
+                value = value.get(sub_key)
+
+            if not valid:
+                if len(used_keys) == 0:
+                    invalid_key = key_subdict[0]
+                else:
+                    invalid_key = used_keys[0]
+                    for idx, sub_key in enumerate(used_keys):
+                        if idx == 0:
+                            continue
+                        invalid_key += "[{0}]".format(sub_key)
+
+                result["invalid_type"] = {invalid_key: type(value)}
+                return result
+
+        valid = isinstance(value, numbers.Number)
+        if valid:
+            return result
+
+        for inh_class in type(value).mro():
+            if inh_class == StringType:
+                return result
+
+        result["missing_key"] = key
+        result["invalid_type"] = {key: type(value)}
+        return result
+
     def _format(self, template, data):
         ''' Figure out with whole formatting.
         Separate advanced keys (*Like '{project[name]}') from string which must
