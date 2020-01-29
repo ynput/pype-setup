@@ -474,21 +474,9 @@ class Anatomy:
         :rtype: dictionary
         Returnes dictionary split into 3 categories: solved/partial/unsolved
         '''
-        # Create a copy of inserted data
-        data = copy.deepcopy(in_data)
-
-        # Add environment variable to data
-        if only_keys is False:
-            for k, v in os.environ.items():
-                data['$'+k] = v
-
-        # Do not override keys if they are already set
-        datetime_data = config.get_datetime_data()
-        for key, value in datetime_data.items():
-            if key not in data:
-                data[key] = value
-
-        return self.solve_dict(self.templates, data, only_keys)
+        output = self.format(in_data, only_keys)
+        output.strict = False
+        return output
 
     def format(self, in_data, only_keys=True):
         ''' Solves anatomy based on entered data.
