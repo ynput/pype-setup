@@ -163,11 +163,27 @@ class AnatomyDict(dict):
 
     @property
     def missing_keys(self):
-        """Return missing keys for all children templates."""
+        """Return missing keys of all children templates."""
         missing_keys = []
         for value in self.values():
             missing_keys.extend(value.missing_keys)
         return list(set(missing_keys))
+
+    @property
+    def invalid_types(self):
+        """Return invalid types of all children templates."""
+        invalid_types = {}
+        for value in self.values():
+            for invalid_type in value.invalid_types:
+                _invalid_types = {}
+                for key, val in invalid_type.items():
+                    if key in invalid_types:
+                        continue
+                    _invalid_types[key] = val
+                invalid_types = config.update_dict(
+                    invalid_types, _invalid_types
+                )
+        return invalid_types
 
     @property
     def used_values(self):
