@@ -731,6 +731,8 @@ class PypeLauncher(object):
         tools_attr = [os.environ["AVALON_APP"], os.environ["AVALON_APP_NAME"]]
         tools_attr += avalon_tools
 
+        print("TOOLS: {}".format(tools_attr))
+
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
 
