@@ -370,20 +370,25 @@ class Anatomy:
 
         else:
             value = copy.deepcopy(data)
-            valid = True
+            missing_key = False
+            invalid_type = False
             for sub_key in key_subdict:
                 if (
                     value is None or
-                    not hasattr(value, "items") or
-                    sub_key not in value
+                    (hasattr(value, "items") and sub_key not in value)
                 ):
-                    valid = False
+                    missing_key = True
+                    used_keys.append(sub_key)
+                    break
+
+                elif not hasattr(value, "items"):
+                    invalid_type = True
                     break
 
                 used_keys.append(sub_key)
                 value = value.get(sub_key)
 
-            if not valid:
+            if missing_key or invalid_type:
                 if len(used_keys) == 0:
                     invalid_key = key_subdict[0]
                 else:
@@ -393,7 +398,12 @@ class Anatomy:
                             continue
                         invalid_key += "[{0}]".format(sub_key)
 
-                result["invalid_type"] = {invalid_key: type(value)}
+                if missing_key:
+                    result["missing_key"] = invalid_key
+
+                elif invalid_type:
+                    result["invalid_type"] = {invalid_key: type(value)}
+
                 return result
 
         valid = isinstance(value, numbers.Number)
