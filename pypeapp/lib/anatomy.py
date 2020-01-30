@@ -52,7 +52,7 @@ class AnatomyUnsolved(Exception):
         invalid_type_items = []
         for _key, _type in invalid_types.items():
             invalid_type_items.append(
-                "\"{0}\" {1}".format(_key, StringType(_type))
+                "\"{0}\" {1}".format(_key, str(_type))
             )
 
         invalid_types_msg = ""
@@ -71,7 +71,7 @@ class AnatomyUnsolved(Exception):
         )
 
 
-class AnatomyResult(StringType):
+class AnatomyResult(str):
     """Result (formatted template) of anatomy with most of information in.
 
     used_values <dict>
@@ -312,7 +312,7 @@ class Anatomy:
             _missing_keys = []
             _invalid_types = []
             for optional_key in self.key_pattern.findall(optional_group):
-                key = StringType(optional_key[1:-1])
+                key = str(optional_key[1:-1])
                 key_padding = list(
                     self.key_padding_pattern.findall(key)
                 )
@@ -429,7 +429,7 @@ class Anatomy:
         replace_keys = []
         for group in self.key_pattern.findall(template):
             orig_key = group[1:-1]
-            key = StringType(orig_key)
+            key = str(orig_key)
             key_padding = list(self.key_padding_pattern.findall(key))
             if key_padding:
                 key = key_padding[0]
