@@ -434,14 +434,14 @@ class PypeLauncher(object):
             args.append('-k')
             args.append(keyword)
             args.append(os.path.join(os.getenv('PYPE_ROOT'),
-                        'repos', 'pype', 'pype', 'tests'))
+                                     'repos', 'pype', 'pype', 'tests'))
 
         elif id:
             t.echo("  - selecting test ID [ {} ]".format(id))
             args.append(id)
         else:
             args.append(os.path.join(os.getenv('PYPE_ROOT'),
-                        'repos', 'pype', 'pype', 'tests'))
+                                     'repos', 'pype', 'pype', 'tests'))
 
         pytest.main(args)
 
@@ -806,3 +806,34 @@ class PypeLauncher(object):
                 t.echo(
                     "!!! cannot find application launcher [ {} ]".format(app))
                 return
+
+    def validate_jsons(self):
+        import json
+        import glob
+        from pypeapp.lib.Terminal import Terminal
+
+        t = Terminal()
+
+        t.echo(">>> validating ...")
+        files = [f for f in glob.glob(
+            os.environ.get("PYPE_ROOT") + os.path.sep + "**/*.json",
+            recursive=True)]
+
+        failures = 0
+        for f in files:
+            t.echo("  - {}".format(f))
+            with open(f, "r") as jf:
+                json_str = jf.read()
+            try:
+                json.loads(json_str)
+            except json.decoder.JSONDecodeError as e:
+                t.echo("!!! failed on [ {} ]".format(f))
+                t.echo(str(e))
+                failures += 1
+
+        if failures > 0:
+            t.echo(
+                "!!! Failed on [ {} ] file(s), "
+                "see log above.".format(failures))
+        else:
+            t.echo(">>> All OK.")

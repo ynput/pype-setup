@@ -338,3 +338,12 @@ def launch(app, project, asset, task,
         return
 
     PypeLauncher().run_application(app, project, asset, task, tools, arguments)
+
+
+@main.command()
+def validate_config():
+    """
+    This will validate all json configuration files for errors.
+    """
+
+    PypeLauncher().validate_jsons()
