@@ -225,7 +225,7 @@ class PypeMongoFormatter(logging.Formatter):
         """Formats LogRecord into python dictionary."""
         # Standard document
         document = {
-            'timestamp': dt.datetime.utcnow(),
+            'timestamp': dt.datetime.now(),
             'level': record.levelname,
             'thread': record.thread,
             'threadName': record.threadName,
