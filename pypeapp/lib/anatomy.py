@@ -418,6 +418,21 @@ class Anatomy:
         result["invalid_type"] = {key: type(value)}
         return result
 
+    def _merge_used_values(self, current_used, keys, value):
+        key = keys[0]
+        _keys = keys[1:]
+        if len(_keys) == 0:
+            current_used[key] = value
+        else:
+            next_dict = {}
+            if key in current_used:
+                next_dict = current_used[key]
+            current_used[key] = self._merge_used_values(
+                next_dict, _keys, value
+            )
+        return current_used
+
+
     def _format(self, orig_template, data):
         ''' Figure out with whole formatting.
         Separate advanced keys (*Like '{project[name]}') from string which must
@@ -460,7 +475,15 @@ class Anatomy:
 
             try:
                 value = group.format(**data)
-                used_values[key] = value
+                key_subdict = list(self.sub_dict_pattern.findall(key))
+                if len(key_subdict) <= 1:
+                    used_values[key] = value
+
+                else:
+                    used_values = self._merge_used_values(
+                        used_values, key_subdict, value
+                    )
+
             except (TypeError, KeyError):
                 missing_required.append(key)
                 replace_keys.append(key)
