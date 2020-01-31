@@ -283,3 +283,67 @@ def clean():
     """
     # This is implemented purely in shell script
     pass
+
+
+@main.command(context_settings={"ignore_unknown_options": True})
+@click.option("--app", help="Registered application name")
+@click.option("--project", help="Project name",
+              default=lambda: os.environ.get('AVALON_PROJECT', ''))
+@click.option("--asset", help="Asset name",
+              default=lambda: os.environ.get('AVALON_ASSET', ''))
+@click.option("--task", help="Task name",
+              default=lambda: os.environ.get('AVALON_TASK', ''))
+@click.option("--tools", help="List of tools to add")
+@click.option("--user", help="Pype user name",
+              default=lambda: os.environ.get('PYPE_USERNAME', ''))
+@click.option("-fs",
+              "--ftrack-server",
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_SERVER', ''))
+@click.option("-fu",
+              "--ftrack-user",
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_API_USER', ''))
+@click.option("-fk",
+              "--ftrack-key",
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_API_KEY', ''))
+@click.argument('arguments', nargs=-1)
+def launch(app, project, asset, task,
+           ftrack_server, ftrack_user, ftrack_key, tools, arguments, user):
+    """
+    Launch registered application name in Pype context.
+
+    You can define applications in pype-config toml files. Project, asset name
+    and task name must be provided (even if they are not used by app itself).
+    Optionally you can specify ftrack credentials if needed.
+
+    ARGUMENTS are passed to launched application.
+    """
+    if ftrack_server:
+        os.environ["FTRACK_SERVER"] = ftrack_server
+
+    if ftrack_server:
+        os.environ["FTRACK_API_USER"] = ftrack_user
+
+    if ftrack_server:
+        os.environ["FTRACK_API_KEY"] = ftrack_key
+
+    if user:
+        os.environ["PYPE_USERNAME"] = user
+
+    # test required
+    if not project or not asset or not task:
+        print("!!! Missing required arguments")
+        return
+
+    PypeLauncher().run_application(app, project, asset, task, tools, arguments)
+
+
+@main.command()
+def validate_config():
+    """
+    This will validate all json configuration files for errors.
+    """
+
+    PypeLauncher().validate_jsons()
