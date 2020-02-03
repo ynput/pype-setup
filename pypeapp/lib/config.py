@@ -79,38 +79,47 @@ def get_datetime_data(datetime_obj=None):
 
 
 def load_json(fpath, first_run=False):
-    with open(fpath, "r") as opened_file:
-        lines = opened_file.read().splitlines()
+    output = {}
+    try:
+        with open(fpath, "r") as opened_file:
+            lines = opened_file.read().splitlines()
 
-    standard_json = ""
+        standard_json = ""
 
-    for line in lines:
-        # Remove all whitespace on both sides
-        line = line.strip()
+        for line in lines:
+            # Remove all whitespace on both sides
+            line = line.strip()
 
-        # Skip blank lines
-        if len(line) == 0:
-            continue
+            # Skip blank lines
+            if len(line) == 0:
+                continue
 
-        standard_json += line
+            standard_json += line
 
-    extra_comma = False
-    if ",]" in standard_json or ",}" in standard_json:
-        extra_comma = True
-    standard_json = standard_json.replace(",]", "]")
-    standard_json = standard_json.replace(",}", "}")
+        extra_comma = False
+        if ",]" in standard_json or ",}" in standard_json:
+            extra_comma = True
+        standard_json = standard_json.replace(",]", "]")
+        standard_json = standard_json.replace(",}", "}")
 
-    if extra_comma:
+        if extra_comma:
+            if first_run:
+                log.error("Extra comma in json file: \"{}\"".format(fpath))
+
+        # return empty dict if file is empty
+        if standard_json == "":
+            if first_run:
+                log.error("Empty json file: \"{}\"".format(fpath))
+            return {}
+        output = json.loads(standard_json)
+    except json.decoder.JSONDecodeError:
         if first_run:
-            log.error("Extra comma in json file: \"{}\"".format(fpath))
+            log.warning(
+                "File has invalid json format \"{}\"".format(fpath),
+                exc_info=True
+            )
 
-    # return empty dict if file is empty
-    if standard_json == "":
-        if first_run:
-            log.error("Empty json file: \"{}\"".format(fpath))
-        return {}
-
-    return json.loads(standard_json)
+    return output
 
 
 def collect_json_from_path(input_path, first_run=False):
