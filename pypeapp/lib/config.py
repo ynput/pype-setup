@@ -79,47 +79,60 @@ def get_datetime_data(datetime_obj=None):
 
 
 def load_json(fpath, first_run=False):
-    output = {}
+    # Load json data
+    with open(fpath, "r") as opened_file:
+        lines = opened_file.read().splitlines()
+
+    # prepare json string
+    standard_json = ""
+    for line in lines:
+        # Remove all whitespace on both sides
+        line = line.strip()
+
+        # Skip blank lines
+        if len(line) == 0:
+            continue
+
+        standard_json += line
+
+    # Check if has extra commas
+    extra_comma = False
+    if ",]" in standard_json or ",}" in standard_json:
+        extra_comma = True
+    standard_json = standard_json.replace(",]", "]")
+    standard_json = standard_json.replace(",}", "}")
+
+    if extra_comma and first_run:
+        log.error("Extra comma in json file: \"{}\"".format(fpath))
+
+    # return empty dict if file is empty
+    if standard_json == "":
+        if first_run:
+            log.error("Empty json file: \"{}\"".format(fpath))
+        return {}
+
+    # Try to parse string
+    try:
+        return json.loads(standard_json)
+
+    except json.decoder.JSONDecodeError:
+        # Return empty dict if it is first time that decode error happened
+        if not first_run:
+            return {}
+
+    # Repreduce the exact same exception but traceback contains better
+    # information about position of error in the loaded json
     try:
         with open(fpath, "r") as opened_file:
-            lines = opened_file.read().splitlines()
+            json.load(opened_file)
 
-        standard_json = ""
-
-        for line in lines:
-            # Remove all whitespace on both sides
-            line = line.strip()
-
-            # Skip blank lines
-            if len(line) == 0:
-                continue
-
-            standard_json += line
-
-        extra_comma = False
-        if ",]" in standard_json or ",}" in standard_json:
-            extra_comma = True
-        standard_json = standard_json.replace(",]", "]")
-        standard_json = standard_json.replace(",}", "}")
-
-        if extra_comma:
-            if first_run:
-                log.error("Extra comma in json file: \"{}\"".format(fpath))
-
-        # return empty dict if file is empty
-        if standard_json == "":
-            if first_run:
-                log.error("Empty json file: \"{}\"".format(fpath))
-            return {}
-        output = json.loads(standard_json)
     except json.decoder.JSONDecodeError:
-        if first_run:
-            log.warning(
-                "File has invalid json format \"{}\"".format(fpath),
-                exc_info=True
-            )
+        log.warning(
+            "File has invalid json format \"{}\"".format(fpath),
+            exc_info=True
+        )
 
-    return output
+    return {}
 
 
 def collect_json_from_path(input_path, first_run=False):
