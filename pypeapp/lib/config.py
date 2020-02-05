@@ -79,11 +79,12 @@ def get_datetime_data(datetime_obj=None):
 
 
 def load_json(fpath, first_run=False):
+    # Load json data
     with open(fpath, "r") as opened_file:
         lines = opened_file.read().splitlines()
 
+    # prepare json string
     standard_json = ""
-
     for line in lines:
         # Remove all whitespace on both sides
         line = line.strip()
@@ -94,15 +95,15 @@ def load_json(fpath, first_run=False):
 
         standard_json += line
 
+    # Check if has extra commas
     extra_comma = False
     if ",]" in standard_json or ",}" in standard_json:
         extra_comma = True
     standard_json = standard_json.replace(",]", "]")
     standard_json = standard_json.replace(",}", "}")
 
-    if extra_comma:
-        if first_run:
-            log.error("Extra comma in json file: \"{}\"".format(fpath))
+    if extra_comma and first_run:
+        log.error("Extra comma in json file: \"{}\"".format(fpath))
 
     # return empty dict if file is empty
     if standard_json == "":
@@ -110,7 +111,28 @@ def load_json(fpath, first_run=False):
             log.error("Empty json file: \"{}\"".format(fpath))
         return {}
 
-    return json.loads(standard_json)
+    # Try to parse string
+    try:
+        return json.loads(standard_json)
+
+    except json.decoder.JSONDecodeError:
+        # Return empty dict if it is first time that decode error happened
+        if not first_run:
+            return {}
+
+    # Repreduce the exact same exception but traceback contains better
+    # information about position of error in the loaded json
+    try:
+        with open(fpath, "r") as opened_file:
+            json.load(opened_file)
+
+    except json.decoder.JSONDecodeError:
+        log.warning(
+            "File has invalid json format \"{}\"".format(fpath),
+            exc_info=True
+        )
+
+    return {}
 
 
 def collect_json_from_path(input_path, first_run=False):
