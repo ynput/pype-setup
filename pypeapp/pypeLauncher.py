@@ -706,7 +706,7 @@ class PypeLauncher(object):
             "task": task,
             "asset": asset,
             "app": app_dir,
-            "hierarchy": avalon_asset["data"]["parents"] or "",
+            "hierarchy": os.path.join(*avalon_asset["data"]["parents"]) or "",
         }
 
         anatomy = Anatomy()
