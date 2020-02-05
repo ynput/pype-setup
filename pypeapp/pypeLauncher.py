@@ -697,6 +697,7 @@ class PypeLauncher(object):
         if tools:
             avalon_tools = tools.split(",") or []
 
+        hierarchy = avalon_asset["data"]["parents"] or ""
         data = {
             "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
             "project": {
@@ -706,7 +707,7 @@ class PypeLauncher(object):
             "task": task,
             "asset": asset,
             "app": app_dir,
-            "hierarchy": avalon_asset["data"]["parents"] or "",
+            "hierarchy": hierarchy,
         }
 
         anatomy = Anatomy()
@@ -722,6 +723,7 @@ class PypeLauncher(object):
         os.environ["AVALON_APP"] = app.split("_")[0]
         os.environ["AVALON_APP_NAME"] = app
         os.environ["AVALON_WORKDIR"] = workdir
+        os.environ["AVALON_HIERARCHY"] = hierarchy
 
         try:
             os.makedirs(workdir)
