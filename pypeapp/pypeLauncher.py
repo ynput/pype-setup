@@ -556,16 +556,19 @@ class PypeLauncher(object):
         This is useful on scenarios, where these variables are set on different
         platform then one currently running.
 
+        Source data can be dictionary or list and it can contain other
+        dictionaries and lists. Paths will be replaced recursively.
+
         :param data: Source data. By default it is `os.environ`
         :type data: dict
         :param source: string defining plaform from which we want to remap.
                      If not set, then all platforms other then current one will
                      be searched.
-        :type source: dict
+        :type source: dict or list
         :param to: string defining platform to which we want to remap. If not
                    set, we will remap to current platform.
         :returns: modified data
-        :rtype: dict
+        :rtype: dict or list
         """
         from pypeapp.storage import Storage
         from pypeapp.lib.Terminal import Terminal
@@ -594,16 +597,44 @@ class PypeLauncher(object):
             to_paths_platform = _current_platform  # noqa: E501
 
         result_strings = Storage().get_storage_vars(platform=to_paths_platform)
-        remapped = {}
+        if isinstance(data, dict):
+            remapped = {}
+        else:
+            remapped = []
         done_keys = []
         for p in from_paths_platform:
             search_strings = Storage().get_storage_vars(platform=p)
-            for key, var in data.items():
+            for key in data:
+                if isinstance(data, dict):
+                    var = data[key]
+                else:
+                    var = key
                 # TODO: handle all cases. Normalized path, backslashes, ...
                 for skey, string in search_strings.items():
                     # skip empty strings
                     if not string:
                         continue
+                    # work only on strings
+                    t.echo("{}: {}".format(skey, string))
+                    # t.echo("type: {}".format(type(var)))
+                    if not isinstance(var, str):
+                        # if another dict is found, recurse
+                        if isinstance(var, dict) or isinstance(var, list):
+                            t.echo("recurse")
+                            revar = self.path_remapper(data=var,
+                                                       source=source,
+                                                       to=to)
+                            if isinstance(data, dict):
+                                remapped[key] = revar
+                            else:
+                                remapped.append(revar)
+                        else:
+                            if isinstance(data, dict):
+                                remapped[key] = var
+                            else:
+                                remapped.append(var)
+                        continue
+
                     if string in var and key not in done_keys:
                         out = var.replace(string, result_strings[skey])
                         if to_paths_platform in ["win32", "windows"]:
@@ -611,11 +642,20 @@ class PypeLauncher(object):
                         else:
                             out = out.replace("\\", "/")
                         t.echo("  - Remapping [{}] -> [{}]".format(var, out))
-                        remapped[key] = out
+                        if isinstance(data, dict):
+                            t.echo("- {}: {}".format(key, out))
+                            remapped[key] = out
+                            t.echo("* {}".format(remapped.get(key)))
+                        else:
+                            remapped.append(out)
                         done_keys.append(key)
-                    else:
-                        remapped[key] = var
+                    elif key not in done_keys:
 
+                        t.echo("- skip {}: {}".format(key, var))
+                        if isinstance(data, dict):
+                            remapped[key] = var
+                        else:
+                            remapped.append(var)
         return remapped
 
     def run_application(self, app, project, asset, task, tools, arguments):
@@ -697,7 +737,10 @@ class PypeLauncher(object):
         if tools:
             avalon_tools = tools.split(",") or []
 
-        hierarchy = avalon_asset["data"]["parents"] or ""
+        hierarchy = ""
+        parents = avalon_asset["data"]["parents"] or []
+        if parents:
+            hierarchy = os.path.join(*parents)
         data = {
             "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
             "project": {
@@ -740,6 +783,10 @@ class PypeLauncher(object):
 
         env = acre.merge(env, current_env=dict(os.environ))
         env = {k: str(v) for k, v in env.items()}
+
+        # sanitize slashes in path
+        env["PYTHONPATH"] = env["PYTHONPATH"].replace("/", "\\")
+        env["PYTHONPATH"] = env["PYTHONPATH"].replace("\\\\", "\\")
 
         launchers_path = os.path.join(launchers_path,
                                       platform.system().lower())
