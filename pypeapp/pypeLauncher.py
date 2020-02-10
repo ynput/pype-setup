@@ -812,12 +812,17 @@ class PypeLauncher(object):
         import glob
         from pypeapp.lib.Terminal import Terminal
 
+        self._initialize()
         t = Terminal()
 
         t.echo(">>> validating ...")
         files = [f for f in glob.glob(
-            os.environ.get("PYPE_ROOT") + os.path.sep + "**/*.json",
-            recursive=True)]
+            os.environ.get("PYPE_CONFIG") + os.path.sep + "**/*.json",
+            recursive=True)] or []
+
+        files += [f for f in glob.glob(
+            os.environ.get("PYPE_PROJECT_CONFIGS") + os.path.sep + "**/*.json",
+            recursive=True)] or []
 
         failures = 0
         for f in files:
