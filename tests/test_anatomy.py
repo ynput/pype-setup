@@ -1,9 +1,7 @@
+import os
 import pytest
 from pypeapp import Anatomy
 import ruamel.yaml as yaml
-import os
-import pathlib
-from pprint import pprint
 
 
 valid_data = {
@@ -62,34 +60,29 @@ def anatomy_file(tmp_path):
 def test_format_anatomy():
 
     anatomy = Anatomy()
-    a = anatomy.solve_dict(valid_templates, valid_data)
-    # formatted_no_optional = anatomy.solve_dict(template, test_data_2)
+    solved = anatomy.solve_dict(valid_templates, valid_data)
 
+    assert solved['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
+    assert solved['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
 
-
-    assert a['solved']['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
-    assert a['solved']['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
-
-    assert a['partial']['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
-    assert a['unsolved']
-    # assert formatted_no_optional == "iamrequiredKey"
+    assert solved['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
 
 
 def test_anatomy(anatomy_file, monkeypatch):
-
+    # TODO add test for `missing_keys` and `invalid_types`
+    anatomy_file = os.path.join(anatomy_file, "repos", "pype-config")
     print(anatomy_file)
-    monkeypatch.setitem(os.environ, 'PYPE_ROOT', anatomy_file)
+
+    monkeypatch.setitem(os.environ, 'PYPE_CONFIG', anatomy_file)
     anatomy = Anatomy()
 
-    a = anatomy.format_all(valid_data)
+    filled_all = anatomy.format_all(valid_data)
+    filled = anatomy.format(valid_data)
 
-    b = anatomy.format(valid_data)
+    assert filled_all['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
+    assert filled_all['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
+    assert filled_all['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
 
-    assert a['solved']['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
-    assert a['solved']['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
-    assert a['partial']['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
-    assert a['unsolved']
-
-    assert b['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
-    assert b['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
-    assert b['work']['multiple_optional'] == "PRJ/BOB/asset/characters_v001.ABC"
+    assert filled['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
+    assert filled['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
+    assert filled['work']['multiple_optional'] == "PRJ/BOB/asset/characters_v001.ABC"

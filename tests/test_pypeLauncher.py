@@ -18,7 +18,11 @@ class TestPypeLauncher():
         test_env = {
             "FOO": "orange:apple",
             "BAR": "K:\\Windows\\Path\\Pear",
-            "BAZ": "/mnt/path/Pear"
+            "BAZ": "/mnt/path/Pear",
+            "GOO": [
+                "/mnt/path/banana",
+                {"BOO": "/mnt/path/kiwi"}
+            ]
         }
 
         test_storage = """\
@@ -45,6 +49,8 @@ class TestPypeLauncher():
         assert result.get("BAR") == "/mnt/path/Pear"
 
         result = PypeLauncher().path_remapper(test_env, "linux", "windows")
-        assert result.get("BAZ") == "K:/Windows/Path/Pear"
-        assert result.get("BAR") == "K:\\Windows\\Path\\Pear"
+        assert result.get("BAZ") == r"\\store\mnt\path\Pear"
+        assert result.get("BAR") == r"K:\Windows\Path\Pear"
         assert result.get("FOO") == "orange:apple"
+        assert result.get("GOO")[0] == r"\\store\mnt\path\banana"
+        assert result.get("GOO")[1].get("BOO") == r"\\store\mnt\path\kiwi"
