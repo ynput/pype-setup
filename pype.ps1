@@ -288,10 +288,9 @@ function Install-Environment {
 function Check-Environment {
   # get current pip environment
   Log-Msg -Text ">>> ", "Validating environment dependencies ... " -Color Green, Gray -NoNewLine
-  $p = &{pip freeze}
+  & python "$($env:PYPE_ROOT)\pypeapp\requirements.py"
   # get requirements file
-  $r = Get-Content "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
-  if (Compare-Object -ReferenceObject $p -DifferenceObject $r) {
+  if ($LASTEXITCODE -ne 0) {
     # environment differs from requirements.txt
     Log-Msg -Text "FAILED" -Color Yellow
     # TODO: Fix only if option flag present?
