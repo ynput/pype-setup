@@ -249,7 +249,7 @@ install_environment () {
 ###############################################################################
 check_environment () {
   echo -e "${IGreen}>>>${RST} Validating environment dependencies ... \c"
-  diff <(sort pypeapp/requirements.txt) <(pip3 freeze | sort) > /dev/null
+  $PYTHON "$PYPE_ROOT/pypeapp/requirements.py"
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}FAILED${RST}"
     echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
