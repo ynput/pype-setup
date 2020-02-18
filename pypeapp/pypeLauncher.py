@@ -570,9 +570,6 @@ class PypeLauncher(object):
         :rtype: dict or list
         """
         from pypeapp.storage import Storage
-        from pypeapp.lib.Terminal import Terminal
-
-        t = Terminal()
 
         _platform_name = [
             ("win32", "windows"),
@@ -639,17 +636,12 @@ class PypeLauncher(object):
                             out = os.path.normpath(out)
                         else:
                             out = out.replace("\\", "/")
-                        t.echo("  - Remapping [{}] -> [{}]".format(var, out))
                         if isinstance(data, dict):
-                            t.echo("- {}: {}".format(key, out))
                             remapped[key] = out
-                            t.echo("* {}".format(remapped.get(key)))
                         else:
                             remapped.append(out)
                         done_keys.append(key)
                     elif key not in done_keys:
-
-                        t.echo("- skip {}: {}".format(key, var))
                         if isinstance(data, dict):
                             remapped[key] = var
                         else:
