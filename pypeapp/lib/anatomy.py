@@ -229,6 +229,9 @@ class Anatomy:
     sub_dict_pattern = re.compile(r"([^\[\]]+)")
     optional_pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
 
+    anatomy_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
+    anatomy_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
+
     def __init__(self, project=None, keep_updated=False):
         if not project:
             project = os.environ.get('AVALON_PROJECT', None)
@@ -292,6 +295,180 @@ class Anatomy:
                         print(exc)
             anatomy = config.update_dict(anatomy, proj_anatomy)
         return anatomy
+
+    def _solve_anatomy_inner_links(self, anatomy):
+        default_key_value_keys = []
+        for key, value in anatomy.items():
+            if isinstance(value, dict):
+                continue
+            default_key_value_keys.append(key)
+
+        default_key_values = {}
+        for key in default_key_value_keys:
+            default_key_values[key] = anatomy.pop(key)
+
+        keys_by_subkey = {}
+        for sub_key, sub_value in anatomy.items():
+            key_values = {}
+            key_values.update(default_key_values)
+            key_values.update(sub_value)
+
+            all_filled = False
+            while not all_filled:
+                found = False
+                keys_to_pop = []
+                for key, value in key_values.items():
+                    if isinstance(value, StringType):
+                        matches = self.anatomy_key_pattern.findall(value)
+                        if not matches:
+                            continue
+
+                        found = True
+                        for match in matches:
+                            anatomy_sub_keys = (
+                                self.anatomy_key_name_pattern.findall(match)
+                            )
+                            for anatomy_sub_key in anatomy_sub_keys:
+                                replace_value = key_values.get(anatomy_sub_key)
+                                if replace_value is None:
+                                    raise KeyError((
+                                        "Anatomy templates can't be filled."
+                                        " Anatomy key `{0}` has"
+                                        " invalid inner key `{1}`."
+                                    ).format(key, anatomy_sub_key))
+                                valid = isinstance(
+                                    replace_value,
+                                    (numbers.Number, StringType)
+                                )
+                                if not valid:
+                                    raise ValueError((
+                                        "Anatomy templates can't be filled."
+                                        " Anatomy key `{0}` has"
+                                        " invalid inner key `{1}`"
+                                        " with value `{2}`."
+                                    ).format(
+                                        key,
+                                        anatomy_sub_key,
+                                        str(replace_value)
+                                    ))
+
+                                replace_value = str(
+                                    key_values[anatomy_sub_key]
+                                )
+                                value = value.replace(match, replace_value)
+
+                        key_values[key] = value
+                        continue
+
+                    elif not isinstance(value, dict):
+                        continue
+
+                    for _key, _value in value.items():
+                        matches = self.anatomy_key_pattern.findall(_value)
+                        if not matches:
+                            continue
+
+                        found = True
+
+                        for match in matches:
+                            anatomy_sub_keys = (
+                                self.anatomy_key_name_pattern.findall(match)
+                            )
+                            for anatomy_sub_key in anatomy_sub_keys:
+                                replace_value = key_values.get(anatomy_sub_key)
+                                if replace_value is None:
+                                    raise KeyError((
+                                        "Anatomy templates can't be filled."
+                                        " Anatomy key `{0}` has"
+                                        " invalid inner key `{1}`."
+                                    ).format(key, anatomy_sub_key))
+                                valid = isinstance(
+                                    replace_value,
+                                    (numbers.Number, StringType)
+                                )
+                                if not valid:
+                                    raise ValueError((
+                                        "Anatomy templates can't be filled."
+                                        " Anatomy key `{0}` has"
+                                        " invalid inner key `{1}`"
+                                        " with value `{2}`."
+                                    ).format(
+                                        key,
+                                        anatomy_sub_key,
+                                        str(replace_value)
+                                    ))
+
+                                replace_value = str(
+                                    key_values[anatomy_sub_key]
+                                )
+                                _value = _value.replace(match, replace_value)
+
+                        key_values[key][_key] = _value
+
+                if not found:
+                    break
+
+            keys_by_subkey[sub_key] = key_values
+
+        all_filled = False
+        while not all_filled:
+            found = False
+            keys_to_pop = []
+            for key, value in default_key_values.items():
+                matches = None
+                if isinstance(value, StringType):
+                    matches = self.anatomy_key_pattern.findall(value)
+
+                if not matches:
+                    keys_by_subkey[key] = value
+                    keys_to_pop.append(key)
+                    continue
+
+                found = True
+                for match in matches:
+                    anatomy_sub_keys = (
+                        self.anatomy_key_name_pattern.findall(match)
+                    )
+                    for anatomy_sub_key in anatomy_sub_keys:
+                        replace_value = key_values.get(anatomy_sub_key)
+                        if replace_value is None:
+                            raise KeyError((
+                                "Anatomy templates can't be filled."
+                                " Anatomy key `{0}` has"
+                                " invalid inner key `{1}`."
+                            ).format(key, anatomy_sub_key))
+                        valid = isinstance(
+                            replace_value,
+                            (numbers.Number, StringType)
+                        )
+                        if not valid:
+                            raise ValueError((
+                                "Anatomy templates can't be filled."
+                                " Anatomy key `{0}` has"
+                                " invalid inner key `{1}`"
+                                " with value `{2}`."
+                            ).format(
+                                key,
+                                anatomy_sub_key,
+                                str(replace_value)
+                            ))
+
+                        value = value.replace(match, str(replace_value))
+
+                default_key_values[key] = value
+
+            for key in keys_to_pop:
+                default_key_values.pop(key)
+
+            if not found:
+                all_filled = True
+                break
+
+        for key, value in default_key_values.items():
+            if key not in keys_by_subkey:
+                keys_by_subkey[key] = value
+
+        return keys_by_subkey
 
     def _filter_optional(self, template, data):
         """Filter invalid optional keys.
@@ -431,7 +608,6 @@ class Anatomy:
                 next_dict, _keys, value
             )
         return current_used
-
 
     def _format(self, orig_template, data):
         ''' Figure out with whole formatting.
