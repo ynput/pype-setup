@@ -294,7 +294,34 @@ class Anatomy:
                     except yaml.YAMLError as exc:
                         print(exc)
             anatomy = config.update_dict(anatomy, proj_anatomy)
-        return anatomy
+        return self._solve_anatomy_inner_links(anatomy)
+
+    def _replace_inner_keys(self, matches, value, key_values, key):
+        for match in matches:
+            anatomy_sub_keys = (
+                self.anatomy_key_name_pattern.findall(match)
+            )
+            for anatomy_sub_key in anatomy_sub_keys:
+                replace_value = key_values.get(anatomy_sub_key)
+                if replace_value is None:
+                    raise KeyError((
+                        "Anatomy templates can't be filled."
+                        " Anatomy key `{0}` has"
+                        " invalid inner key `{1}`."
+                    ).format(key, anatomy_sub_key))
+
+                valid = isinstance(replace_value, (numbers.Number, StringType))
+                if not valid:
+                    raise ValueError((
+                        "Anatomy templates can't be filled."
+                        " Anatomy key `{0}` has"
+                        " invalid inner key `{1}`"
+                        " with value `{2}`."
+                    ).format(key, anatomy_sub_key, str(replace_value)))
+
+                value = value.replace(match, str(replace_value))
+
+        return value
 
     def _solve_anatomy_inner_links(self, anatomy):
         default_key_value_keys = []
@@ -324,40 +351,9 @@ class Anatomy:
                             continue
 
                         found = True
-                        for match in matches:
-                            anatomy_sub_keys = (
-                                self.anatomy_key_name_pattern.findall(match)
-                            )
-                            for anatomy_sub_key in anatomy_sub_keys:
-                                replace_value = key_values.get(anatomy_sub_key)
-                                if replace_value is None:
-                                    raise KeyError((
-                                        "Anatomy templates can't be filled."
-                                        " Anatomy key `{0}` has"
-                                        " invalid inner key `{1}`."
-                                    ).format(key, anatomy_sub_key))
-                                valid = isinstance(
-                                    replace_value,
-                                    (numbers.Number, StringType)
-                                )
-                                if not valid:
-                                    raise ValueError((
-                                        "Anatomy templates can't be filled."
-                                        " Anatomy key `{0}` has"
-                                        " invalid inner key `{1}`"
-                                        " with value `{2}`."
-                                    ).format(
-                                        key,
-                                        anatomy_sub_key,
-                                        str(replace_value)
-                                    ))
-
-                                replace_value = str(
-                                    key_values[anatomy_sub_key]
-                                )
-                                value = value.replace(match, replace_value)
-
-                        key_values[key] = value
+                        key_values[key] = self._replace_inner_keys(
+                            matches, value, key_values, key
+                        )
                         continue
 
                     elif not isinstance(value, dict):
@@ -369,41 +365,10 @@ class Anatomy:
                             continue
 
                         found = True
-
-                        for match in matches:
-                            anatomy_sub_keys = (
-                                self.anatomy_key_name_pattern.findall(match)
-                            )
-                            for anatomy_sub_key in anatomy_sub_keys:
-                                replace_value = key_values.get(anatomy_sub_key)
-                                if replace_value is None:
-                                    raise KeyError((
-                                        "Anatomy templates can't be filled."
-                                        " Anatomy key `{0}` has"
-                                        " invalid inner key `{1}`."
-                                    ).format(key, anatomy_sub_key))
-                                valid = isinstance(
-                                    replace_value,
-                                    (numbers.Number, StringType)
-                                )
-                                if not valid:
-                                    raise ValueError((
-                                        "Anatomy templates can't be filled."
-                                        " Anatomy key `{0}` has"
-                                        " invalid inner key `{1}`"
-                                        " with value `{2}`."
-                                    ).format(
-                                        key,
-                                        anatomy_sub_key,
-                                        str(replace_value)
-                                    ))
-
-                                replace_value = str(
-                                    key_values[anatomy_sub_key]
-                                )
-                                _value = _value.replace(match, replace_value)
-
-                        key_values[key][_key] = _value
+                        key_values[key][_key] = self._replace_inner_keys(
+                            matches, _value, key_values,
+                            "{}.{}".format(key, _key)
+                        )
 
                 if not found:
                     break
@@ -425,37 +390,9 @@ class Anatomy:
                     continue
 
                 found = True
-                for match in matches:
-                    anatomy_sub_keys = (
-                        self.anatomy_key_name_pattern.findall(match)
-                    )
-                    for anatomy_sub_key in anatomy_sub_keys:
-                        replace_value = key_values.get(anatomy_sub_key)
-                        if replace_value is None:
-                            raise KeyError((
-                                "Anatomy templates can't be filled."
-                                " Anatomy key `{0}` has"
-                                " invalid inner key `{1}`."
-                            ).format(key, anatomy_sub_key))
-                        valid = isinstance(
-                            replace_value,
-                            (numbers.Number, StringType)
-                        )
-                        if not valid:
-                            raise ValueError((
-                                "Anatomy templates can't be filled."
-                                " Anatomy key `{0}` has"
-                                " invalid inner key `{1}`"
-                                " with value `{2}`."
-                            ).format(
-                                key,
-                                anatomy_sub_key,
-                                str(replace_value)
-                            ))
-
-                        value = value.replace(match, str(replace_value))
-
-                default_key_values[key] = value
+                default_key_values[key] = self._replace_inner_keys(
+                    matches, value, default_key_values, key
+                )
 
             for key in keys_to_pop:
                 default_key_values.pop(key)
