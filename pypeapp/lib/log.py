@@ -14,16 +14,19 @@ Best place for it is in ``repos/pype-config/environments/global.json``
 
 import logging
 import os
+import sys
 import datetime
 import time
 import datetime as dt
 import platform
 import getpass
+import socket
 try:
     from urllib.parse import urlparse, parse_qs
 except ImportError:
     from urlparse import urlparse, parse_qs
 
+from bson.objectid import ObjectId
 try:
     from log4mongo.handlers import MongoHandler
 except ImportError:
@@ -42,6 +45,25 @@ except NameError:
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
+
+MONGO_PROCESS_ID = ObjectId()
+system_name, pc_name = platform.uname()[:2]
+host_name = socket.gethostname()
+host_id = socket.gethostbyname(host_name)
+
+# Get process name
+if len(sys.argv) > 0 and os.path.basename(sys.argv[0]) == "tray.py":
+    process_name = "Tray"
+else:
+    try:
+        import psutil
+        process = psutil.Process(os.getpid())
+        process_name = process.name()
+
+    except ImportError:
+        process_name = os.environ.get("AVALON_APP_NAME")
+        if not process_name:
+            process_name = os.path.basename(sys.executable)
 
 
 def _mongo_settings():
@@ -241,8 +263,12 @@ class PypeMongoFormatter(logging.Formatter):
             'module': record.module,
             'method': record.funcName,
             'lineNumber': record.lineno,
-            'host': platform.node(),
-            'user': getpass.getuser()
+            'process_id': MONGO_PROCESS_ID,
+            'hostname': host_name,
+            'hostip': host_id,
+            'username': getpass.getuser(),
+            'system_name': system_name,
+            'process_name': process_name
         }
         # Standard document decorated with exception info
         if record.exc_info is not None:
