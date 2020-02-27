@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 from pypeapp import style, Logger
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
 from pypeapp.lib.config import get_presets
@@ -10,16 +9,16 @@ try:
 except Exception:
     import ConfigParser as configparser
 
-IS_DEV = True
+IS_DEV = False
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 config_file_path = os.path.join(cur_dir, "config.ini")
 if os.path.exists(config_file_path):
     config = configparser.ConfigParser()
     config.read(config_file_path)
     try:
-        value = config["DEFAULT"]["production"]
+        value = config["DEFAULT"]["dev"]
         if value.lower() == "true":
-            IS_DEV = False
+            IS_DEV = True
     except KeyError:
         pass
 
