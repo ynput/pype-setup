@@ -10,7 +10,7 @@ try:
 except Exception:
     import ConfigParser as configparser
 
-IS_DEV = False
+IS_DEV = True
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 config_file_path = os.path.join(cur_dir, "config.ini")
 if os.path.exists(config_file_path):
@@ -18,8 +18,8 @@ if os.path.exists(config_file_path):
     config.read(config_file_path)
     try:
         value = config["DEFAULT"]["production"]
-        if value.lower() != "true":
-            IS_DEV = True
+        if value.lower() == "true":
+            IS_DEV = False
     except KeyError:
         pass
 
