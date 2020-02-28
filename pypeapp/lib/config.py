@@ -172,6 +172,30 @@ def collect_json_from_path(input_path, first_run=False):
     return output
 
 
+def apply_overrides(keys, in_dict, content, orig_keys=None):
+    if len(keys) == 0:
+        raise AssertionError("This is a bug")
+
+    if orig_keys is None:
+        orig_keys = list(keys)
+
+    key = keys.pop(0)
+    if key not in in_dict:
+        in_dict[key] = {}
+
+    elif not isinstance(in_dict[key], dict):
+        path = "/".join(orig_keys)
+        raise TypeError((
+            "Incompatible Project overrides. Expected dictionary for `{}`"
+        ).format(path))
+
+    if len(keys) == 0:
+        in_dict[key] = content
+    else:
+        in_dict[key] = apply_overrides(keys, in_dict[key], content, orig_keys)
+    return in_dict
+
+
 def get_presets(project=None, first_run=False):
     """ Loads preset files with usage of 'collect_json_from_path'
     Default preset path is set to: ``{PYPE_CONFIG}/presets``
@@ -196,35 +220,56 @@ def get_presets(project=None, first_run=False):
     """
     # config_path should be set from environments?
     config_path = os.path.normpath(os.environ['PYPE_CONFIG'])
-    preset_items = [config_path, 'presets']
-    config_path = os.path.sep.join(preset_items)
+    config_path = os.path.join(config_path, "presets")
     if not os.path.isdir(config_path):
         log.error('Preset path was not found: "{}"'.format(config_path))
         return None
-    default_data = collect_json_from_path(config_path, first_run)
+    presets_data = collect_json_from_path(config_path, first_run)
 
     if not project:
         project = os.environ.get('AVALON_PROJECT', None)
 
     if not project:
-        return default_data
+        return presets_data
 
     project_configs_path = os.environ.get('PYPE_PROJECT_CONFIGS')
     if not project_configs_path:
-        return default_data
+        return presets_data
 
     project_configs_path = os.path.normpath(project_configs_path)
-    project_config_items = [project_configs_path, project, 'presets']
-    project_config_path = os.path.sep.join(project_config_items)
+    project_config_path = os.path.join(
+        project_configs_path, project, "presets"
+    )
 
     if not os.path.isdir(project_config_path):
         log.warning('Preset path for project {} not found: "{}"'.format(
             project, project_config_path
         ))
-        return default_data
-    project_data = collect_json_from_path(project_config_path, first_run)
+        return presets_data
 
-    return update_dict(default_data, project_data)
+    # Project overrides - per file
+    for subdir, dirs, file_names in os.walk(project_config_path):
+        _subdir = subdir[len(project_config_path):]
+        # Remove `\` and `/` from start of subdict
+        while _subdir.startswith("\\") or _subdir.startswith("/"):
+            _subdir = _subdir[1:]
+
+        for file_name in file_names:
+            basename, exc = os.path.splitext(file_name)
+            # Care only about jsons
+            if exc != ".json":
+                continue
+
+            # Load content
+            full_path = os.path.join(subdir, file_name)
+            content = load_json(full_path, first_run)
+
+            # Apply project overrides
+            keys_string = os.path.join(_subdir, basename)
+            keys = keys_string.split(os.path.sep)
+            presets_data = apply_overrides(keys, presets_data, content)
+
+    return presets_data
 
 
 def get_init_presets(project=None):
