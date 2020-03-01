@@ -113,7 +113,10 @@ class AnatomyDict(dict):
     def __init__(self, in_data, key=None, parent=None, strict=None):
         super(AnatomyDict, self).__init__()
         for _key, _value in in_data.items():
-            if not isinstance(_value, AnatomyResult):
+            if (
+                not isinstance(_value, numbers.Number) and
+                not isinstance(_value, AnatomyResult)
+            ):
                 _value = self.__class__(_value, _key, self)
             self[_key] = _value
 
