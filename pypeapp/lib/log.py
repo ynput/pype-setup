@@ -26,7 +26,6 @@ try:
 except ImportError:
     from urlparse import urlparse, parse_qs
 
-from bson.objectid import ObjectId
 try:
     from log4mongo.handlers import MongoHandler
 except ImportError:
@@ -46,7 +45,10 @@ except NameError:
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
 
-MONGO_PROCESS_ID = ObjectId()
+if _mongo_logging:
+    from bson.objectid import ObjectId
+    MONGO_PROCESS_ID = ObjectId()
+
 system_name, pc_name = platform.uname()[:2]
 host_name = socket.gethostname()
 host_id = socket.gethostbyname(host_name)
@@ -375,8 +377,11 @@ class PypeLogger:
 
         if len(logger.handlers) > 0:
             for handler in logger.handlers:
-                if (not isinstance(handler, MongoHandler)
-                   and not isinstance(handler, PypeStreamHandler)):
+                if (
+                    _mongo_logging and
+                    not isinstance(handler, MongoHandler) and
+                    not isinstance(handler, PypeStreamHandler)
+                ):
                     if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:  # noqa
                         logger.addHandler(self._get_mongo_handler())
                         pass
