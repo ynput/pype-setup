@@ -159,6 +159,7 @@ function Start-Progress {
   #>
 }
 
+
 function Log-Msg {
   param (
         [alias ('T')] [String[]]$Text,
@@ -211,7 +212,13 @@ function Log-Msg {
         Write-Color -Text $Text -Color $Color
     }
   }
+  <#
+  .SYNOPSIS
+  This is wrapped Write-Color function allowing to disable output coloring
+  based on environment variable PYPE_LOG_NO_COLORS
+  #>
 }
+
 
 function Activate-Venv {
   param(
@@ -263,6 +270,7 @@ function Update-Requirements {
   #>
 }
 
+
 function Install-Environment {
   if($help -eq $true) {
     & python -m "pypeapp" install --help
@@ -278,6 +286,7 @@ function Install-Environment {
     Log-Msg -Text "!!! ", "Installation failed (", $LASTEXITCODE, ")" -Color Red, Yellow, Magenta, Yellow
     exit 1
   }
+  Pyc-Cleaner
   <#
   .SYNOPSIS
   Install virtual environment
@@ -305,6 +314,8 @@ function Check-Environment {
       Log-Msg -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
       return 1
     }
+    Pyc-Cleaner -Path $env:PYPE_ENV
+    Pyc-Cleaner
   } else {
     Log-Msg -Text "OK" -Color Green
   }
@@ -313,6 +324,7 @@ function Check-Environment {
   This checks current environment against pype's requirement.txt
   #>
 }
+
 
 function Upgrade-pip {
   if ($offline -ne $true)
@@ -328,6 +340,7 @@ function Upgrade-pip {
   Upgrade pip to latest version
   #>
 }
+
 
 function Bootstrap-Pype {
 
@@ -353,6 +366,7 @@ function Bootstrap-Pype {
       return 1
     }
   }
+  Pyc-Cleaner
   <#
   .SYNOPSIS
   This will install all requirements necessary from requirements.txt
@@ -400,9 +414,6 @@ function Validate-Pype {
   Requires git
   #>
 }
-
-
-
 
 
 function Detect-Mongo {
@@ -472,6 +483,7 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
   #>
 }
 
+
 function Detect-Git {
   Log-Msg -Text ">>> ", "Detecting Git ... " -Color Green, Gray -NoNewLine
   if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
@@ -501,6 +513,7 @@ function Test-Offline {
   #>
 }
 
+
 function Download {
   Test-Offline
   if ($offline -eq $true) {
@@ -518,14 +531,32 @@ function Download {
   #>
 }
 
+
 function Localize-Bin {
-  Log-Msg -Text ">>> ", "Localizing [ ", "vendor/bin", " ]" -Color Green, Gray, White, Gray
+  Log-Msg -Text ">>> ", "Localizing [ ", "vendor\bin", " ]" -Color Green, Gray, White, Gray
   Copy-Item -Force -Recurse "$($env:PYPE_ROOT)\vendor\bin\" -Destination "$($env:PYPE_ENV)\localized\"
   <#
   .SYNOPSIS
   Copy stuff in vendor/bin to $PYPE_ENV/localized
   #>
 }
+
+function Pyc-Cleaner {
+  param(
+    [alias ('Path')][string]$Path = $pwd
+  )
+  Log-Msg -Text ">>> ", "Cleaning pyc [ ", $Path, " ] ..." -Color Green, Gray, White, Gray -NoNewLine
+  Get-ChildItem -Filter "$($path)\*.pyc" -Force -Recurse | Remove-Item -Force
+  Log-Msg -Text "DONE" -Color Green
+  <#
+  .SYNOPSIS
+  This function will clean recursively all python pyc files. If Path not present
+  then current directory will be used.
+  .PARAMETER Path
+  Path to clean.
+  #>
+}
+
 
 # -----------------------------------------------------------------------------
 # main
@@ -536,9 +567,7 @@ Log-Msg -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White, Gra
 
 # Clean pyc
 if ($clean -eq $true) {
-  Log-Msg -Text ">>> ", "Cleaning pyc ... " -Color Green, White, Gray -NoNewLine
-  Get-ChildItem -Filter '*.pyc' -Force -Recurse | Remove-Item -Force
-  Log-Msg -Text "DONE" -Color Green
+  Pyc-Cleaner
   Log-Msg -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
   exit 0
 }
