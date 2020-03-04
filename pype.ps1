@@ -543,10 +543,10 @@ function Localize-Bin {
 
 function Pyc-Cleaner {
   param(
-    [alias ('Path')][string]$Path = $pwd
+    [alias ('P')][string]$Path = $pwd
   )
-  Log-Msg -Text ">>> ", "Cleaning pyc [ ", $Path, " ] ..." -Color Green, Gray, White, Gray -NoNewLine
-  Get-ChildItem -Filter "$($path)\*.pyc" -Force -Recurse | Remove-Item -Force
+  Log-Msg -Text ">>> ", "Cleaning pyc [ ", $Path, " ] ... " -Color Green, Gray, White, Gray -NoNewLine
+  Get-ChildItem $path -Filter ".pyc" -Force -Recurse | Remove-Item -Force
   Log-Msg -Text "DONE" -Color Green
   <#
   .SYNOPSIS
