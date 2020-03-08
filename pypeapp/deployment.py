@@ -629,7 +629,9 @@ class Deployment(object):
                         tar_file = tarfile.open(archive_file_path, tar_type)
                     except tarfile.ReadError:
                         raise DeployException(
-                            "corrupted archive"
+                            "corrupted archive: also consider to download the "
+                            "archive manually, add its path to the url, run "
+                            "`./pype deploy`"
                         )
                     tar_file.extractall(path)
                     tar_file.close()

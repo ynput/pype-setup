@@ -376,7 +376,7 @@ class PypeLauncher(object):
         # find path from different platforms in environment and remap it to
         # current platform paths. Only those paths specified in Storage
         # will be remapped.
-        os.environ.update(self.path_remapper())
+        # os.environ.update(self.path_remapper())
 
         from pype import install, uninstall
         # Register target and host
@@ -392,12 +392,11 @@ class PypeLauncher(object):
             t.echo("No publish paths specified")
             return False
 
-        if paths:
-            remapped_path = self.path_remapper(
-                {
-                    "PYPE_PUBLISH_PATHS": os.pathsep.join(paths)
-                })
-            os.environ.update(remapped_path)
+        remapped_path = self.path_remapper(
+            {
+                "PYPE_PUBLISH_DATA": os.pathsep.join(paths)
+            })
+        os.environ.update(remapped_path)
 
         if gui:
             import pyblish_qml
@@ -571,9 +570,6 @@ class PypeLauncher(object):
         :rtype: dict or list
         """
         from pypeapp.storage import Storage
-        from pypeapp.lib.Terminal import Terminal
-
-        t = Terminal()
 
         _platform_name = [
             ("win32", "windows"),
@@ -615,19 +611,18 @@ class PypeLauncher(object):
                     if not string:
                         continue
                     # work only on strings
-                    t.echo("{}: {}".format(skey, string))
-                    # t.echo("type: {}".format(type(var)))
                     if not isinstance(var, str):
                         # if another dict is found, recurse
                         if isinstance(var, dict) or isinstance(var, list):
-                            t.echo("recurse")
-                            revar = self.path_remapper(data=var,
-                                                       source=source,
-                                                       to=to)
-                            if isinstance(data, dict):
-                                remapped[key] = revar
-                            else:
-                                remapped.append(revar)
+                            # don't get into empty oness
+                            if var:
+                                revar = self.path_remapper(data=var,
+                                                           source=source,
+                                                           to=to)
+                                if isinstance(data, dict):
+                                    remapped[key] = revar
+                                else:
+                                    remapped.append(revar)
                         else:
                             if isinstance(data, dict):
                                 remapped[key] = var
@@ -641,17 +636,12 @@ class PypeLauncher(object):
                             out = os.path.normpath(out)
                         else:
                             out = out.replace("\\", "/")
-                        t.echo("  - Remapping [{}] -> [{}]".format(var, out))
                         if isinstance(data, dict):
-                            t.echo("- {}: {}".format(key, out))
                             remapped[key] = out
-                            t.echo("* {}".format(remapped.get(key)))
                         else:
                             remapped.append(out)
                         done_keys.append(key)
                     elif key not in done_keys:
-
-                        t.echo("- skip {}: {}".format(key, var))
                         if isinstance(data, dict):
                             remapped[key] = var
                         else:
@@ -699,7 +689,7 @@ class PypeLauncher(object):
         # find path from different platforms in environment and remap it to
         # current platform paths. Only those paths specified in Storage
         # will be remapped.
-        os.environ.update(self.path_remapper())
+        # os.environ.update(self.path_remapper())
 
         abspath = lib.which_app(app)
         if abspath is None:
