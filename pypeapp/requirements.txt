@@ -27,7 +27,7 @@ more-itertools==6.0.0
 OpenTimelineIO==0.10.0
 pathlib2==2.3.5
 packaging==19.0
-Pillow==6.0.0
+Pillow==6.2.0
 pico==2.0.5
 pluggy==0.8.1
 psutil==5.5.1
