@@ -22,11 +22,6 @@
       "branch": "master"
     },
     {
-      "name": "pyblish-qml",
-      "url": "https://github.com/pyblish/pyblish-qml.git",
-      "branch": "master"
-    },
-    {
       "name": "maya-look-assigner",
       "url": "git@github.com:pypeclub/maya-look-assigner.git",
       "branch": "master"
@@ -34,7 +29,7 @@
     {
       "name": "pype",
       "url": "git@github.com:pypeclub/pype-private.git",
-      "tag": "2.6.0"
+      "tag": "2.6.2"
     },
     {
       "name": "pype-config",
