@@ -3,38 +3,38 @@
   "init_env": ["global", "avalon", "ftrack", "deadline", "clockify"],
   "repositories": [{
       "name": "avalon-core",
-      "url": "git@github.com:pypeclub/avalon-core.git",
+      "url": "https://github.com/pypeclub/avalon-core.git",
       "branch": "2.6.0-pype"
     },
     {
       "name": "avalon-launcher",
-      "url": "git@github.com:pypeclub/avalon-launcher.git",
+      "url": "https://github.com/pypeclub/avalon-launcher.git",
       "branch": "develop"
     },
     {
       "name": "pyblish-base",
-      "url": "git@github.com:pypeclub/pyblish-base.git",
+      "url": "https://github.com/pypeclub/pyblish-base.git",
       "branch": "develop"
     },
     {
       "name": "pyblish-lite",
-      "url": "git@github.com:pypeclub/pyblish-lite.git",
+      "url": "https://github.com/pypeclub/pyblish-lite.git",
       "branch": "master"
     },
     {
       "name": "maya-look-assigner",
-      "url": "git@github.com:pypeclub/maya-look-assigner.git",
+      "url": "https://github.com/pypeclub/maya-look-assigner.git",
       "branch": "master"
     },
     {
       "name": "pype",
-      "url": "git@github.com:pypeclub/pype-private.git",
-      "tag": "2.6.2"
+      "url": "https://github.com/pypeclub/pype.git",
+      "tag": "2.6.4"
     },
     {
       "name": "pype-config",
-      "url": "git@github.com:pypeclub/pype-config-private.git",
-      "tag": "2.6.0"
+      "url": "https://github.com/pypeclub/pype-config.git",
+      "tag": "2.6.1"
     }
   ],
   "pip": [
