@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import copy
 import collections
 import numbers
@@ -576,3 +577,65 @@ class Anatomy:
         solved = self.solve_dict(self.templates, data)
 
         return AnatomyDict(solved)
+
+
+class Roots:
+    def __init__(self, project_name=None, keep_updated=False):
+        if not project_name:
+            project_name = os.environ.get("AVALON_PROJECT")
+
+        self._roots = None
+        self.loaded_project = None
+        self.project_name = project_name
+        self.keep_updated = keep_updated
+
+    @property
+    def roots(self):
+        if self.keep_updated:
+            project_name = os.environ.get("AVALON_PROJECT")
+            if project_name is not None and project_name != self.project_name:
+                self.project_name = project_name
+
+        if self.project_name != self.loaded_project:
+            self._roots = None
+
+        if self._roots is None:
+            self._roots = self._discover()
+            self.loaded_project = self.project_name
+        return self._roots
+
+    def _discover(self):
+        ''' Loads root from json.
+        Default roots are loaded all the time.
+
+        :rtype: dictionary
+        '''
+        path_items = ["anatomy", "roots.json"]
+        if self.project_name is None:
+            defaults_path_items = [os.environ["PYPE_CONFIG"]]
+            defaults_path_items.extend(path_items)
+
+            default_roots_path = os.path.normpath(
+                os.path.join(defaults_path_items)
+            )
+            with open(default_roots_path, "r") as default_roots_file:
+                default_roots = json.loads(default_roots_file)
+
+            return default_roots
+
+        project_configs_path = os.path.normpath(
+            os.environ.get("PYPE_PROJECT_CONFIGS", "")
+        )
+        project_config_items = [
+            project_configs_path,
+            self.project_name
+        ]
+        project_config_items.extend(path_items)
+        project_roots_path = os.path.sep.join(project_config_items)
+        if not os.path.exists(project_roots_path):
+            return None
+
+        with open(project_roots_path, "r") as project_roots_file:
+            project_roots = json.loads(project_roots_file)
+
+        return project_roots
