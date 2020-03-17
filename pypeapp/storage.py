@@ -34,19 +34,15 @@ class Storage:
         Example of storage::
 
            {
-                "studio": {
-                    "projects": {
-                        "path": {
-                            "windows": "//store/vfx/projects",
-                            "darwin": "//Volumes/vfx/projects",
-                            "linux": "/mnt/vfx/projects"
-                        },
-                        "mount": {
-                            "windows": "P:/vfx",
-                            "darwin": ""
-                            "linux": "/studio/pojects/vfx"
-                        }
-                    }
+                "path": {
+                    "windows": "//store/vfx/projects",
+                    "darwin": "//Volumes/vfx/projects",
+                    "linux": "/mnt/vfx/projects"
+                },
+                "mount": {
+                    "windows": "P:/vfx",
+                    "darwin": ""
+                    "linux": "/studio/pojects/vfx"
                 }
            }
 
@@ -54,7 +50,7 @@ class Storage:
         with content based on platform and ``PYPE_STUDIO_PROJECTS_MOUNT``.
     """
 
-    _prefix = 'PYPE'
+    _prefix = 'PYPE_CORE'
     _config = None
     _log = Logger().get_logger()
 
@@ -65,25 +61,24 @@ class Storage:
             :type storage: str
             :raises: :class:`PypeStorageException`
         """
+        storage = storage or os.environ.get('PYPE_CONFIG')
+
         if storage is None:
-            self._config = os.environ.get('PYPE_CONFIG')
-        else:
-            self._config = storage
-
-        if self._config is None:
             raise PypeStorageException(
-                'Path to storage definitions not provided.')
+                'Path to storage definitions not provided.'
+            )
 
-    def _get_storage_paths(self):
+        self._config = storage
+
+    def _get_storage_path(self):
         """ get paths to storage definition file and its schema
 
             :returns: resolved path to **storage.json**
             :rtype: str
         """
         config_path = Path(self._config)
-        storage_path = config_path / "system" / "storage.json"
-        schema_path = config_path / "system" / "storage_schema.json"
-        return [storage_path.as_posix(), schema_path.as_posix()]
+        storage_path = config_path / "system" / "core.json"
+        return storage_path.as_posix()
 
     def _read_storage_file(self, file: str) -> dict:
         """ Load JSON file containing storage informations.
@@ -96,48 +91,6 @@ class Storage:
         with open(file) as storage_file:
             data = json.load(storage_file)
         return data
-
-    def _read_schema(self, file: str) -> dict:
-        """ Reads json schema from file
-
-            :param file: path to schema json
-            :type file: str
-            :return: parsed json schema
-            :rtype: dict
-            :raises: :class:`PypeStorageException`
-        """
-        if (not os.path.exists(file)):
-            raise PypeStorageException(
-                "Cannot find schema to validate `{}`".format(
-                    self._deploy_file))
-        with open(file) as schema:
-            data = json.load(schema)
-        return data
-
-    def _validate_schema(self, settings: dict) -> bool:
-        """ Validate storage json against json schema.
-
-            :param settings: storage settings from parsed json
-            :type settings: dict
-            :return: True if validated, False if not
-            :rtype: bool
-
-            .. seealso::
-                :func:`Storage._read_schema`
-                :func:`Storage._read_storage_file`
-        """
-        paths = self._get_storage_paths()
-        schema = self._read_schema(paths[1])
-
-        try:
-            jsonschema.validate(settings, schema)
-        except jsonschema.exceptions.ValidationError as e:
-            self._log.error(e)
-            return False
-        except jsonschema.exceptions.SchemaError as e:
-            self._log.error(e)
-            return False
-        return True
 
     @staticmethod
     def paths(tree: dict, cur=()) -> tuple:
@@ -222,8 +175,8 @@ class Storage:
             :returns: content as dictionary
             :rtype: dict
         """
-        paths = self._get_storage_paths()
-        storage = self._read_storage_file(paths[0])
+        path = self._get_storage_path()
+        storage = self._read_storage_file(path)
 
         return storage
 
