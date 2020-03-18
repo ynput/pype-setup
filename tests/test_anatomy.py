@@ -20,7 +20,7 @@ valid_data = {
     'comment': 'iAmComment'
 }
 
-valid_templates = {
+solve_templates = {
     "resources": {
         "footage": "{root[resources]}/{nonExistent}/resources/footage"
     },
@@ -38,6 +38,24 @@ valid_templates = {
     }
 }
 
+features_templates = {
+    "version_padding": 3,
+    "version": "v{version:0>{@version_padding}}",
+    "inner_keys": {
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{@version}",
+        "file": "{project[code]}_{asset}_{task}_v{version:0>3}<_{comment}>.{ext}",
+        "path": "{@folder}/{@file}"
+    },
+    "missing_keys": {
+        "missing_1": "{missing_key}/{project[code]}_{asset}",
+        "missing_2": "{project[code]}_{missing_key1}_{asset}_{task}_v{version:0>3}<_{comment}>.{ext}{missing_key2}"
+    },
+    "invalid_types": {
+        "invalid_type": "{project}_{asset[name]}"
+    }
+}
+features_templates.update(solve_templates)
+
 
 @pytest.fixture
 def anatomy_file(tmp_path):
@@ -53,14 +71,14 @@ def anatomy_file(tmp_path):
     os.makedirs(yaml_path)
     yaml_file = yaml_path / "default.yaml"
     with open(yaml_file.as_posix(), "w") as write_yaml:
-        yaml.dump(valid_templates, write_yaml)
+        yaml.dump(features_templates, write_yaml)
     return tmp_path.as_posix()
 
 
 def test_format_anatomy():
 
     anatomy = Anatomy()
-    solved = anatomy.solve_dict(valid_templates, valid_data)
+    solved = anatomy.solve_dict(solve_templates, valid_data)
 
     assert solved['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
     assert solved['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
@@ -83,6 +101,22 @@ def test_anatomy(anatomy_file, monkeypatch):
     assert filled_all['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
     assert filled_all['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
 
+    assert filled_all['missing_keys']['missing_1'].missing_keys == ["missing_key"]
+    assert sorted(filled_all['missing_keys']['missing_2'].missing_keys) == ["missing_key1", "missing_key2"]
+
+    assert filled_all["invalid_types"]["invalid_type"].invalid_types == {
+        "project": dict,
+        "asset": str
+    }
+
     assert filled['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
     assert filled['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
     assert filled['work']['multiple_optional'] == "PRJ/BOB/asset/characters_v001.ABC"
+
+    try:
+        filled_all['work']['noDictKey']
+        raise AssertionError("Should raise error about missing key")
+    except Exception:
+        pass
+
+    assert filled["inner_keys"]["path"] == "\\volume\\projects/P001_ProjectX/asset/characters/BOB/publish/v001/PRJ_BOB_MODELING_v001_iAmComment.ABC"
