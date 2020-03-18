@@ -25,7 +25,6 @@ solve_templates = {
         "comment": "{asset}_{task}_v{version:0>3}<_{comment}>.{ext}",
         "nocomment": "{asset}_{task}_v{version:0>3}<_{nocomment}>.{ext}",
         "noDictKey": "{project[code]}_{asset[name]}_v{version:0>3}.{ext}",
-        "noDictKey": "{project[code]}_{asset[name]}_v{version:0>3}.{ext}",
         "multiple_optional": "{project[code]}</{asset}></{hierarchy}><_v{version:0>3}><_{nocomment}>.{ext}"
     }
 }
@@ -86,7 +85,6 @@ def test_format_anatomy():
 
 
 def test_anatomy(anatomy_file, monkeypatch):
-    # TODO add test for `invalid_types`
     anatomy_file = os.path.join(anatomy_file, "repos", "pype-config")
     print(anatomy_file)
 
@@ -111,20 +109,8 @@ def test_anatomy(anatomy_file, monkeypatch):
         "asset": str
     }
 
-    assert filled['basic']['comment'] == "BOB_MODELING_v001_iAmComment.ABC"
-    assert filled['basic']['nocomment'] == "BOB_MODELING_v001.ABC"
-    assert filled['basic']['multiple_optional'] == "PRJ/BOB/asset/characters_v001.ABC"
-
-    try:
-        filled_all['basic']['noDictKey']
-        raise AssertionError("Should raise error about missing key")
-    except Exception:
-        pass
-
     inner_path = "P001_ProjectX/asset/characters/BOB/v001/PRJ_BOB_v001.ABC"
     assert filled["inner_keys"]["path"] == inner_path
 
     inner_override_file = "PRJ_BOB_ver01.ABC"
     assert filled["inner_override"]["file"] == inner_override_file
-
-    inner_path = "P001_ProjectX/asset/characters/BOB/v001/PRJ_BOB_ver01.ABC"
