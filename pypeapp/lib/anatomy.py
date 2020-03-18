@@ -2,6 +2,7 @@ import os
 import re
 import json
 import copy
+import platform
 import collections
 import numbers
 try:
@@ -10,6 +11,8 @@ except NameError:
     StringType = str
 
 from . import config
+from .log import PypeLogger
+
 try:
     import ruamel.yaml as yaml
 except ImportError:
@@ -26,6 +29,8 @@ else:
             )
         )
         open(file_path, "a").close()
+
+log = PypeLogger().get_logger(__name__)
 
 
 class AnatomyMissingKey(Exception):
@@ -696,6 +701,8 @@ class Anatomy:
 
 
 class Roots:
+    root_expected_keys = ["mount", "path"]
+
     def __init__(self, project_name, keep_updated=False):
         self._roots = None
         self.loaded_project = None
@@ -722,6 +729,56 @@ class Roots:
 
         return self._roots
 
+    def default_roots(self, path_items):
+        defaults_path_items = [os.environ["PYPE_CONFIG"]]
+        defaults_path_items.extend(path_items)
+
+        default_roots_path = os.path.normpath(
+            os.path.join(defaults_path_items)
+        )
+        with open(default_roots_path, "r") as default_roots_file:
+            default_roots = json.load(default_roots_file)
+
+        return self.choose_platform(default_roots)
+
+    def choose_platform(self, roots_data):
+        output = {}
+        platform_name = platform.system().lower()
+        for root_key, mount_path_values in roots_data.items():
+            output[root_key] = {}
+            missing_keys = []
+            for key in self.root_expected_keys:
+                if key not in mount_path_values:
+                    missing_keys.append("\"{}\"".format(key))
+
+            if missing_keys:
+                ending = ""
+                if len(missing_keys) > 1:
+                    ending = "s"
+                log.warning((
+                    "Root key \"{}\" missing expected key{}: {}"
+                ).format(
+                    root_key, ending, ", ".join(missing_keys)
+                ))
+            # QUESTION should we add force validation?
+            # - if "mount" and "path" are set
+            for key, per_platform_value in mount_path_values.items():
+                if platform_name not in per_platform_value:
+                    project_line = ""
+                    if self.project_name is not None:
+                        project_line = " in project {}".format(
+                            self.project_name
+                        )
+                    log.warning((
+                        "Subkey \"{}\" of root key \"{}\" "
+                        "has missing platform \"{}\" value{}."
+                    ).format(
+                        root_key, key, platform_name, project_line
+                    ))
+                    continue
+                output[root_key][key] = per_platform_value[platform_name]
+        return output
+
     def _discover(self):
         ''' Loads root from json.
         Default roots are loaded if project is not set.
@@ -731,16 +788,7 @@ class Roots:
         path_items = ["anatomy", "roots.json"]
         # Return default roots if project is not set
         if self.project_name is None:
-            defaults_path_items = [os.environ["PYPE_CONFIG"]]
-            defaults_path_items.extend(path_items)
-
-            default_roots_path = os.path.normpath(
-                os.path.join(defaults_path_items)
-            )
-            with open(default_roots_path, "r") as default_roots_file:
-                default_roots = json.load(default_roots_file)
-
-            return default_roots
+            return self.default_roots(path_items)
 
         # Return project specific roots
         project_configs_path = os.path.normpath(
@@ -759,4 +807,4 @@ class Roots:
         with open(project_roots_path, "r") as project_roots_file:
             project_roots = json.load(project_roots_file)
 
-        return project_roots
+        return self.choose_platform(project_roots)
