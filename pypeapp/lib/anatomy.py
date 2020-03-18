@@ -580,10 +580,7 @@ class Anatomy:
 
 
 class Roots:
-    def __init__(self, project_name=None, keep_updated=False):
-        if not project_name:
-            project_name = os.environ.get("AVALON_PROJECT")
-
+    def __init__(self, project_name, keep_updated=False):
         self._roots = None
         self.loaded_project = None
         self.project_name = project_name
@@ -593,7 +590,7 @@ class Roots:
     def roots(self):
         if self.keep_updated:
             project_name = os.environ.get("AVALON_PROJECT")
-            if project_name is not None and project_name != self.project_name:
+            if project_name != self.project_name:
                 self.project_name = project_name
 
         if self.project_name != self.loaded_project:
@@ -602,15 +599,21 @@ class Roots:
         if self._roots is None:
             self._roots = self._discover()
             self.loaded_project = self.project_name
+
+        # Backward compatibility - set roots to value of `AVALON_PROJECTS` env
+        if self._roots is None:
+            self._roots = os.environ["AVALON_PROJECTS"]
+
         return self._roots
 
     def _discover(self):
         ''' Loads root from json.
-        Default roots are loaded all the time.
+        Default roots are loaded if project is not set.
 
         :rtype: dictionary
         '''
         path_items = ["anatomy", "roots.json"]
+        # Return default roots if project is not set
         if self.project_name is None:
             defaults_path_items = [os.environ["PYPE_CONFIG"]]
             defaults_path_items.extend(path_items)
@@ -619,10 +622,11 @@ class Roots:
                 os.path.join(defaults_path_items)
             )
             with open(default_roots_path, "r") as default_roots_file:
-                default_roots = json.loads(default_roots_file)
+                default_roots = json.load(default_roots_file)
 
             return default_roots
 
+        # Return project specific roots
         project_configs_path = os.path.normpath(
             os.environ.get("PYPE_PROJECT_CONFIGS", "")
         )
@@ -632,10 +636,11 @@ class Roots:
         ]
         project_config_items.extend(path_items)
         project_roots_path = os.path.sep.join(project_config_items)
+        # If path does not exist we assume it is older project without roots
         if not os.path.exists(project_roots_path):
             return None
 
         with open(project_roots_path, "r") as project_roots_file:
-            project_roots = json.loads(project_roots_file)
+            project_roots = json.load(project_roots_file)
 
         return project_roots
