@@ -21,20 +21,12 @@ valid_data = {
 }
 
 solve_templates = {
-    "resources": {
-        "footage": "{root[resources]}/{nonExistent}/resources/footage"
-    },
-    "work": {
-        "file": "{project[code]}_{asset}_{task}_v{version:0>3}<_{comment}>.{ext}",
-        "file2": "{project[code]}_{asset}_{task}_v{version:0>3}<_{nocomment}>.{ext}",
-        "noDictKey": "{project[code]}_{asset[name]}_{task}_v{version:0>3}<_{nocomment}>.{ext}",
-        "path": "{root[work]}/{projaect[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version:0>3}/{project[code]}_{asset}_{subset}_v{version:0>3}.{representation}",
+    "basic": {
+        "comment": "{asset}_{task}_v{version:0>3}<_{comment}>.{ext}",
+        "nocomment": "{asset}_{task}_v{version:0>3}<_{nocomment}>.{ext}",
+        "noDictKey": "{project[code]}_{asset[name]}_v{version:0>3}.{ext}",
+        "noDictKey": "{project[code]}_{asset[name]}_v{version:0>3}.{ext}",
         "multiple_optional": "{project[code]}</{asset}></{hierarchy}><_v{version:0>3}><_{nocomment}>.{ext}"
-    },
-    "avalon": {
-        "workfile": "{asset}_{task}_v{version:0>3}<_{comment}>",
-        "work": "{root}/{project[name]}/{hierarchy}/{asset}/work/{task}",
-        "publish": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version:0>3}/{project[code]}_{asset}_{subset}_v{version:0>3}.{representation}"
     }
 }
 
@@ -42,13 +34,20 @@ features_templates = {
     "version_padding": 3,
     "version": "v{version:0>{@version_padding}}",
     "inner_keys": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{@version}",
-        "file": "{project[code]}_{asset}_{task}_v{version:0>3}<_{comment}>.{ext}",
+        "folder": "{project[name]}/{hierarchy}/{asset}/{@version}",
+        "file": "{project[code]}_{asset}_v{version:0>3}.{ext}",
+        "path": "{@folder}/{@file}"
+    },
+    "inner_override": {
+        "version_padding": 2,
+        "version": "ver{version:0>{@version_padding}}",
+        "folder": "{hierarchy}/{asset}/{@version}",
+        "file": "{project[code]}_{asset}_{@version}.{ext}",
         "path": "{@folder}/{@file}"
     },
     "missing_keys": {
         "missing_1": "{missing_key}/{project[code]}_{asset}",
-        "missing_2": "{project[code]}_{missing_key1}_{asset}_{task}_v{version:0>3}<_{comment}>.{ext}{missing_key2}"
+        "missing_2": "{missing_key1}_{asset}<_{comment}>.{ext}{missing_key2}"
     },
     "invalid_types": {
         "invalid_type": "{project}_{asset[name]}"
@@ -80,14 +79,14 @@ def test_format_anatomy():
     anatomy = Anatomy()
     solved = anatomy.solve_dict(solve_templates, valid_data)
 
-    assert solved['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
-    assert solved['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
+    assert solved['basic']['comment'] == "BOB_MODELING_v001_iAmComment.ABC"
+    assert solved['basic']['nocomment'] == "BOB_MODELING_v001.ABC"
 
-    assert solved['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
+    assert solved['basic']['noDictKey'] == "PRJ_{asset[name]}_v001.ABC"
 
 
 def test_anatomy(anatomy_file, monkeypatch):
-    # TODO add test for `missing_keys` and `invalid_types`
+    # TODO add test for `invalid_types`
     anatomy_file = os.path.join(anatomy_file, "repos", "pype-config")
     print(anatomy_file)
 
@@ -97,26 +96,35 @@ def test_anatomy(anatomy_file, monkeypatch):
     filled_all = anatomy.format_all(valid_data)
     filled = anatomy.format(valid_data)
 
-    assert filled_all['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
-    assert filled_all['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
-    assert filled_all['work']['noDictKey'] == "PRJ_{asset[name]}_MODELING_v001.ABC"
+    assert filled_all['basic']['comment'] == "BOB_MODELING_v001_iAmComment.ABC"
+    assert filled_all['basic']['nocomment'] == "BOB_MODELING_v001.ABC"
+    assert filled_all['basic']['noDictKey'] == "PRJ_{asset[name]}_v001.ABC"
 
-    assert filled_all['missing_keys']['missing_1'].missing_keys == ["missing_key"]
-    assert sorted(filled_all['missing_keys']['missing_2'].missing_keys) == ["missing_key1", "missing_key2"]
+    missing_1 = filled_all['missing_keys']['missing_1'].missing_keys
+    assert missing_1 == ["missing_key"]
+
+    missing_2 = sorted(filled_all['missing_keys']['missing_2'].missing_keys)
+    assert missing_2 == ["missing_key1", "missing_key2"]
 
     assert filled_all["invalid_types"]["invalid_type"].invalid_types == {
         "project": dict,
         "asset": str
     }
 
-    assert filled['work']['file'] == "PRJ_BOB_MODELING_v001_iAmComment.ABC"
-    assert filled['work']['file2'] == "PRJ_BOB_MODELING_v001.ABC"
-    assert filled['work']['multiple_optional'] == "PRJ/BOB/asset/characters_v001.ABC"
+    assert filled['basic']['comment'] == "BOB_MODELING_v001_iAmComment.ABC"
+    assert filled['basic']['nocomment'] == "BOB_MODELING_v001.ABC"
+    assert filled['basic']['multiple_optional'] == "PRJ/BOB/asset/characters_v001.ABC"
 
     try:
-        filled_all['work']['noDictKey']
+        filled_all['basic']['noDictKey']
         raise AssertionError("Should raise error about missing key")
     except Exception:
         pass
 
-    assert filled["inner_keys"]["path"] == "\\volume\\projects/P001_ProjectX/asset/characters/BOB/publish/v001/PRJ_BOB_MODELING_v001_iAmComment.ABC"
+    inner_path = "P001_ProjectX/asset/characters/BOB/v001/PRJ_BOB_v001.ABC"
+    assert filled["inner_keys"]["path"] == inner_path
+
+    inner_override_file = "PRJ_BOB_ver01.ABC"
+    assert filled["inner_override"]["file"] == inner_override_file
+
+    inner_path = "P001_ProjectX/asset/characters/BOB/v001/PRJ_BOB_ver01.ABC"
