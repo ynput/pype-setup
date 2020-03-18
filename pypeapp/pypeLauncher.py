@@ -436,8 +436,8 @@ class PypeLauncher(object):
                                      'repos', 'pype', 'pype', 'tests'))
 
         elif id:
-            t.echo("  - selecting test ID [ {} ]".format(id))
-            args.append(id)
+            t.echo("  - selecting test ID [ {} ]".format(id[0]))
+            args.append(id[0])
         else:
             args.append(os.path.join(os.getenv('PYPE_ROOT'),
                                      'repos', 'pype', 'pype', 'tests'))
