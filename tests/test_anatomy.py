@@ -1,6 +1,6 @@
 import os
 import pytest
-from pypeapp import Anatomy
+from pypeapp.lib.anatomy import Anatomy, AnatomyUnsolved
 import ruamel.yaml as yaml
 
 
@@ -94,21 +94,31 @@ def test_anatomy(anatomy_file, monkeypatch):
     filled_all = anatomy.format_all(valid_data)
     filled = anatomy.format(valid_data)
 
+    # Basic tests
     assert filled_all['basic']['comment'] == "BOB_MODELING_v001_iAmComment.ABC"
     assert filled_all['basic']['nocomment'] == "BOB_MODELING_v001.ABC"
     assert filled_all['basic']['noDictKey'] == "PRJ_{asset[name]}_v001.ABC"
 
+    # Missing keys
     missing_1 = filled_all['missing_keys']['missing_1'].missing_keys
     assert missing_1 == ["missing_key"]
 
     missing_2 = sorted(filled_all['missing_keys']['missing_2'].missing_keys)
     assert missing_2 == ["missing_key1", "missing_key2"]
 
+    try:
+        filled['missing_keys']['missing_1']
+        raise AssertionError("Should raise error about missing key")
+    except AnatomyUnsolved:
+        pass
+
+    # Invalid types
     assert filled_all["invalid_types"]["invalid_type"].invalid_types == {
         "project": dict,
         "asset": str
     }
 
+    # Inner keys
     inner_path = "P001_ProjectX/asset/characters/BOB/v001/PRJ_BOB_v001.ABC"
     assert filled["inner_keys"]["path"] == inner_path
 
