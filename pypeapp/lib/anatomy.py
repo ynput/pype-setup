@@ -141,7 +141,10 @@ class AnatomyDict(dict):
             return value
 
         # Raise exception when expected solved anatomy template and it is not.
-        if self.raise_on_unsolved and not value.solved:
+        if (
+            self.raise_on_unsolved
+            and (hasattr(value, "solved") and not value.solved)
+        ):
             raise AnatomyUnsolved(
                 value.template, value.missing_keys, value.invalid_types
             )
