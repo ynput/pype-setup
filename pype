@@ -119,7 +119,7 @@ fi
 export PATH="$PYPE_ROOT/vendor/bin/ffmpeg_exec/linux/bin:$PATH"
 
 # Load colors definitions for easy output coloring
-if [[ ! -v PYPE_LOG_NO_COLORS ]]; then
+if [[ -z $PYPE_LOG_NO_COLORS ]]; then
   source "$PYPE_ROOT/pypeapp/colors.sh"
 fi
 
