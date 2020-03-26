@@ -33,19 +33,50 @@ else:
 log = PypeLogger().get_logger(__name__)
 
 
-class AnatomyMissingKey(Exception):
+class Anatomy:
+    ''' Anatomy module helps to keep project settings.
+
+    :param project_name: Project name to look on project's anatomy overrides.
+    :type project_name: str
+    '''
+
+    def __init__(self, project=None, keep_updated=False):
+        if not project:
+            project = os.environ.get("AVALON_PROJECT")
+
+        self._templates = Templates(parent=self)
+        self._roots = Roots(parent=self)
+        self.project_name = project
+        self.keep_updated = keep_updated
+
+    @property
+    def templates(self):
+        return self._templates
+
+    def format(self, *args, **kwargs):
+        return self._templates.format(*args, **kwargs)
+
+    def format_all(self, *args, **kwargs):
+        return self._templates.format_all(*args, **kwargs)
+
+    @property
+    def roots(self):
+        return self._roots
+
+
+class TemplateMissingKey(Exception):
     """Exception for cases when key does not exist in Anatomy."""
 
     msg = "Anatomy key does not exist: `anatomy{0}`."
 
     def __init__(self, parents):
         parent_join = "".join(["[\"{0}\"]".format(key) for key in parents])
-        super(AnatomyMissingKey, self).__init__(
+        super(TemplateMissingKey, self).__init__(
             self.msg.format(parent_join)
         )
 
 
-class AnatomyUnsolved(Exception):
+class TemplateUnsolved(Exception):
     """Exception for unsolved template when strict is set to True."""
 
     msg = (
@@ -72,12 +103,12 @@ class AnatomyUnsolved(Exception):
             missing_keys_msg = self.missing_keys_msg.format(
                 ", ".join(missing_keys)
             )
-        super(AnatomyUnsolved, self).__init__(
+        super(TemplateUnsolved, self).__init__(
             self.msg.format(template, missing_keys_msg, invalid_types_msg)
         )
 
 
-class AnatomyResult(str):
+class TemplateResult(str):
     """Result (formatted template) of anatomy with most of information in.
 
     used_values <dict>
@@ -98,7 +129,7 @@ class AnatomyResult(str):
         cls, filled_template, template, solved,
         used_values, missing_keys, invalid_types
     ):
-        new_obj = super(AnatomyResult, cls).__new__(cls, filled_template)
+        new_obj = super(TemplateResult, cls).__new__(cls, filled_template)
         new_obj.used_values = used_values
         new_obj.solved = solved
         new_obj.template = template
@@ -113,11 +144,11 @@ class AnatomyResult(str):
         return new_obj
 
 
-class AnatomyDict(dict):
-    """Holds and wrap AnatomyResults for easy bug report."""
+class TemplatesDict(dict):
+    """Holds and wrap TemplateResults for easy bug report."""
 
     def __init__(self, in_data, key=None, parent=None, strict=None):
-        super(AnatomyDict, self).__init__()
+        super(TemplatesDict, self).__init__()
         for _key, _value in in_data.items():
             if isinstance(_value, dict):
                 _value = self.__class__(_value, _key, self)
@@ -134,18 +165,18 @@ class AnatomyDict(dict):
         if key not in self.keys():
             hier = self.hierarchy()
             hier.append(key)
-            raise AnatomyMissingKey(hier)
+            raise TemplateMissingKey(hier)
 
-        value = super(AnatomyDict, self).__getitem__(key)
+        value = super(TemplatesDict, self).__getitem__(key)
         if isinstance(value, self.__class__):
             return value
 
-        # Raise exception when expected solved anatomy template and it is not.
+        # Raise exception when expected solved templates and it is not.
         if (
             self.raise_on_unsolved
             and (hasattr(value, "solved") and not value.solved)
         ):
-            raise AnatomyUnsolved(
+            raise TemplateUnsolved(
                 value.template, value.missing_keys, value.invalid_types
             )
         return value
@@ -220,98 +251,124 @@ class AnatomyDict(dict):
         return self.__class__(result, key=self.key, parent=self.parent)
 
 
-class Anatomy:
-    ''' Anatomy module help get anatomy and format anatomy with entered data.
-
-    .. todo:: should be able to load Project specific anatomy.
-
-    Anatomy string Example:
-    ``{$APP_PATH}/{project[code]}_{task}_v{version:0>3}<_{comment}>``
-    - ``$APP_PATH``: environment variable
-    - ``project[code]``: dictionary
-    fill ``{'project':{'code': 'PROJECT_CODE'}}``
-    - task, version: basic string format ``'TASK_NAME', 1``
-    - comment: optional key, if not entered ``'<_{comment}>'`` will be removed
-
-    :param project_name: Project name to look on project's anatomy overrides.
-    :type project_name: str
-    '''
+class Templates:
     key_pattern = re.compile(r"(\{.*?[^{0]*\})")
     key_padding_pattern = re.compile(r"([^:]+)\S+[><]\S+")
     sub_dict_pattern = re.compile(r"([^\[\]]+)")
     optional_pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
 
-    anatomy_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
-    anatomy_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
+    inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
+    inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
 
-    def __init__(self, project=None, keep_updated=False):
-        if not project:
-            project = os.environ.get('AVALON_PROJECT', None)
+    def __init__(
+        self, project_name=None, keep_updated=False, roots=None, parent=None
+    ):
+        self._keep_updated = keep_updated
+        self._project_name = project_name
+        self._roots = roots
+        self.parent = parent
+        if parent is None and project_name is None:
+            log.warning((
+                "It is expected to enter project_name if Templates are created"
+                " out of Anatomy."
+            ))
 
-        self._anatomy = None
         self.loaded_project = None
-        self.project_name = project
-        self.keep_updated = keep_updated
+        self._templates = None
+
+    def __getitem__(self, key):
+        return self.templates[key]
+
+    def get(self, key, default=None):
+        return self.templates.get(key, default)
+
+    @property
+    def project_name(self):
+        if self.parent:
+            return self.parent.project_name
+        return self._project_name
+
+    @property
+    def keep_updated(self):
+        if self.parent:
+            return self.parent.keep_updated
+        return self._keep_updated
+
+    @property
+    def roots(self):
+        if self.parent:
+            return self.parent.roots
+        return self._roots
 
     @property
     def templates(self):
-        if self.keep_updated:
+        if self.parent is None and self.keep_updated:
             project = os.environ.get("AVALON_PROJECT", None)
             if project is not None and project != self.project_name:
-                self.project_name = project
+                self._project_name = project
 
         if self.project_name != self.loaded_project:
-            self._anatomy = None
+            self._templates = None
 
-        if self._anatomy is None:
-            self._anatomy = self._discover()
+        if self._templates is None:
+            self._templates = self._discover()
             self.loaded_project = self.project_name
-        return self._anatomy
+        return self._templates
+
+    @staticmethod
+    def default_templates():
+        path = "{PYPE_CONFIG}/anatomy/default.yaml"
+        path = os.path.normpath(path.format(**os.environ))
+        with open(path, "r") as stream:
+            # QUESTION Should we not raise exception if file is invalid?
+            default_templates = yaml.load(
+                stream, Loader=yaml.loader.Loader
+            )
+
+        return Templates.solve_template_inner_links(default_templates)
 
     def _discover(self):
-        ''' Loads anatomy from yaml.
-        Default anatomy is loaded all the time.
-        TODO: if project_name is set also tries to find project's
-        anatomy overrides.
+        ''' Loads anatomy templates from yaml.
+        Default templates are loaded if project is not set or project does
+        not have set it's own.
+        TODO: create templates if not exist.
 
         :rtype: dictionary
         '''
-        # TODO: right way to get templates path
-        path = '{PYPE_CONFIG}/anatomy/default.yaml'
-        path = os.path.normpath(path.format(**os.environ))
-        with open(path, 'r') as stream:
-            try:
-                anatomy = yaml.load(stream, Loader=yaml.loader.Loader)
-            except yaml.YAMLError as exc:
-                print(exc)
 
         if self.project_name is not None:
             project_configs_path = os.path.normpath(
-                os.environ.get('PYPE_PROJECT_CONFIGS', "")
+                os.environ.get("PYPE_PROJECT_CONFIGS", "")
             )
             project_config_items = [
                 project_configs_path,
                 self.project_name,
-                'anatomy',
-                'default.yaml'
+                "anatomy",
+                "default.yaml"
             ]
-            project_anatomy_path = os.path.sep.join(project_config_items)
-            proj_anatomy = {}
-            if os.path.exists(project_anatomy_path):
-                with open(project_anatomy_path, 'r') as stream:
-                    try:
-                        proj_anatomy = yaml.load(
-                            stream, Loader=yaml.loader.Loader
-                        )
-                    except yaml.YAMLError as exc:
-                        print(exc)
-            anatomy = config.update_dict(anatomy, proj_anatomy)
-        return self._solve_anatomy_inner_links(anatomy)
+            project_templates_path = os.path.sep.join(project_config_items)
+            if os.path.exists(project_templates_path):
+                # QUESTION Should we not raise exception if file is invalid?
+                with open(project_templates_path, "r") as stream:
+                    proj_templates = yaml.load(
+                        stream, Loader=yaml.loader.Loader
+                    )
+                return Templates.solve_template_inner_links(proj_templates)
 
-    def _replace_inner_keys(self, matches, value, key_values, key):
+            else:
+                # QUESTION create project specific if not found?
+                log.warning((
+                    "Project \"{0}\" does not have his own templates."
+                    " Trying to use default."
+                ).format(self.project_name))
+
+        return self.default_templates()
+
+    @classmethod
+    def replace_inner_keys(cls, matches, value, key_values, key):
         for match in matches:
             anatomy_sub_keys = (
-                self.anatomy_key_name_pattern.findall(match)
+                cls.inner_key_name_pattern.findall(match)
             )
             for anatomy_sub_key in anatomy_sub_keys:
                 replace_value = key_values.get(anatomy_sub_key)
@@ -335,19 +392,20 @@ class Anatomy:
 
         return value
 
-    def _solve_anatomy_inner_links(self, anatomy):
+    @classmethod
+    def solve_template_inner_links(cls, templates):
         default_key_value_keys = []
-        for key, value in anatomy.items():
+        for key, value in templates.items():
             if isinstance(value, dict):
                 continue
             default_key_value_keys.append(key)
 
         default_key_values = {}
         for key in default_key_value_keys:
-            default_key_values[key] = anatomy.pop(key)
+            default_key_values[key] = templates.pop(key)
 
         keys_by_subkey = {}
-        for sub_key, sub_value in anatomy.items():
+        for sub_key, sub_value in templates.items():
             key_values = {}
             key_values.update(default_key_values)
             key_values.update(sub_value)
@@ -358,12 +416,12 @@ class Anatomy:
                 keys_to_pop = []
                 for key, value in key_values.items():
                     if isinstance(value, StringType):
-                        matches = self.anatomy_key_pattern.findall(value)
+                        matches = cls.inner_key_pattern.findall(value)
                         if not matches:
                             continue
 
                         found = True
-                        key_values[key] = self._replace_inner_keys(
+                        key_values[key] = cls.replace_inner_keys(
                             matches, value, key_values, key
                         )
                         continue
@@ -372,12 +430,12 @@ class Anatomy:
                         continue
 
                     for _key, _value in value.items():
-                        matches = self.anatomy_key_pattern.findall(_value)
+                        matches = cls.inner_key_pattern.findall(_value)
                         if not matches:
                             continue
 
                         found = True
-                        key_values[key][_key] = self._replace_inner_keys(
+                        key_values[key][_key] = cls.replace_inner_keys(
                             matches, _value, key_values,
                             "{}.{}".format(key, _key)
                         )
@@ -394,7 +452,7 @@ class Anatomy:
             for key, value in default_key_values.items():
                 matches = None
                 if isinstance(value, StringType):
-                    matches = self.anatomy_key_pattern.findall(value)
+                    matches = cls.inner_key_pattern.findall(value)
 
                 if not matches:
                     keys_by_subkey[key] = value
@@ -402,7 +460,7 @@ class Anatomy:
                     continue
 
                 found = True
-                default_key_values[key] = self._replace_inner_keys(
+                default_key_values[key] = cls.replace_inner_keys(
                     matches, value, default_key_values, key
                 )
 
@@ -567,7 +625,7 @@ class Anatomy:
         :type template: str
         :param data: Containing keys to be filled into template.
         :type data: dict
-        :rtype: AnatomyResult
+        :rtype: TemplateResult
         '''
         template, missing_optional, invalid_optional = (
             self._filter_optional(orig_template, data)
@@ -634,14 +692,14 @@ class Anatomy:
         invalid_types = invalid_required + invalid_optional
 
         filled_template = template.format(**final_data)
-        result = AnatomyResult(
+        result = TemplateResult(
             filled_template, orig_template, solved,
             used_values, missing_keys, invalid_types
         )
         return result
 
     def solve_dict(self, templates, data):
-        ''' Solves anatomy templates with entered data.
+        ''' Solves templates with entered data.
 
         :param templates: All Anatomy templates which will be formatted.
         :type templates: dict
@@ -667,10 +725,10 @@ class Anatomy:
         return output
 
     def format_all(self, in_data, only_keys=True):
-        ''' Solves anatomy based on entered data.
+        ''' Solves templates based on entered data.
         :param data: Containing keys to be filled into template.
         :type data: dict
-        :param only_keys: Decides if environ will be used to fill anatomy
+        :param only_keys: Decides if environ will be used to fill templates
         or only keys in data.
         :type only_keys: bool
         :rtype: dictionary
@@ -681,10 +739,10 @@ class Anatomy:
         return output
 
     def format(self, in_data, only_keys=True):
-        ''' Solves anatomy based on entered data.
+        ''' Solves templates based on entered data.
         :param data: Containing keys to be filled into template.
         :type data: dict
-        :param only_keys: Decides if environ will be used to fill anatomy
+        :param only_keys: Decides if environ will be used to fill templates
         or only keys in data.
         :type only_keys: bool
         :rtype: dictionary
@@ -698,23 +756,53 @@ class Anatomy:
             for key, val in os.environ.items():
                 data["$" + key] = val
 
+        # override root value
+        roots = self.roots
+        if roots:
+            data["root"] = roots
         solved = self.solve_dict(self.templates, data)
 
-        return AnatomyDict(solved)
+        return TemplatesDict(solved)
 
 
 class Roots:
     root_expected_keys = ["mount", "path"]
 
-    def __init__(self, project_name, keep_updated=False):
-        self._roots = None
+    def __init__(self, project_name=None, keep_updated=False, parent=None):
         self.loaded_project = None
-        self.project_name = project_name
-        self.keep_updated = keep_updated
+        self._project_name = project_name
+        self._keep_updated = keep_updated
+
+        if parent is None and project_name is None:
+            log.warning((
+                "It is expected to enter project_name if Roots are created"
+                " out of Anatomy."
+            ))
+        self.parent = parent
+
+        self._roots = None
+        self._raw_roots = None
+
+    @property
+    def project_name(self):
+        if self.parent:
+            return self.parent.project_name
+        return self._project_name
+
+    @property
+    def keep_updated(self):
+        if self.parent:
+            return self.parent.keep_updated
+        return self._keep_updated
+
+    @property
+    def raw_roots(self):
+        self.roots
+        return self._raw_roots
 
     @property
     def roots(self):
-        if self.keep_updated:
+        if self.parent is None and self.keep_updated:
             project_name = os.environ.get("AVALON_PROJECT")
             if project_name != self.project_name:
                 self.project_name = project_name
@@ -723,75 +811,72 @@ class Roots:
             self._roots = None
 
         if self._roots is None:
-            self._roots = self._discover()
+            self._raw_roots, self._roots = self._discover()
             self.loaded_project = self.project_name
 
-        # Backward compatibility - set roots to value of `AVALON_PROJECTS` env
+        # Backwards compatibility
         if self._roots is None:
-            self._roots = os.environ["AVALON_PROJECTS"]
+            self._raw_roots, self._roots = self._backwards_discover()
 
         return self._roots
 
-    def default_roots(self, path_items):
-        defaults_path_items = [os.environ["PYPE_CONFIG"]]
-        defaults_path_items.extend(path_items)
-
+    @staticmethod
+    def default_roots_with_raw():
+        defaults_path_items = [
+            os.environ["PYPE_CONFIG"],
+            "anatomy",
+            "roots.json"
+        ]
         default_roots_path = os.path.normpath(
-            os.path.join(defaults_path_items)
+            os.path.join(*defaults_path_items)
         )
         with open(default_roots_path, "r") as default_roots_file:
-            default_roots = json.load(default_roots_file)
+            raw_default_roots = json.load(default_roots_file)
 
-        return self.choose_platform(default_roots)
+        roots = {}
+        for root_key, values in raw_default_roots.items():
+            roots[root_key] = Roots.choose_platform(values, root_key)
+        return raw_default_roots, roots
 
-    def choose_platform(self, roots_data):
+    @staticmethod
+    def default_roots():
+        Roots.default_roots_with_raw()[1]
+
+    @staticmethod
+    def choose_platform(values, root_key="N/A"):
         output = {}
         platform_name = platform.system().lower()
-        for root_key, mount_path_values in roots_data.items():
-            output[root_key] = {}
-            missing_keys = []
-            for key in self.root_expected_keys:
-                if key not in mount_path_values:
-                    missing_keys.append("\"{}\"".format(key))
+        missing_keys = []
+        for key in Roots.root_expected_keys:
+            if key not in values:
+                missing_keys.append("\"{}\"".format(key))
 
-            if missing_keys:
-                ending = ""
-                if len(missing_keys) > 1:
-                    ending = "s"
+        if missing_keys:
+            ending = ""
+            if len(missing_keys) > 1:
+                ending = "s"
+            log.warning((
+                "Root key \"{}\" missing expected key{}: {}"
+            ).format(
+                root_key, ending, ", ".join(missing_keys)
+            ))
+        # QUESTION should we add force validation?
+        # - if "mount" and "path" are set
+        for key, per_platform_value in values.items():
+            if platform_name not in per_platform_value:
                 log.warning((
-                    "Root key \"{}\" missing expected key{}: {}"
+                    "Subkey \"{0}\" of root key \"{1}\" "
+                    "has missing platform \"{2}\" value."
                 ).format(
-                    root_key, ending, ", ".join(missing_keys)
+                    root_key, key, platform_name
                 ))
-            # QUESTION should we add force validation?
-            # - if "mount" and "path" are set
-            for key, per_platform_value in mount_path_values.items():
-                if platform_name not in per_platform_value:
-                    project_line = ""
-                    if self.project_name is not None:
-                        project_line = " in project {}".format(
-                            self.project_name
-                        )
-                    log.warning((
-                        "Subkey \"{}\" of root key \"{}\" "
-                        "has missing platform \"{}\" value{}."
-                    ).format(
-                        root_key, key, platform_name, project_line
-                    ))
-                    continue
-                output[root_key][key] = per_platform_value[platform_name]
+                continue
+            output[key] = per_platform_value[platform_name]
         return output
 
-    def _discover(self):
-        ''' Loads root from json.
-        Default roots are loaded if project is not set.
-
-        :rtype: dictionary
-        '''
-        path_items = ["anatomy", "roots.json"]
-        # Return default roots if project is not set
+    def _backwards_discover(self):
         if self.project_name is None:
-            return self.default_roots(path_items)
+            return (None, None)
 
         # Return project specific roots
         project_configs_path = os.path.normpath(
@@ -799,15 +884,52 @@ class Roots:
         )
         project_config_items = [
             project_configs_path,
-            self.project_name
+            self.project_name,
+            "system",
+            "storage.json"
         ]
-        project_config_items.extend(path_items)
+        project_storage_path = os.path.sep.join(project_config_items)
+        # If path does not exist we assume it is older project without roots
+        if not os.path.exists(project_storage_path):
+            return (None, None)
+
+        with open(project_storage_path, "r") as project_storage_file:
+            project_storage = json.load(project_storage_file)
+
+        raw_data = project_storage["studio"]["projects"]
+
+        return raw_data, Roots.choose_platform(raw_data)
+
+    def _discover(self):
+        ''' Loads root from json.
+        Default roots are loaded if project is not set.
+
+        :rtype: dictionary
+        '''
+
+        # Return default roots if project is not set
+        if self.project_name is None:
+            return Roots.default_roots_with_raw()
+
+        # Return project specific roots
+        project_configs_path = os.path.normpath(
+            os.environ.get("PYPE_PROJECT_CONFIGS", "")
+        )
+        project_config_items = [
+            project_configs_path,
+            self.project_name,
+            "anatomy",
+            "roots.json"
+        ]
         project_roots_path = os.path.sep.join(project_config_items)
         # If path does not exist we assume it is older project without roots
         if not os.path.exists(project_roots_path):
-            return None
+            return (None, None)
 
         with open(project_roots_path, "r") as project_roots_file:
-            project_roots = json.load(project_roots_file)
+            raw_project_roots = json.load(project_roots_file)
 
-        return self.choose_platform(project_roots)
+        roots = {}
+        for root_key, values in raw_project_roots.items():
+            roots[root_key] = Roots.choose_platform(values, root_key)
+        return raw_project_roots, roots
