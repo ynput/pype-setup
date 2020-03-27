@@ -765,9 +765,96 @@ class Templates:
         return TemplatesDict(solved)
 
 
-class Roots:
-    root_expected_keys = ["mount", "path"]
+class MissingRootDefinition(Exception):
+    pass
 
+
+class RootItem:
+    expected_keys = ["mount", "path"]
+    _default_key = "path"
+
+    def __init__(self, root_raw_data, name=None, default_key=None):
+        self.raw_data = root_raw_data
+
+        if name is None:
+            name = "N/A"
+        self.name = name
+        if default_key is None:
+            default_key = self._default_key
+        self.default_key = default_key
+
+        self.data = self.choose_platform(root_raw_data)
+        # QUESTION should we add force validation?
+        # - if "mount" and "path" are both set
+        missing_keys = []
+        for key in self.expected_keys:
+            if key not in self.data:
+                missing_keys.append(key)
+
+        if len(missing_keys) == len(self.expected_keys):
+            log.warning("Root key {0} miss all expected keys. {1}".format(
+                self.name,
+                ", ".join(['"{0}"'.format(key) for key in self.expected_keys])
+            ))
+            for key in self.expected_keys:
+                self.data[key] = None
+
+        elif missing_keys:
+            ending = "" if len(missing_keys) == 1 else "s"
+            _name = "" if name is None else " item \"{}\"".format(name)
+            log.warning(
+                "Root{} missing expected key{}: {}".format(
+                    _name, ending, ", ".join(missing_keys)
+                )
+            )
+
+    def choose_platform(self, values, platform_name=None):
+        output = {}
+        if platform_name is None:
+            platform_name = platform.system().lower()
+
+        for key, per_platform_value in values.items():
+            if platform_name not in per_platform_value:
+                continue
+            output[key] = per_platform_value[platform_name]
+        return output
+
+    def _root_exists(self, root):
+        drive = os.path.splitdrive(root)[0]
+        if not os.path.exists(drive + "/"):
+            return False
+        return True
+
+    def _clean_root(self, path):
+        path = path.replace("\\", "/")
+        while path.endswith("/"):
+            path = path[:-1]
+        return path
+
+    def __format__(self, addict):
+        value = self.data[self.default_key]
+        if value is None:
+            raise MissingRootDefinition(
+                "Root key {0} miss all expected keys. {1}".format(
+                    self.name,
+                    ", ".join(
+                        ['"{0}"'.format(key) for key in self.expected_keys]
+                    )
+                )
+            )
+        return self.data[self.default_key].__format__(addict)
+
+    def __str__(self):
+        return self.data[self.default_key]
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+
+
+class Roots:
     def __init__(self, project_name=None, keep_updated=False, parent=None):
         self.loaded_project = None
         self._project_name = project_name
@@ -778,10 +865,9 @@ class Roots:
                 "It is expected to enter project_name if Roots are created"
                 " out of Anatomy."
             ))
-        self.parent = parent
 
+        self.parent = parent
         self._roots = None
-        self._raw_roots = None
 
     @property
     def project_name(self):
@@ -795,13 +881,7 @@ class Roots:
             return self.parent.keep_updated
         return self._keep_updated
 
-    @property
-    def raw_roots(self):
-        self.roots
-        return self._raw_roots
-
-    @property
-    def roots(self):
+    def check_updates(self):
         if self.parent is None and self.keep_updated:
             project_name = os.environ.get("AVALON_PROJECT")
             if project_name != self.project_name:
@@ -810,18 +890,23 @@ class Roots:
         if self.project_name != self.loaded_project:
             self._roots = None
 
-        if self._roots is None:
-            self._raw_roots, self._roots = self._discover()
-            self.loaded_project = self.project_name
+        if self._roots is not None:
+            return
+
+        self._roots = self._discover()
+        self.loaded_project = self.project_name
 
         # Backwards compatibility
         if self._roots is None:
-            self._raw_roots, self._roots = self._backwards_discover()
+            self._roots = self._backwards_discover()
 
+    @property
+    def roots(self):
+        self.check_updates()
         return self._roots
 
     @staticmethod
-    def default_roots_with_raw():
+    def default_roots():
         defaults_path_items = [
             os.environ["PYPE_CONFIG"],
             "anatomy",
@@ -835,48 +920,12 @@ class Roots:
 
         roots = {}
         for root_key, values in raw_default_roots.items():
-            roots[root_key] = Roots.choose_platform(values, root_key)
-        return raw_default_roots, roots
-
-    @staticmethod
-    def default_roots():
-        Roots.default_roots_with_raw()[1]
-
-    @staticmethod
-    def choose_platform(values, root_key="N/A"):
-        output = {}
-        platform_name = platform.system().lower()
-        missing_keys = []
-        for key in Roots.root_expected_keys:
-            if key not in values:
-                missing_keys.append("\"{}\"".format(key))
-
-        if missing_keys:
-            ending = ""
-            if len(missing_keys) > 1:
-                ending = "s"
-            log.warning((
-                "Root key \"{}\" missing expected key{}: {}"
-            ).format(
-                root_key, ending, ", ".join(missing_keys)
-            ))
-        # QUESTION should we add force validation?
-        # - if "mount" and "path" are set
-        for key, per_platform_value in values.items():
-            if platform_name not in per_platform_value:
-                log.warning((
-                    "Subkey \"{0}\" of root key \"{1}\" "
-                    "has missing platform \"{2}\" value."
-                ).format(
-                    root_key, key, platform_name
-                ))
-                continue
-            output[key] = per_platform_value[platform_name]
-        return output
+            roots[root_key] = RootItem(values, root_key)
+        return roots
 
     def _backwards_discover(self):
         if self.project_name is None:
-            return (None, None)
+            return None
 
         # Return project specific roots
         project_configs_path = os.path.normpath(
@@ -891,14 +940,12 @@ class Roots:
         project_storage_path = os.path.sep.join(project_config_items)
         # If path does not exist we assume it is older project without roots
         if not os.path.exists(project_storage_path):
-            return (None, None)
+            return None
 
         with open(project_storage_path, "r") as project_storage_file:
             project_storage = json.load(project_storage_file)
 
-        raw_data = project_storage["studio"]["projects"]
-
-        return raw_data, Roots.choose_platform(raw_data)
+        return RootItem(project_storage["studio"]["projects"])
 
     def _discover(self):
         ''' Loads root from json.
@@ -931,5 +978,5 @@ class Roots:
 
         roots = {}
         for root_key, values in raw_project_roots.items():
-            roots[root_key] = Roots.choose_platform(values, root_key)
-        return raw_project_roots, roots
+            roots[root_key] = RootItem(values, root_key)
+        return roots
