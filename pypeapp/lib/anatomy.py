@@ -558,8 +558,8 @@ class Templates:
             invalid_type = False
             for sub_key in key_subdict:
                 if (
-                    value is None or
-                    (hasattr(value, "items") and sub_key not in value)
+                    value is None
+                    or (hasattr(value, "items") and sub_key not in value)
                 ):
                     missing_key = True
                     used_keys.append(sub_key)
@@ -590,8 +590,7 @@ class Templates:
 
                 return result
 
-        valid = isinstance(value, numbers.Number)
-        if valid:
+        if isinstance(value, (numbers.Number, RootItem)):
             return result
 
         for inh_class in type(value).mro():
@@ -832,9 +831,6 @@ class RootItem:
     def default_key(self):
         if self._default_key:
             return self._default_key
-
-        if self.parent:
-            return self.parent.default_root_key
         return self.default_root_key
 
     def find_root_template_from_path(self, path, all_platforms=False):
@@ -946,6 +942,27 @@ class Roots:
 
         self.parent = parent
         self._roots = None
+
+    def __iter__(self):
+        return self.roots.__iter__()
+
+    def __format__(self, *args, **kwargs):
+        return self.roots.__format__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        return self.roots[key]
+
+    def values(self):
+        return self.roots.values()
+
+    def keys(self):
+        return self.roots.keys()
+
+    def items(self):
+        return self.roots.items()
+
+    def get(self, key, default=None):
+        return self.roots.get(key, default)
 
     def find_root_template_from_path(
         self, path, root_name=None, all_platforms=False
