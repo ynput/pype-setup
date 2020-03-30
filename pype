@@ -119,7 +119,7 @@ fi
 export PATH="$PYPE_ROOT/vendor/bin/ffmpeg_exec/linux/bin:$PATH"
 
 # Load colors definitions for easy output coloring
-if [[ ! -v PYPE_LOG_NO_COLORS ]]; then
+if [[ -z $PYPE_LOG_NO_COLORS ]]; then
   source "$PYPE_ROOT/pypeapp/colors.sh"
 fi
 
@@ -186,6 +186,7 @@ deactivate_venv () {
     venv_activated=0
   fi
 }
+
 ##############################################################################
 # Update requirements with stuff based on what is installed in current
 # active python (virtual) environment.
@@ -263,11 +264,22 @@ check_environment () {
       echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
       return 1
     fi
+    clean_pyc $PYPE_ENV
+    clean_pyc
   else
     echo -e "${BIGreen}OK${RST}"
   fi
 }
 
+##############################################################################
+# Upgrade pip
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
 upgrade_pip () {
   if [ "$f_offline" -ne 1 ] ; then
     echo -e "${BIGreen}>>>${RST} Updating pip ..."
@@ -487,6 +499,22 @@ localize_bin () {
   cp -aR $PYPE_ROOT/vendor/bin/* $PYPE_ENV/localized/
 }
 
+##############################################################################
+# Clean pyc files in specified directory
+# Globals:
+#   None
+# Arguments:
+#   Optional path to clean
+# Returns:
+#   None
+###############################################################################
+clean_pyc () {
+  path=${1:-$PYPE_ROOT}
+  echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
+  find . -name '*.py?' -delete
+  echo -e "${BIGreen}DONE${RST}"
+}
+
 # -----------------------------------------------------------------------------
 # main
 # -----------------------------------------------------------------------------
@@ -497,9 +525,7 @@ main () {
 
   # Clean pyc
   if [ "$f_clean" == 1 ] ; then
-    echo -e "${IGreen}>>>${RST} Cleaning pyc ... \c"
-    find . -name '*.py?' -delete
-    echo -e "${BIGreen}DONE${RST}"
+    clear_pyc
     echo -e "${ICyan}<<<${RST} Terminating ${IWhite}Pype${RST} ..."
     return 0
   fi
