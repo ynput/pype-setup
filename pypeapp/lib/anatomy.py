@@ -771,17 +771,17 @@ class MissingRootDefinition(Exception):
 
 class RootItem:
     expected_keys = ["mount", "path"]
-    default_root_key = "path"
+    default_root_type = "path"
     default_root_replacement_key = "root"
 
     def __init__(
-        self, root_raw_data, name=None, default_key=None,
+        self, root_raw_data, name=None, root_type=None,
         root_replacement_key=None, parent=None
     ):
         self.raw_data = root_raw_data
         self.name = name
         self.parent = parent
-        self._default_key = default_key
+        self._root_type = root_type
         self._root_replacement_key = root_replacement_key
 
         self.available_platforms = []
@@ -808,16 +808,16 @@ class RootItem:
                     _name, ending, ", ".join(missing_keys)
                 )
             )
-            if self.default_key in missing_keys:
+            if self.root_type in missing_keys:
                 for key in self.expected_keys:
                     if key not in missing_keys:
-                        self.data[self.default_key] = self.data[key]
+                        self.data[self.root_type] = self.data[key]
                         break
 
             for key in self.expected_keys:
                 value = self.data.get(key)
                 if value is None:
-                    self.data[key] = self.data[self.default_key]
+                    self.data[key] = self.data[self.root_type]
 
         for key in self.expected_keys:
             setattr(self, key, self.data[key])
@@ -829,14 +829,14 @@ class RootItem:
         return self._root_replacement_key or self.default_root_replacement_key
 
     @property
-    def default_key(self):
+    def root_type(self):
+        if self._root_type:
+            return self._root_type
+
         if self.parent:
-            return self.parent.root_key
+            return self.parent.root_type
 
-        if self._default_key:
-            return self._default_key
-
-        return self.default_root_key
+        return self.default_root_type
 
     def find_root_template_from_path(self, path, all_platforms=False):
         result = False
@@ -898,7 +898,7 @@ class RootItem:
         return path
 
     def __format__(self, addict):
-        value = self.data[self.default_key]
+        value = self.data[self.root_type]
         if value is None:
             raise MissingRootDefinition(
                 "Root key {0} miss all expected keys. {1}".format(
@@ -908,10 +908,10 @@ class RootItem:
                     )
                 )
             )
-        return self.data[self.default_key].__format__(addict)
+        return self.data[self.root_type].__format__(addict)
 
     def __str__(self):
-        return self.data[self.default_key]
+        return self.data[self.root_type]
 
     def __getitem__(self, key):
         return self.data[key]
@@ -933,12 +933,12 @@ class RootItem:
 
 
 class Roots:
-    default_root_key = "path"
+    default_root_type = "path"
     default_root_replacement_key = "root"
 
     def __init__(
         self, project_name=None, keep_updated=False,
-        root_replacement_key=None, root_key=None, parent=None
+        root_replacement_key=None, root_type=None, parent=None
     ):
         self.loaded_project = None
         self._project_name = project_name
@@ -947,7 +947,7 @@ class Roots:
             root_replacement_key
             or self.default_root_replacement_key
         )
-        self._root_key = root_key or self.default_root_key
+        self._root_type = root_type or self.default_root_type
 
         if parent is None and project_name is None:
             log.warning((
@@ -1020,8 +1020,8 @@ class Roots:
         return self._root_replacement_key
 
     @property
-    def root_key(self):
-        return self._root_key
+    def root_type(self):
+        return self._root_type
 
     @property
     def project_name(self):
