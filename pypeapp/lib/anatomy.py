@@ -980,7 +980,7 @@ class Roots:
         return self.roots.get(key, default)
 
     def find_root_template_from_path(
-        self, path, root_name=None, all_platforms=False
+        self, path, root_name=None, all_platforms=False, others_on_fail=False
     ):
         roots = self.roots
         if roots is None:
@@ -991,9 +991,14 @@ class Roots:
 
         if root_name is not None:
             if root_name in roots:
-                return roots[root_name].find_root_template_from_path(
+                success, result = roots[root_name].find_root_template_from_path(
                     path, all_platforms
                 )
+                if not others_on_fail or success:
+                    return (success, result)
+
+            if others_on_fail:
+                return self.find_root_template_from_path(path)
 
             raise KeyError((
                 "Root \"{}\" is not specified in current context."
