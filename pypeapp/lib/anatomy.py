@@ -44,10 +44,11 @@ class Anatomy:
         if not project_name:
             project_name = os.environ.get("AVALON_PROJECT")
 
-        self._templates = Templates(parent=self)
-        self._roots = Roots(parent=self)
         self.project_name = project_name
         self.keep_updated = keep_updated
+
+        self._templates = Templates(parent=self)
+        self._roots = Roots(parent=self)
 
     @property
     def templates(self):
@@ -553,7 +554,7 @@ class Templates:
             value = data[key]
 
         else:
-            value = copy.deepcopy(data)
+            value = data
             missing_key = False
             invalid_type = False
             for sub_key in key_subdict:
@@ -590,7 +591,7 @@ class Templates:
 
                 return result
 
-        if isinstance(value, (numbers.Number, RootItem)):
+        if isinstance(value, (numbers.Number, Roots, RootItem)):
             return result
 
         for inh_class in type(value).mro():
@@ -911,6 +912,9 @@ class RootItem:
     def __getitem__(self, key):
         return self.data[key]
 
+    def __iter__(self):
+        return self.data.__iter__()
+
     def get(self, key, default=None):
         return self.data.get(key, default)
 
@@ -1016,31 +1020,25 @@ class Roots:
             return self.parent.keep_updated
         return self._keep_updated
 
-    def check_updates(self):
+    @property
+    def roots(self):
         if self.parent is None and self.keep_updated:
             project_name = os.environ.get("AVALON_PROJECT")
-            if project_name != self.project_name:
-                self.project_name = project_name
+            if self.project_name != project_name:
+                self._project_name = project_name
 
         if self.project_name != self.loaded_project:
             self._roots = None
 
-        if self._roots is not None:
-            return
-
-        self._roots = self._discover()
-        self.loaded_project = self.project_name
-
-        # Backwards compatibility
         if self._roots is None:
-            self._roots = self._backwards_discover()
+            self._roots = self._discover()
+            self.loaded_project = self.project_name
+            # Backwards compatibility
+            if self._roots is None:
+                self._roots = self._backwards_discover()
 
-        if self._roots is None:
-            self._roots = Roots.default_roots(self)
-
-    @property
-    def roots(self):
-        self.check_updates()
+                if self._roots is None:
+                    self._roots = Roots.default_roots(self)
         return self._roots
 
     @staticmethod
