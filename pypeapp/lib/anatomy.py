@@ -929,6 +929,7 @@ class RootItem:
 
 
 class Roots:
+    default_root_replacement_key = "root"
     def __init__(
         self, project_name=None, keep_updated=False,
         root_replacement_key=None, parent=None
@@ -936,7 +937,10 @@ class Roots:
         self.loaded_project = None
         self._project_name = project_name
         self._keep_updated = keep_updated
-        self._root_replacement_key = root_replacement_key
+        self._root_replacement_key = (
+            root_replacement_key
+            or self.default_root_replacement_key
+        )
 
         if parent is None and project_name is None:
             log.warning((
@@ -999,10 +1003,10 @@ class Roots:
             )
             if result:
                 log.info("Found match in root \"{}\".".format(root_name))
-                return _path
+                return (False, _path)
 
         log.warning("No matching root was found in current setting.")
-        return path
+        return (False, path)
 
     @property
     def root_replacement_key(self):
