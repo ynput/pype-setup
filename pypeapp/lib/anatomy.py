@@ -830,8 +830,12 @@ class RootItem:
 
     @property
     def default_key(self):
+        if self.parent:
+            return self.parent.root_key
+
         if self._default_key:
             return self._default_key
+
         return self.default_root_key
 
     def find_root_template_from_path(self, path, all_platforms=False):
@@ -929,10 +933,12 @@ class RootItem:
 
 
 class Roots:
+    default_root_key = "path"
     default_root_replacement_key = "root"
+
     def __init__(
         self, project_name=None, keep_updated=False,
-        root_replacement_key=None, parent=None
+        root_replacement_key=None, root_key=None, parent=None
     ):
         self.loaded_project = None
         self._project_name = project_name
@@ -941,6 +947,7 @@ class Roots:
             root_replacement_key
             or self.default_root_replacement_key
         )
+        self._root_key = root_key or self.default_root_key
 
         if parent is None and project_name is None:
             log.warning((
@@ -1011,6 +1018,10 @@ class Roots:
     @property
     def root_replacement_key(self):
         return self._root_replacement_key
+
+    @property
+    def root_key(self):
+        return self._root_key
 
     @property
     def project_name(self):
