@@ -392,11 +392,15 @@ class PypeLauncher(object):
             t.echo("No publish paths specified")
             return False
 
-        remapped_path = self.path_remapper(
-            {
-                "PYPE_PUBLISH_DATA": os.pathsep.join(paths)
-            })
-        os.environ.update(remapped_path)
+        # distinguish legacy remapping by "{root" in path
+        _paths = []
+        for path in paths:
+            if "{root" in path:
+                _paths.append(path)
+            else:
+                _paths.extend(self.path_remapper(path))
+
+        os.environ["PYPE_PUBLISH_DATA"] = os.pathsep.join(_paths)
 
         if gui:
             import pyblish_qml
