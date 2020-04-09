@@ -47,22 +47,30 @@ class Anatomy:
         self.project_name = project_name
         self.keep_updated = keep_updated
 
-        self._templates = Templates(parent=self)
-        self._roots = Roots(parent=self)
+        self._templates_obj = Templates(parent=self)
+        self._roots_obj = Roots(parent=self)
 
     @property
     def templates(self):
-        return self._templates
+        return self.templates_obj.templates
+
+    @property
+    def templates_obj(self):
+        return self._templates_obj
 
     def format(self, *args, **kwargs):
-        return self._templates.format(*args, **kwargs)
+        return self._templates_obj.format(*args, **kwargs)
 
     def format_all(self, *args, **kwargs):
-        return self._templates.format_all(*args, **kwargs)
+        return self._templates_obj.format_all(*args, **kwargs)
 
     @property
     def roots(self):
-        return self._roots
+        return self.roots_obj.roots
+
+    @property
+    def roots_obj(self):
+        return self._roots_obj
 
 
 class TemplateMissingKey(Exception):
