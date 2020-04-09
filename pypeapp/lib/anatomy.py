@@ -765,62 +765,48 @@ class Templates:
         return TemplatesDict(solved)
 
 
-class MissingRootDefinition(Exception):
-    pass
-
-
 class RootItem:
-    expected_keys = ["mount", "path"]
-    default_root_type = "path"
     default_root_replacement_key = "root"
 
     def __init__(
-        self, root_raw_data, name=None, root_type=None,
+        self, root_raw_data, name=None, parent_keys=[],
         root_replacement_key=None, parent=None
     ):
-        self.raw_data = root_raw_data
+        lowered_platform_keys = {}
+        for key, value in root_raw_data.items():
+            lowered_platform_keys[key.lower()] = value
+        self.raw_data = lowered_platform_keys
+        self.cleaned_data = self._clean_roots(lowered_platform_keys)
         self.name = name
+        self.parent_keys = parent_keys
         self.parent = parent
-        self._root_type = root_type
         self._root_replacement_key = root_replacement_key
 
-        self.available_platforms = []
-        self.data = self.choose_platform(root_raw_data)
-        # QUESTION should we add force validation?
-        # - if "mount" and "path" are both set
-        missing_keys = [
-            key for key in self.expected_keys if key not in self.data
-        ]
+        self.available_platforms = list(lowered_platform_keys.keys())
+        self.value = lowered_platform_keys.get(platform.system().lower())
+        self.clean_value = self.clean_root(self.value)
 
-        if len(missing_keys) == len(self.expected_keys):
-            log.warning("Root key {} miss all expected keys. {}".format(
-                self.name or "N/A",
-                ", ".join(['"{0}"'.format(key) for key in self.expected_keys])
-            ))
-            for key in self.expected_keys:
-                self.data[key] = None
+    def __format__(self, *args, **kwargs):
+        return self.value.__format__(*args, **kwargs)
 
-        elif missing_keys:
-            ending = "" if len(missing_keys) == 1 else "s"
-            _name = "" if name is None else " item \"{}\"".format(name)
-            log.warning(
-                "Root{} missing expected key{}: {}".format(
-                    _name, ending, ", ".join(missing_keys)
-                )
+    def __str__(self):
+        return str(self.value)
+
+    def __getitem__(self, key):
+        if isinstance(key, numbers.Number):
+            return self.value[key]
+
+        additional_info = ""
+        if self.parent and self.parent.project_name:
+            additional_info += " for project \"{}\"".format(
+                self.parent.project_name
             )
-            if self.root_type in missing_keys:
-                for key in self.expected_keys:
-                    if key not in missing_keys:
-                        self.data[self.root_type] = self.data[key]
-                        break
 
-            for key in self.expected_keys:
-                value = self.data.get(key)
-                if value is None:
-                    self.data[key] = self.data[self.root_type]
-
-        for key in self.expected_keys:
-            setattr(self, key, self.data[key])
+        raise AssertionError(
+            "Root key \"{}\" is missing{}.".format(
+                key, additional_info
+            )
+        )
 
     @property
     def root_replacement_key(self):
@@ -828,62 +814,20 @@ class RootItem:
             return self.parent.root_replacement_key
         return self._root_replacement_key or self.default_root_replacement_key
 
-    @property
-    def root_type(self):
-        if self._root_type:
-            return self._root_type
+    def full_key(self):
+        if not self.name:
+            return str(self.default_root_replacement_key)
 
-        if self.parent:
-            return self.parent.root_type
+        joined_parent_keys = "".join(
+            ["[{}]".format(key) for key in self.parent_keys]
+        )
+        return "{}{}".format(
+            self.default_root_replacement_key,
+            joined_parent_keys
+        )
 
-        return self.default_root_type
-
-    def find_root_template_from_path(self, path, all_platforms=False):
-        result = False
-        output = str(path)
-
-        root_paths = []
-        for root_path in self.data.values():
-            root_path = self.clean_root(root_path)
-            if root_path not in root_paths:
-                root_paths.append(root_path)
-
-        if all_platforms:
-            for platform_data in self.raw_data.values():
-                for root_path in platform_data.values():
-                    root_path = self.clean_root(root_path)
-                    if root_path not in root_paths:
-                        root_paths.append(root_path)
-
-        mod_path = path.replace("\\", "/")
-        for root_typ, root_path in self.items():
-            _root_path = self.clean_root(root_path)
-            if not mod_path.startswith(_root_path):
-                continue
-
-            result = True
-            replacement = str(self.root_replacement_key)
-            if self.name:
-                replacement += "[{}]".format(self.name)
-            replacement = "{" + replacement + "}"
-            output = replacement + mod_path[len(_root_path):]
-
-        return (result, output)
-
-    def choose_platform(self, values, platform_name=None):
-        output = {}
-        if platform_name is None:
-            platform_name = platform.system().lower()
-
-        for key, per_platform_value in values.items():
-            for _platform_name in per_platform_value.keys():
-                if _platform_name not in self.available_platforms:
-                    self.available_platforms.append(_platform_name)
-
-            if platform_name not in per_platform_value:
-                continue
-            output[key] = os.path.normpath(per_platform_value[platform_name])
-        return output
+    def exists(self):
+        return self.root_exists(self.value)
 
     def root_exists(self, root):
         drive = os.path.splitdrive(root)[0]
@@ -891,63 +835,109 @@ class RootItem:
             return False
         return True
 
-    def clean_root(self, path):
-        path = path.replace("\\", "/")
-        while path.endswith("/"):
-            path = path[:-1]
-        return path
+    def clean_path(self, path):
+        return path.replace("\\", "/")
 
-    def __format__(self, addict):
-        value = self.data[self.root_type]
-        if value is None:
-            raise MissingRootDefinition(
-                "Root key {0} miss all expected keys. {1}".format(
-                    self.name,
-                    ", ".join(
-                        ['"{0}"'.format(key) for key in self.expected_keys]
+    def clean_root(self, root):
+        if root:
+            root = self.clean_path(root)
+            while root.endswith("/"):
+                root = root[:-1]
+        return root
+
+    def _clean_roots(self, raw_data):
+        cleaned = {}
+        for key, value in raw_data.items():
+            cleaned[key] = self.clean_root(value)
+        return cleaned
+
+    def path_remapper(self, path, dst_platform=None, src_platform=None):
+        cleaned_path = self.clean_path(path)
+        if dst_platform:
+            dst_root_clean = self.cleaned_data.get(dst_platform)
+            if not dst_root_clean:
+                key_part = ""
+                full_key = self.full_key()
+                if full_key != self.root_replacement_key:
+                    key_part += "\"{}\" ".format(full_key)
+
+                log.warning(
+                    "Root {}miss platform \"{}\" definition.".format(
+                        key_part, dst_platform
                     )
                 )
+                return None
+
+            if cleaned_path.startswith(dst_root_clean):
+                return cleaned_path
+
+        if src_platform:
+            src_root_clean = self.cleaned_data.get(src_platform)
+            if src_root_clean is None:
+                log.warning(
+                    "Root \"{}\" miss platform \"{}\" definition.".format(
+                        self.full_key(), src_platform
+                    )
+                )
+                return None
+
+            if not cleaned_path.startswith(src_root_clean):
+                return None
+
+            subpath = cleaned_path[len(src_root_clean):]
+            if dst_platform:
+                # `dst_root_clean` is used from upper condition
+                return dst_root_clean + subpath
+            return self.clean_value + subpath
+
+        result, template = self.find_root_template_from_path(path)
+        if not result:
+            return None
+
+        if dst_platform:
+            def parent_dict(keys, value):
+                if not keys:
+                    return value
+
+                key = keys.pop(0)
+                return {key: parent_dict(keys, value)}
+
+            format_value = parent_dict(
+                list(self.parent_keys), dst_root_clean
             )
-        return self.data[self.root_type].__format__(addict)
+        else:
+            format_value = self
+        return template.format(**{"root": format_value})
 
-    def __str__(self):
-        return self.data[self.root_type]
+    def find_root_template_from_path(self, path):
+        result = False
+        output = str(path)
 
-    def __getitem__(self, key):
-        return self.data[key]
+        root_paths = list(self.cleaned_data.values())
+        mod_path = self.clean_path(path)
+        for root_path in root_paths:
+            if mod_path.startswith(root_path):
+                result = True
+                replacement = "{" + self.full_key() + "}"
+                output = replacement + mod_path[len(root_path):]
+                break
 
-    def __iter__(self):
-        return self.data.__iter__()
-
-    def get(self, key, default=None):
-        return self.data.get(key, default)
-
-    def items(self):
-        return self.data.items()
-
-    def values(self):
-        return self.data.values()
-
-    def keys(self):
-        return self.data.keys()
+        return (result, output)
 
 
 class Roots:
-    default_root_type = "path"
-    default_root_replacement_key = "root"
+    default_root_replacement_key = (
+        RootItem.default_root_replacement_key
+    )
 
     def __init__(
         self, project_name=None, keep_updated=False,
-        root_replacement_key=None, root_type=None, parent=None
+        root_replacement_key=None, parent=None
     ):
         self.loaded_project = None
         self._project_name = project_name
         self._keep_updated = keep_updated
-        self._root_replacement_key = (
-            root_replacement_key
-            or self.default_root_replacement_key
-        )
-        self._root_type = root_type or self.default_root_type
+        self._root_replacement_key = root_replacement_key
 
         if parent is None and project_name is None:
             log.warning((
@@ -958,75 +948,60 @@ class Roots:
         self.parent = parent
         self._roots = None
 
-    def __iter__(self):
-        return self.roots.__iter__()
-
     def __format__(self, *args, **kwargs):
         return self.roots.__format__(*args, **kwargs)
 
     def __getitem__(self, key):
         return self.roots[key]
 
-    def values(self):
-        return self.roots.values()
-
-    def keys(self):
-        return self.roots.keys()
-
-    def items(self):
-        return self.roots.items()
-
-    def get(self, key, default=None):
-        return self.roots.get(key, default)
-
-    def find_root_template_from_path(
-        self, path, root_name=None, all_platforms=False, others_on_fail=False
+    def path_remapper(
+        self, path, dst_platform=None, src_platform=None, roots=None
     ):
-        roots = self.roots
+        if roots is None:
+            roots = self.roots
+
         if roots is None:
             raise ValueError("Roots are not set. Can't find path.")
 
         if isinstance(roots, RootItem):
-            return roots.find_root_template_from_path(path, all_platforms)
+            return roots.path_remapper(path, dst_platform, src_platform)
 
-        if root_name is not None:
-            if root_name in roots:
-                success, result = roots[root_name].find_root_template_from_path(
-                    path, all_platforms
-                )
-                if not others_on_fail or success:
-                    return (success, result)
-
-            if others_on_fail:
-                return self.find_root_template_from_path(path)
-
-            raise KeyError((
-                "Root \"{}\" is not specified in current context."
-                " Available keys ares: {}"
-            ).format(
-                root_name,
-                ", ".join(['"{}"'.format(key) for key in roots.keys()])
-            ))
-
-        log.info("Root name was not specified, looking for first matching.")
-        for root_name, root_item in roots.items():
-            result, _path = root_item.find_root_template_from_path(
-                path, all_platforms
+        for _root in roots.values():
+            result = self.path_remapper(
+                path, dst_platform, src_platform, _root
             )
-            if result:
+            if result is not None:
+                return result
+
+    def find_root_template_from_path(self, path, roots=None):
+        if roots is None:
+            log.debug(
+                "Looking for matching root in path \"{}\".".format(path)
+            )
+            roots = self.roots
+
+        if roots is None:
+            raise ValueError("Roots are not set. Can't find path.")
+
+        if isinstance(roots, RootItem):
+            return roots.find_root_template_from_path(path)
+
+        for root_name, _root in roots.items():
+            success, result = self.find_root_template_from_path(path, _root)
+            if success:
                 log.info("Found match in root \"{}\".".format(root_name))
-                return (False, _path)
+                return success, result
 
         log.warning("No matching root was found in current setting.")
         return (False, path)
 
     @property
     def root_replacement_key(self):
-        return self._root_replacement_key
+        return self._root_replacement_key or self.default_root_replacement_key
 
-    @property
-    def root_type(self):
-        return self._root_type
+    @root_replacement_key.setter
+    def root_replacement_key(self, value):
+        self._root_replacement_key = value
 
     @property
     def project_name(self):
@@ -1055,10 +1030,7 @@ class Roots:
             self.loaded_project = self.project_name
             # Backwards compatibility
             if self._roots is None:
-                self._roots = self._backwards_discover()
-
-                if self._roots is None:
-                    self._roots = Roots.default_roots(self)
+                self._roots = Roots.default_roots(self)
         return self._roots
 
     @staticmethod
@@ -1074,34 +1046,7 @@ class Roots:
         with open(default_roots_path, "r") as default_roots_file:
             raw_default_roots = json.load(default_roots_file)
 
-        roots = {}
-        for root_key, values in raw_default_roots.items():
-            roots[root_key] = RootItem(values, root_key, parent=parent)
-        return roots
-
-    def _backwards_discover(self):
-        if self.project_name is None:
-            return None
-
-        # Return project specific roots
-        project_configs_path = os.path.normpath(
-            os.environ.get("PYPE_PROJECT_CONFIGS", "")
-        )
-        project_config_items = [
-            project_configs_path,
-            self.project_name,
-            "system",
-            "storage.json"
-        ]
-        project_storage_path = os.path.sep.join(project_config_items)
-        # If path does not exist we assume it is older project without roots
-        if not os.path.exists(project_storage_path):
-            return None
-
-        with open(project_storage_path, "r") as project_storage_file:
-            project_storage = json.load(project_storage_file)
-
-        return RootItem(project_storage["studio"]["projects"], parent=self)
+        return Roots._parse_dict(raw_default_roots)
 
     def _discover(self):
         ''' Loads root from json.
@@ -1132,7 +1077,22 @@ class Roots:
         with open(project_roots_path, "r") as project_roots_file:
             raw_project_roots = json.load(project_roots_file)
 
-        roots = {}
-        for root_key, values in raw_project_roots.items():
-            roots[root_key] = RootItem(values, root_key, parent=self)
-        return roots
+        return self._parse_dict(raw_project_roots, parent=self)
+
+    @staticmethod
+    def _parse_dict(data, key=None, parent_keys=[], parent=None):
+        is_last = False
+        for value in data.values():
+            if isinstance(value, StringType):
+                is_last = True
+                break
+
+        if is_last:
+            return RootItem(data, key, parent_keys, parent=parent)
+
+        output = {}
+        for key, value in data.items():
+            _parent_keys = list(parent_keys)
+            _parent_keys.append(key)
+            output[key] = Roots._parse_dict(value, key, _parent_keys, parent)
+        return output
