@@ -607,8 +607,8 @@ class PypeLauncher(object):
         parents = avalon_asset["data"]["parents"] or []
         if parents:
             hierarchy = os.path.join(*parents)
+
         data = {
-            "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
             "project": {
                 "name": project,
                 "code": avalon_project['data']['code']
@@ -619,10 +619,12 @@ class PypeLauncher(object):
             "hierarchy": hierarchy,
         }
 
-        anatomy = Anatomy()
-        anatomy = anatomy.format(data)
-        work_template = anatomy["work"]["folder"]
-        workdir = os.path.normpath(work_template)
+        anatomy = Anatomy(project)
+        anatomy_filled = anatomy.format(data)
+        workdir = os.path.normpath(anatomy_filled["work"]["folder"])
+
+        # set PYPE_ROOT_* environments
+        anatomy.set_root_environments()
 
         # set environments for Avalon
         os.environ["AVALON_PROJECT"] = project

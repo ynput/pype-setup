@@ -72,6 +72,9 @@ class Anatomy:
     def roots_obj(self):
         return self._roots_obj
 
+    def set_root_environments(self):
+        self.roots_obj.set_root_environments()
+
 
 class TemplateMissingKey(Exception):
     """Exception for cases when key does not exist in Anatomy."""
@@ -800,6 +803,9 @@ class RootItem:
     def __str__(self):
         return str(self.value)
 
+    def __repr__(self):
+        return self.__str__()
+
     def __getitem__(self, key):
         if isinstance(key, numbers.Number):
             return self.value[key]
@@ -1002,6 +1008,31 @@ class Roots:
 
         log.warning("No matching root was found in current setting.")
         return (False, path)
+
+    def set_root_environments(self):
+        for key, value in self.root_environments().items():
+            os.environ[key] = value
+
+    def root_environments(self):
+        return self._root_environments()
+
+    def _root_environments(self, keys=[], roots=None):
+        if roots is None:
+            roots = self.roots
+
+        if isinstance(roots, RootItem):
+            key_items = [self.env_prefix]
+            for _key in keys:
+                key_items.append(_key.upper())
+            key = "_".join(key_items)
+            return {key: roots.value}
+
+        output = {}
+        for _key, _value in roots.items():
+            _keys = list(keys)
+            _keys.append(_key)
+            output.update(get_root_environments(_keys, _value))
+        return output
 
     @property
     def root_replacement_key(self):
