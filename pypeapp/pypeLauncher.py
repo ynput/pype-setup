@@ -18,7 +18,7 @@ class PypeLauncher(object):
         host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa: E501
 
         t.echo("... Running pype from\t\t\t[ {} ]".format(
-            os.environ.get('PYPE_ROOT')))
+            os.environ.get('PYPE_SETUP_PATH')))
         t.echo("... Using config at\t\t\t[ {} ]".format(
             os.environ.get('PYPE_CONFIG')))
         t.echo("... Projects root\t\t\t[ {} ]".format(
@@ -58,14 +58,14 @@ class PypeLauncher(object):
         """
         from pypeapp.deployment import Deployment
 
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        d = Deployment(os.environ.get('PYPE_SETUP_PATH', None))
         paths = d.get_deployment_paths()
 
         # add self
-        paths.append(os.environ.get('PYPE_ROOT'))
+        paths.append(os.environ.get('PYPE_SETUP_PATH'))
 
         # additional vendor packages
-        vendor_path = os.path.join(os.getenv('PYPE_ROOT'), 'vendor', 'python')
+        vendor_path = os.path.join(os.getenv('PYPE_SETUP_PATH'), 'vendor', 'python')
 
         with os.scandir(vendor_path) as vp:
             for entry in vp:
@@ -123,7 +123,7 @@ class PypeLauncher(object):
         self._initialize()
 
         if debug:
-            pype_setup = os.getenv('PYPE_ROOT')
+            pype_setup = os.getenv('PYPE_SETUP_PATH')
             items = [pype_setup, "pypeapp", "tray.py"]
             fname = os.path.sep.join(items)
 
@@ -136,7 +136,7 @@ class PypeLauncher(object):
 
         DETACHED_PROCESS = 0x00000008
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [pype_setup, "pypeapp", "tray.py"]
         fname = os.path.sep.join(items)
 
@@ -226,7 +226,7 @@ class PypeLauncher(object):
 
         self._initialize()
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server.py"
@@ -250,7 +250,7 @@ class PypeLauncher(object):
         from pypeapp import execute
         self._initialize()
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server_cli.py"
@@ -282,7 +282,7 @@ class PypeLauncher(object):
         .. seealso:: :func:`Deployment.validate`
         """
         from pypeapp.deployment import Deployment, DeployException
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        d = Deployment(os.environ.get('PYPE_SETUP_PATH', None))
         try:
             d.validate()
         except DeployException:
@@ -298,7 +298,7 @@ class PypeLauncher(object):
 
         """
         from pypeapp.deployment import Deployment, DeployException
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        d = Deployment(os.environ.get('PYPE_SETUP_PATH', None))
         try:
             d.deploy(force)
         except DeployException:
@@ -312,7 +312,7 @@ class PypeLauncher(object):
 
         # if not called, console coloring will get mangled in python.
         Terminal()
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         d = Deployment(pype_setup)
 
         tools, config_path = d.get_environment_data()
@@ -342,7 +342,7 @@ class PypeLauncher(object):
 
         self._initialize()
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
             pype_setup, "repos", "pype", "pype", "tools",
             "texture_copy", "app.py"
@@ -436,14 +436,14 @@ class PypeLauncher(object):
             t.echo("  - selecting [ {} ]".format(keyword))
             args.append('-k')
             args.append(keyword)
-            args.append(os.path.join(os.getenv('PYPE_ROOT'),
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'),
                                      'repos', 'pype', 'pype', 'tests'))
 
         elif id:
             t.echo("  - selecting test ID [ {} ]".format(id[0]))
             args.append(id[0])
         else:
-            args.append(os.path.join(os.getenv('PYPE_ROOT'),
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'),
                                      'repos', 'pype', 'pype', 'tests'))
 
         pytest.main(args)
@@ -465,13 +465,13 @@ class PypeLauncher(object):
             t.echo("  - selecting [ {} ]".format(keyword))
             args.append('-k')
             args.append(keyword)
-            args.append(os.path.join(os.getenv('PYPE_ROOT'), 'tests'))
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'), 'tests'))
 
         elif id:
             t.echo("  - selecting test ID [ {} ]".format(id[0]))
             args.append(id[0])
         else:
-            args.append(os.path.join(os.getenv('PYPE_ROOT'), 'tests'))
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'), 'tests'))
 
         pytest.main(args)
 
@@ -488,9 +488,9 @@ class PypeLauncher(object):
         pytest.main(['-v', '-x', '--color=yes', '--cov={}'.format(pype),
                      '--cov-config', '.coveragerc', '--cov-report=html',
                      '--ignore={}'.format(os.path.join(
-                        os.environ.get("PYPE_ROOT"), "vendor")),
+                        os.environ.get("PYPE_SETUP_PATH"), "vendor")),
                      '--ignore={}'.format(os.path.join(
-                        os.environ.get("PYPE_ROOT"), "repos"))
+                        os.environ.get("PYPE_SETUP_PATH"), "repos"))
                      ])
 
     def make_docs(self):
@@ -506,14 +506,14 @@ class PypeLauncher(object):
         t = Terminal()
 
         source_dir_setup = os.path.join(
-            os.environ.get("PYPE_ROOT"), "docs", "source")
+            os.environ.get("PYPE_SETUP_PATH"), "docs", "source")
         build_dir_setup = os.path.join(
-            os.environ.get("PYPE_ROOT"), "docs", "build")
+            os.environ.get("PYPE_SETUP_PATH"), "docs", "build")
 
         source_dir_pype = os.path.join(
-            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "source")
+            os.environ.get("PYPE_SETUP_PATH"), "repos", "pype", "docs", "source")
         build_dir_pype = os.path.join(
-            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "build")
+            os.environ.get("PYPE_SETUP_PATH"), "repos", "pype", "docs", "build")
 
         t.echo(">>> Generating documentation ...")
         t.echo("  - Cleaning up ...")
@@ -528,7 +528,7 @@ class PypeLauncher(object):
                  '--ext-intersphinx', '--ext-viewcode', '-o',
                  source_dir_setup, 'pypeapp'], shell=True)
         vendor_ignore = os.path.join(
-            os.environ.get("PYPE_ROOT"), "repos", "pype", "pype", "vendor")
+            os.environ.get("PYPE_SETUP_PATH"), "repos", "pype", "pype", "vendor")
         execute(['sphinx-apidoc', '-M', '-f', '-d', '6', '--ext-autodoc',
                  '--ext-intersphinx', '--ext-viewcode', '-o',
                  source_dir_pype, 'pype',

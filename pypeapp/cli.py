@@ -6,7 +6,7 @@ from pypeLauncher import PypeLauncher
 try:
     import click
 except ImportError:
-    click_path = os.path.join(os.environ['PYPE_ROOT'],
+    click_path = os.path.join(os.environ['PYPE_SETUP_PATH'],
                               'vendor', 'python', 'click')
     sys.path.append(click_path)
     import click

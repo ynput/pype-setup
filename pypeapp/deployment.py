@@ -71,7 +71,7 @@ class Deployment(object):
         normalized = os.path.normpath(pype_root)
         if not os.path.exists(normalized):
             raise DeployException(
-                "PYPE_ROOT {} doesn't exists or wasn't set".format(normalized),
+                "PYPE_SETUP_PATH {} doesn't exists or wasn't set".format(normalized),
                 100)
         self._pype_root = normalized
         pass
@@ -578,7 +578,7 @@ class Deployment(object):
 
                 if item.get("vendor"):
                     source = os.path.join(
-                                os.environ.get("PYPE_ROOT"),
+                                os.environ.get("PYPE_SETUP_PATH"),
                                 'vendor', 'packages', item.get("vendor"))
                     if not os.path.isfile(source):
                         raise DeployException(
@@ -726,7 +726,7 @@ class Deployment(object):
         files = deploy.get("init_env")
         config_path = os.path.normpath(
             deploy.get('PYPE_CONFIG').format(
-                PYPE_ROOT=self._pype_root))
+                PYPE_SETUP_PATH=self._pype_root))
 
         return files, config_path
 
