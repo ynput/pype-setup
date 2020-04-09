@@ -72,6 +72,9 @@ class Anatomy:
     def roots_obj(self):
         return self._roots_obj
 
+    def root_environments(self):
+        self.roots_obj.root_environments()
+
     def set_root_environments(self):
         self.roots_obj.set_root_environments()
 
@@ -943,6 +946,7 @@ class Roots:
     default_root_replacement_key = (
         RootItem.default_root_replacement_key
     )
+    env_prefix = "PYPE_ROOT"
 
     def __init__(
         self, project_name=None, keep_updated=False,
@@ -1031,7 +1035,7 @@ class Roots:
         for _key, _value in roots.items():
             _keys = list(keys)
             _keys.append(_key)
-            output.update(get_root_environments(_keys, _value))
+            output.update(self._root_environments(_keys, _value))
         return output
 
     @property
