@@ -33,12 +33,30 @@ else:
 log = PypeLogger().get_logger(__name__)
 
 
+class RootCombinationError(Exception):
+    """This exception is raised when templates has combined root types."""
+
+    def __init__(self, roots):
+        joined_roots = ", ".join(
+            ["\"{}\"".format(_root) for _root in roots]
+        )
+        msg = (
+            "Combination of root with and"
+            " without root name in Templates. {}"
+        ).format(joined_roots)
+
+        return super(self.__class__, self).__init__(msg)
+
+
 class Anatomy:
     ''' Anatomy module helps to keep project settings.
 
     :param project_name: Project name to look on project's anatomy overrides.
     :type project_name: str
     '''
+
+    root_key_regex = re.compile(r"{(root?[^}]+)}")
+    root_name_regex = re.compile(r"root\[([^]]+)\]")
 
     def __init__(self, project_name=None, keep_updated=False):
         if not project_name:
@@ -70,13 +88,76 @@ class Anatomy:
 
     @property
     def roots_obj(self):
+        """Returns `Roots` object."""
         return self._roots_obj
 
     def root_environments(self):
-        self.roots_obj.root_environments()
+        """Returns PYPE_ROOT_* environments for current project in dict."""
+        return self.roots_obj.root_environments()
 
     def set_root_environments(self):
+        """Sets PYPE_ROOT_* environments for current project."""
         self.roots_obj.set_root_environments()
+
+    def root_names(self):
+        """Returns root names for current project."""
+        return self.root_names_from_templates(self.templates)
+
+    def _root_keys_from_templates(self, data):
+        """Extract root key from templates in data.
+
+        :param data: Data that may contain templates as string.
+        :type data: dict
+        :rtype: set
+
+        Output example: `{"root[work]", "root[publish]"}`
+        """
+
+        output = set()
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    for root in self._root_keys_from_templates(value):
+                        output.add(root)
+
+                elif isinstance(value, str):
+                    for group in re.findall(self.root_key_regex, value):
+                        output.add(group)
+        return output
+
+    def root_names_from_templates(self, templates):
+        """Extract root names form anatomy templates.
+
+        Returns None if values in templates contain only "{root}".
+        Empty list is returned if there is no "root" in templates.
+        Else returns all root names from templates in list.
+
+        RootCombinationError is raised when templates contain both root types,
+        basic "{root}" and with root name specification "{root[work]}".
+
+        :param templates: Anatomy templates where roots are not filled.
+        :type templates: dict
+        :rtype: list, None
+        """
+        roots = self._root_keys_from_templates(templates)
+        # Return empty list if no roots found in templates
+        if not roots:
+            return list()
+
+        # Raise exception when root keys have roots with and without root name.
+        # Invalid output example: ["root", "root[project]", "root[render]"]
+        if len(roots) > 1 and "root" in roots:
+            raise RootCombinationError(roots)
+
+        # Return None if "root" without root name in templates
+        if len(roots) == 1 and roots[0] == "root":
+            return None
+
+        names = set()
+        for root in roots:
+            for group in re.findall(self.root_name_regex, root):
+                names.add(group)
+        return list(names)
 
 
 class TemplateMissingKey(Exception):
@@ -94,9 +175,7 @@ class TemplateMissingKey(Exception):
 class TemplateUnsolved(Exception):
     """Exception for unsolved template when strict is set to True."""
 
-    msg = (
-        "Anatomy template \"{0}\" is unsolved.{1}{2}"
-    )
+    msg = "Anatomy template \"{0}\" is unsolved.{1}{2}"
     invalid_types_msg = " Keys with invalid DataType: `{0}`."
     missing_keys_msg = " Missing keys: \"{0}\"."
 
