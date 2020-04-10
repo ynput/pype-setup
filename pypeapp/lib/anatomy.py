@@ -410,7 +410,7 @@ class Templates:
         return self._templates
 
     @staticmethod
-    def default_templates():
+    def default_templates_raw():
         path = "{PYPE_CONFIG}/anatomy/default.yaml"
         path = os.path.normpath(path.format(**os.environ))
         with open(path, "r") as stream:
@@ -418,7 +418,11 @@ class Templates:
             default_templates = yaml.load(
                 stream, Loader=yaml.loader.Loader
             )
+        return default_templates
 
+    @staticmethod
+    def default_templates():
+        default_templates = Templates.default_templates_raw()
         return Templates.solve_template_inner_links(default_templates)
 
     def _discover(self):
