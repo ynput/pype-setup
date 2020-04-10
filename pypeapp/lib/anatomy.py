@@ -425,6 +425,25 @@ class Templates:
         default_templates = Templates.default_templates_raw()
         return Templates.solve_template_inner_links(default_templates)
 
+    @staticmethod
+    def overrides_dir_path():
+        return os.path.normpath(
+            os.environ.get("PYPE_PROJECT_CONFIGS", "")
+        )
+
+    @staticmethod
+    def project_overrides_path(project_name):
+        project_config_items = [
+            Templates.overrides_dir_path(),
+            project_name,
+            "anatomy",
+            "default.yaml"
+        ]
+        return os.path.sep.join(project_config_items)
+
+    def _project_overrides_path(self):
+        return Templates.project_overrides_path(self.project_name)
+
     def _discover(self):
         ''' Loads anatomy templates from yaml.
         Default templates are loaded if project is not set or project does
@@ -435,16 +454,7 @@ class Templates:
         '''
 
         if self.project_name is not None:
-            project_configs_path = os.path.normpath(
-                os.environ.get("PYPE_PROJECT_CONFIGS", "")
-            )
-            project_config_items = [
-                project_configs_path,
-                self.project_name,
-                "anatomy",
-                "default.yaml"
-            ]
-            project_templates_path = os.path.sep.join(project_config_items)
+            project_templates_path = self._project_overrides_path()
             if os.path.exists(project_templates_path):
                 # QUESTION Should we not raise exception if file is invalid?
                 with open(project_templates_path, "r") as stream:
@@ -468,6 +478,13 @@ class Templates:
             anatomy_sub_keys = (
                 cls.inner_key_name_pattern.findall(match)
             )
+            if key in anatomy_sub_keys:
+                raise ValueError((
+                    "Unsolvable recursion in inner keys, "
+                    "key: \"{}\" is in his own value."
+                    " Can't determine source, please check Anatomy templates."
+                ).format(key))
+
             for anatomy_sub_key in anatomy_sub_keys:
                 replace_value = key_values.get(anatomy_sub_key)
                 if replace_value is None:
@@ -491,15 +508,56 @@ class Templates:
         return value
 
     @classmethod
+    def prepare_inner_keys(cls, key_values):
+        keys_to_solve = set(key_values.keys())
+        while True:
+            found = False
+            for key in tuple(keys_to_solve):
+                value = key_values[key]
+
+                if isinstance(value, StringType):
+                    matches = cls.inner_key_pattern.findall(value)
+                    if not matches:
+                        keys_to_solve.remove(key)
+                        continue
+
+                    found = True
+                    key_values[key] = cls.replace_inner_keys(
+                        matches, value, key_values, key
+                    )
+                    continue
+
+                elif not isinstance(value, dict):
+                    keys_to_solve.remove(key)
+                    continue
+
+                subdict_found = False
+                for _key, _value in tuple(value.items()):
+                    matches = cls.inner_key_pattern.findall(_value)
+                    if not matches:
+                        continue
+
+                    subdict_found = True
+                    found = True
+                    key_values[key][_key] = cls.replace_inner_keys(
+                        matches, _value, key_values,
+                        "{}.{}".format(key, _key)
+                    )
+
+                if not subdict_found:
+                    keys_to_solve.remove(key)
+
+            if not found:
+                break
+
+        return key_values
+
+    @classmethod
     def solve_template_inner_links(cls, templates):
-        default_key_value_keys = []
-        for key, value in templates.items():
+        default_key_values = {}
+        for key, value in tuple(templates.items()):
             if isinstance(value, dict):
                 continue
-            default_key_value_keys.append(key)
-
-        default_key_values = {}
-        for key in default_key_value_keys:
             default_key_values[key] = templates.pop(key)
 
         keys_by_subkey = {}
@@ -507,71 +565,12 @@ class Templates:
             key_values = {}
             key_values.update(default_key_values)
             key_values.update(sub_value)
+            keys_by_subkey[sub_key] = cls.prepare_inner_keys(key_values)
 
-            all_filled = False
-            while not all_filled:
-                found = False
-                keys_to_pop = []
-                for key, value in key_values.items():
-                    if isinstance(value, StringType):
-                        matches = cls.inner_key_pattern.findall(value)
-                        if not matches:
-                            continue
+        default_keys_by_subkeys = cls.prepare_inner_keys(default_key_values)
 
-                        found = True
-                        key_values[key] = cls.replace_inner_keys(
-                            matches, value, key_values, key
-                        )
-                        continue
-
-                    elif not isinstance(value, dict):
-                        continue
-
-                    for _key, _value in value.items():
-                        matches = cls.inner_key_pattern.findall(_value)
-                        if not matches:
-                            continue
-
-                        found = True
-                        key_values[key][_key] = cls.replace_inner_keys(
-                            matches, _value, key_values,
-                            "{}.{}".format(key, _key)
-                        )
-
-                if not found:
-                    break
-
-            keys_by_subkey[sub_key] = key_values
-
-        all_filled = False
-        while not all_filled:
-            found = False
-            keys_to_pop = []
-            for key, value in default_key_values.items():
-                matches = None
-                if isinstance(value, StringType):
-                    matches = cls.inner_key_pattern.findall(value)
-
-                if not matches:
-                    keys_by_subkey[key] = value
-                    keys_to_pop.append(key)
-                    continue
-
-                found = True
-                default_key_values[key] = cls.replace_inner_keys(
-                    matches, value, default_key_values, key
-                )
-
-            for key in keys_to_pop:
-                default_key_values.pop(key)
-
-            if not found:
-                all_filled = True
-                break
-
-        for key, value in default_key_values.items():
-            if key not in keys_by_subkey:
-                keys_by_subkey[key] = value
+        for key, value in default_keys_by_subkeys.items():
+            keys_by_subkey[key] = value
 
         return keys_by_subkey
 
