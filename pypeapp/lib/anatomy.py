@@ -444,6 +444,30 @@ class Templates:
     def _project_overrides_path(self):
         return Templates.project_overrides_path(self.project_name)
 
+    @staticmethod
+    def save_project_overrides(project_name, templates=None, override=False):
+        if templates is None:
+            templates = Templates.default_templates_raw()
+
+        yaml_path = Templates.project_overrides_path(project_name)
+        if os.path.exists(yaml_path) and not override:
+            log.warning((
+                "Template overrides for project \"{}\" already exists."
+            ).format(project_name))
+            return
+
+        yaml_dir_path = os.path.dirname(yaml_path)
+        if not os.path.exists(yaml_dir_path):
+            log.debug(
+                "Creating Anatomy folder: \"{}\"".format(yaml_dir_path)
+            )
+            os.makedirs(yaml_dir_path)
+
+        yaml_obj = yaml.YAML()
+        yaml_obj.indent(mapping=4, sequence=4, offset=4)
+        with open(yaml_path, "w") as yaml_file:
+            yaml_obj.dump(templates, yaml_file)
+
     def _discover(self):
         ''' Loads anatomy templates from yaml.
         Default templates are loaded if project is not set or project does
