@@ -1245,3 +1245,25 @@ class Roots:
             _parent_keys.append(key)
             output[key] = Roots._parse_dict(value, key, _parent_keys, parent)
         return output
+
+    @staticmethod
+    def save_project_overrides(project_name, roots_data=None, override=False):
+        if roots_data is None:
+            roots_data = Roots.default_roots_raw()
+
+        json_path = Roots.project_overrides_path(project_name)
+        if os.path.exists(json_path) and not override:
+            log.warning((
+                "Roots overrides for project \"{}\" already exists."
+            ).format(project_name))
+            return
+
+        json_dir_path = os.path.dirname(json_path)
+        if not os.path.exists(json_dir_path):
+            log.debug(
+                "Creating Anatomy folder: \"{}\"".format(json_dir_path)
+            )
+            os.makedirs(json_dir_path)
+
+        with open(json_path, "w") as json_file:
+            json.dump(roots_data, json_file)
