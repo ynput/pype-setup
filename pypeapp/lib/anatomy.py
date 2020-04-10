@@ -33,6 +33,34 @@ else:
 log = PypeLogger().get_logger(__name__)
 
 
+def overrides_dir_path():
+    value = os.environ.get("PYPE_PROJECT_CONFIGS")
+    if value:
+        value = os.path.normpath(value)
+    return value
+
+
+def project_overrides_dir_path(project_name):
+    return os.path.join(
+        overrides_dir_path(),
+        project_name
+    )
+
+
+def project_anatomy_overrides_dir_path(project_name):
+    return os.path.join(
+        project_overrides_dir_path(project_name),
+        "anatomy"
+    )
+
+
+def default_anatomy_dir_path():
+    return os.path.join(
+        os.environ["PYPE_CONFIG"],
+        "anatomy"
+    )
+
+
 class RootCombinationError(Exception):
     """This exception is raised when templates has combined root types."""
 
@@ -67,6 +95,10 @@ class Anatomy:
 
         self._templates_obj = Templates(parent=self)
         self._roots_obj = Roots(parent=self)
+
+    def reset(self):
+        self.templates_obj.reset()
+        self.roots_obj.reset()
 
     @property
     def templates(self):
@@ -139,10 +171,10 @@ class Anatomy:
         :type templates: dict
         :rtype: list, None
         """
-        roots = self._root_keys_from_templates(templates)
+        roots = list(self._root_keys_from_templates(templates))
         # Return empty list if no roots found in templates
         if not roots:
-            return list()
+            return roots
 
         # Raise exception when root keys have roots with and without root name.
         # Invalid output example: ["root", "root[project]", "root[render]"]
@@ -354,6 +386,8 @@ class Templates:
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
 
+    templates_file_name = "default.yaml"
+
     def __init__(
         self, project_name=None, keep_updated=False, roots=None, parent=None
     ):
@@ -375,6 +409,9 @@ class Templates:
 
     def get(self, key, default=None):
         return self.templates.get(key, default)
+
+    def reset(self):
+        self._templates = None
 
     @property
     def project_name(self):
@@ -411,8 +448,10 @@ class Templates:
 
     @staticmethod
     def default_templates_raw():
-        path = "{PYPE_CONFIG}/anatomy/default.yaml"
-        path = os.path.normpath(path.format(**os.environ))
+        path = os.path.join(
+            default_anatomy_dir_path(),
+            Templates.templates_file_name
+        )
         with open(path, "r") as stream:
             # QUESTION Should we not raise exception if file is invalid?
             default_templates = yaml.load(
@@ -422,24 +461,16 @@ class Templates:
 
     @staticmethod
     def default_templates():
-        default_templates = Templates.default_templates_raw()
-        return Templates.solve_template_inner_links(default_templates)
-
-    @staticmethod
-    def overrides_dir_path():
-        return os.path.normpath(
-            os.environ.get("PYPE_PROJECT_CONFIGS", "")
+        return Templates.solve_template_inner_links(
+            Templates.default_templates_raw()
         )
 
     @staticmethod
     def project_overrides_path(project_name):
-        project_config_items = [
-            Templates.overrides_dir_path(),
-            project_name,
-            "anatomy",
-            "default.yaml"
-        ]
-        return os.path.sep.join(project_config_items)
+        return os.path.join(
+            project_anatomy_overrides_dir_path(project_name),
+            Templates.templates_file_name
+        )
 
     def _project_overrides_path(self):
         return Templates.project_overrides_path(self.project_name)
@@ -1053,6 +1084,7 @@ class Roots:
         RootItem.default_root_replacement_key
     )
     env_prefix = "PYPE_ROOT"
+    roots_filename = "roots.json"
 
     def __init__(
         self, project_name=None, keep_updated=False,
@@ -1077,6 +1109,9 @@ class Roots:
 
     def __getitem__(self, key):
         return self.roots[key]
+
+    def reset(self):
+        self._roots = None
 
     def path_remapper(
         self, path, dst_platform=None, src_platform=None, roots=None
@@ -1164,6 +1199,17 @@ class Roots:
             return self.parent.keep_updated
         return self._keep_updated
 
+    @staticmethod
+    def project_overrides_path(project_name):
+        project_config_items = [
+            project_anatomy_overrides_dir_path(project_name),
+            Roots.roots_filename
+        ]
+        return os.path.sep.join(project_config_items)
+
+    def _project_overrides_path(self):
+        return Roots.project_overrides_path(self.project_name)
+
     @property
     def roots(self):
         if self.parent is None and self.keep_updated:
@@ -1183,19 +1229,19 @@ class Roots:
         return self._roots
 
     @staticmethod
-    def default_roots(parent=None):
-        defaults_path_items = [
-            os.environ["PYPE_CONFIG"],
-            "anatomy",
-            "roots.json"
-        ]
-        default_roots_path = os.path.normpath(
-            os.path.join(*defaults_path_items)
-        )
+    def default_roots_raw():
+        default_roots_path = os.path.normpath(os.path.join(
+            default_anatomy_dir_path(),
+            Roots.roots_filename
+        ))
         with open(default_roots_path, "r") as default_roots_file:
             raw_default_roots = json.load(default_roots_file)
 
-        return Roots._parse_dict(raw_default_roots)
+        return raw_default_roots
+
+    @staticmethod
+    def default_roots(parent=None):
+        return Roots._parse_dict(Roots.default_roots_raw())
 
     def _discover(self):
         ''' Loads root from json.
@@ -1209,16 +1255,8 @@ class Roots:
             return Roots.default_roots(self)
 
         # Return project specific roots
-        project_configs_path = os.path.normpath(
-            os.environ.get("PYPE_PROJECT_CONFIGS", "")
-        )
-        project_config_items = [
-            project_configs_path,
-            self.project_name,
-            "anatomy",
-            "roots.json"
-        ]
-        project_roots_path = os.path.sep.join(project_config_items)
+        project_roots_path = self._project_overrides_path()
+
         # If path does not exist we assume it is older project without roots
         if not os.path.exists(project_roots_path):
             return None
