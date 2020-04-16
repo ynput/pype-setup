@@ -16,8 +16,9 @@ installed_req = installed_req.decode(sys.getfilesystemencoding())
 installed_req = installed_req.splitlines()
 installed_req = [s.lower() for s in installed_req]
 
-# read required dependencies
-with open("pypeapp/requirements.txt", "r") as rf:
+# read required dependencies and expect it in UTF-8 BOM. This is produced
+# by default on Windows with Poweshell, but works with non-BOM and ASCII too.
+with open("pypeapp/requirements.txt", "r", encoding="utf-8-sig") as rf:
     requested_req = rf.readlines()
 
 # clear those from endlines and make it lower
@@ -35,4 +36,7 @@ for i in installed_req:
 # exit with non-zero status to trigger environment install
 if not set(requested_req).issubset(installed_req):
     if missing:
+        for m in missing:
+            print("")
+            print("   - missing [ {} ]".format(m))
         sys.exit(1)
