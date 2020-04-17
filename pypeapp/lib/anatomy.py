@@ -77,11 +77,14 @@ class RootCombinationError(Exception):
 
 
 class Anatomy:
-    ''' Anatomy module helps to keep project settings.
+    """Anatomy module helps to keep project settings.
 
-    :param project_name: Project name to look on project's anatomy overrides.
-    :type project_name: str
-    '''
+    Wraps key project specifications, Templates and Roots.
+
+    Args:
+        project_name (str): Project name to look on overrides.
+        keep_updated (bool): Project name is updated by AVALON_PROJECT environ.
+    """
 
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
@@ -102,25 +105,30 @@ class Anatomy:
 
     @property
     def templates(self):
-        return self.templates_obj.templates
+        """Wraps property `templates` of Anatomy's Templates instance."""
+        return self._templates_obj.templates
 
     @property
     def templates_obj(self):
+        """Returns `Templates` object of current Anatomy instance."""
         return self._templates_obj
 
     def format(self, *args, **kwargs):
+        """Wraps `format` method of Anatomy's `templates_obj`."""
         return self._templates_obj.format(*args, **kwargs)
 
     def format_all(self, *args, **kwargs):
+        """Wraps `format_all` method of Anatomy's `templates_obj`."""
         return self._templates_obj.format_all(*args, **kwargs)
 
     @property
     def roots(self):
-        return self.roots_obj.roots
+        """Wraps `roots` property of Anatomy's `roots_obj`."""
+        return self._roots_obj.roots
 
     @property
     def roots_obj(self):
-        """Returns `Roots` object."""
+        """Returns `Roots` object of current Anatomy instance."""
         return self._roots_obj
 
     def root_environments(self):
@@ -1093,11 +1101,29 @@ class Roots:
         return self.roots[key]
 
     def reset(self):
+        """Reset current roots value."""
         self._roots = None
 
     def path_remapper(
         self, path, dst_platform=None, src_platform=None, roots=None
     ):
+        """Remap path for specific platform.
+
+        Args:
+            path (str): Source path which need to be remapped.
+            dst_platform (str, optional): Specify destination platform
+                for which remapping should happen.
+            src_platform (str, optional): Specify source platform. This is
+                recommended to not use until you really want to use.
+            roots (dict/RootItem/None, optional): It is possible to remap
+                path with different roots then instance where method was
+                called has.
+
+        Returns:
+            str/None: When path does not contain known root then
+                None is returned else returns remapped path with "{root}"
+                or "{root[<name>]}".
+        """
         if roots is None:
             roots = self.roots
 
@@ -1106,6 +1132,7 @@ class Roots:
 
         if "{root" in path:
             path = path.format(**{"root": roots})
+            # If `dst_platform` is not specified then return else continue.
             if not dst_platform:
                 return path
 
@@ -1120,6 +1147,21 @@ class Roots:
                 return result
 
     def find_root_template_from_path(self, path, roots=None):
+        """Find root value in entered path and replace it with formatting key.
+
+        Args:
+            path (str): Source path where root will be searched.
+            roots (Roots/dict, optional): It is possible to use different
+                roots than instance where method was triggered has.
+
+        Returns:
+            tuple: Output contains tuple with bool representing success as
+                first value and path with or without replaced root with
+                formatting key as second value.
+
+        Raises:
+            ValueError: When roots are not entered and can't be loaded.
+        """
         if roots is None:
             log.debug(
                 "Looking for matching root in path \"{}\".".format(path)
@@ -1142,10 +1184,44 @@ class Roots:
         return (False, path)
 
     def set_root_environments(self):
+        """Set root environments for current project."""
         for key, value in self.root_environments().items():
             os.environ[key] = value
 
     def root_environments(self):
+        """Use root keys to create unique keys for environment variables.
+
+        Concatenates prefix "PYPE_ROOT" with root keys to create unique keys.
+
+        Returns:
+            dict: Result is `{(str): (str)}` dicitonary where key represents
+                unique key concatenated by keys and value is root value of
+                current platform root.
+
+        Example:
+            With raw root values::
+                "work": {
+                    "windows": "P:/projects/work",
+                    "linux": "/mnt/share/projects/work",
+                    "darwin": "/darwin/path/work"
+                },
+                "publish": {
+                    "windows": "P:/projects/publish",
+                    "linux": "/mnt/share/projects/publish",
+                    "darwin": "/darwin/path/publish"
+                }
+
+            Result on windows platform::
+                {
+                    "PYPE_ROOT_WORK": "P:/projects/work",
+                    "PYPE_ROOT_PUBLISH": "P:/projects/publish"
+                }
+
+            Short example when multiroot is not used::
+                {
+                    "PYPE_ROOT": "P:/projects"
+                }
+        """
         return self._root_environments()
 
     def _root_environments(self, keys=[], roots=None):
@@ -1168,18 +1244,26 @@ class Roots:
 
     @property
     def project_name(self):
+        """Return project name which will be used for loading root values."""
         if self.parent:
             return self.parent.project_name
         return self._project_name
 
     @property
     def keep_updated(self):
+        """Keep updated property helps to keep roots updated.
+
+        Returns:
+            bool: Return True when roots should be updated for project set
+                in "AVALON_PROJECT" environment variable.
+        """
         if self.parent:
             return self.parent.keep_updated
         return self._keep_updated
 
     @staticmethod
     def project_overrides_path(project_name):
+        """Returns path to project overrides roots file."""
         project_config_items = [
             project_anatomy_overrides_dir_path(project_name),
             Roots.roots_filename
@@ -1191,6 +1275,14 @@ class Roots:
 
     @property
     def roots(self):
+        """Property for filling "root" key in templates.
+
+        This property returns roots for current project or default root values.
+        Warning:
+            Default roots value may cause issues when project use different
+            roots settings. That may happend when project use multiroot
+            templates but default roots miss their keys.
+        """
         if self.parent is None and self.keep_updated:
             project_name = os.environ.get("AVALON_PROJECT")
             if self.project_name != project_name:
@@ -1209,6 +1301,7 @@ class Roots:
 
     @staticmethod
     def default_roots_raw():
+        """Loads raw default roots data from roots.json."""
         default_roots_path = os.path.normpath(os.path.join(
             default_anatomy_dir_path(),
             Roots.roots_filename
@@ -1220,14 +1313,18 @@ class Roots:
 
     @staticmethod
     def default_roots(parent=None):
+        """Returns parsed default roots."""
         return Roots._parse_dict(Roots.default_roots_raw())
 
     def _discover(self):
-        ''' Loads root from json.
-        Default roots are loaded if project is not set.
+        """ Loads current project's roots or default.
 
-        :rtype: dictionary
-        '''
+        Default roots are loaded if project override's does not contain roots.
+
+        Returns:
+            `RootItem` or `dict` with multiple `RootItem`s when multiroot
+            setting is used.
+        """
 
         # Return default roots if project is not set
         if self.project_name is None:
@@ -1247,6 +1344,23 @@ class Roots:
 
     @staticmethod
     def _parse_dict(data, key=None, parent_keys=[], parent=None):
+        """Parse roots raw data into RootItem or dictionary with RootItems.
+
+        Converting raw roots data to `RootItem` helps to handle platform keys.
+        This method is recursive to be able handle multiroot setup and
+        is static to be able to load default roots without creating new object.
+
+        Args:
+            data (dict): Should contain raw roots data to be parsed.
+            key (str, optional): Current root key. Set by recursion.
+            parent_keys (list): Parent dictionary keys. Set by recursion.
+            parent (Roots, optional): Parent object set in `RootItem`
+                helps to keep RootItem instance updated with `Roots` object.
+
+        Returns:
+            `RootItem` or `dict` with multiple `RootItem`s when multiroot
+            setting is used.
+        """
         is_last = False
         for value in data.values():
             if isinstance(value, StringType):
@@ -1265,6 +1379,27 @@ class Roots:
 
     @staticmethod
     def save_project_overrides(project_name, roots_data=None, override=False):
+        """Save root values into projects overrides.
+
+        Creates or replace "roots.json" file in project overrides.
+
+        Args:
+            project_name (str): Project name for which overrides will be saved.
+            roots_data (dict, optional): Root values to save into
+                project's overrides. Filled with `default_roots_raw` when
+                set to None.
+            override (bool): Allows to override already existing roots file.
+                This option is set to False by default.
+
+        Example:
+            `roots_data` should contain platform specific keys::
+                {
+                    "windows": "P:/projects",
+                    "linux": "/mnt/share/projects",
+                    "darwin": "/Volumes/projects"
+                }
+        """
+
         if roots_data is None:
             roots_data = Roots.default_roots_raw()
 
