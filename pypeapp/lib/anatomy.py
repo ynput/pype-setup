@@ -1122,6 +1122,9 @@ class Roots:
         if roots is None:
             raise ValueError("Roots are not set. Can't find path.")
 
+        if "{root" in path:
+            return path.format(**{"root": roots})
+
         if isinstance(roots, RootItem):
             return roots.path_remapper(path, dst_platform, src_platform)
 
