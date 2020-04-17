@@ -32,7 +32,7 @@ pushd $DIR > /dev/null
 PYTHON="python3"
 # Set path to environment if not set
 if [[ "$OSTYPE" =~ ^darwin.* ]]; then
-  export PYPE_ENV=${PYPE_ENV:="~/Library/pype/pype_env2"}
+  export PYPE_ENV=${PYPE_ENV:="/usr/local/pype/pype_env2"}
 else
   export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
 fi
@@ -127,10 +127,28 @@ if [[ -z $PYPE_LOG_NO_COLORS ]]; then
   source "$PYPE_ROOT/pypeapp/colors.sh"
 fi
 
+###############################################################################
+# Test if Xcode Command Line tools are installed in MacOS
+###############################################################################
 have_command_line_tools() {
   [[ -e "/Library/Developer/CommandLineTools/usr/bin/git" ]]
 }
 
+###############################################################################
+# Get command any key from user
+###############################################################################
+getc() {
+  local save_state
+  save_state=$(/bin/stty -g)
+  /bin/stty raw -echo
+  IFS= read -r -n 1 -d '' "$@"
+  /bin/stty "$save_state"
+}
+
+###############################################################################
+# Test if we have access via sudo
+# Used in MacOS
+###############################################################################
 have_sudo_access() {
   if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
     /usr/bin/sudo -l mkdir &>/dev/null
@@ -145,6 +163,9 @@ have_sudo_access() {
   return "$HAVE_SUDO_ACCESS"
 }
 
+###############################################################################
+# Execute command and report failure
+###############################################################################
 execute() {
   if ! "$@"; then
     echo -e "${BIRed}!!!${RST} Failed execution of ${BIWhite}[ $@ ]${RST}"
@@ -636,7 +657,7 @@ main () {
             echo -e "${BIRed}!!!${RST} but you are offline, so we cannot download it. Install it manually or go online and try again"
             return 1
           fi
-          echo -e "${IGreen}>>>${RST}Searching online for the Command Line Tools"
+          echo -e "${IGreen}>>>${RST} Searching online for the Command Line Tools"
           # This is taken and modified from Homebrew installation script.
           # All credits should go there.
           # It seems that we need Xcode command line tools to install dependencies
@@ -657,29 +678,29 @@ main () {
           clt_label="$(chomp "$(/bin/bash -c "$clt_label_command")")"
 
           if [[ -n "$clt_label" ]]; then
-            echo -e "Installing $clt_label"
+            echo -e "${IGreen}>>>${RST} Installing $clt_label"
             execute_sudo "/usr/sbin/softwareupdate" "-i" "$clt_label"
             execute_sudo "/bin/rm" "-f" "$clt_placeholder"
             execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
           fi
+        else
+          echo -e "${IGreen}>>>${RST} Fixing SDK paths ..."
+          export CPATH=`xcrun --show-sdk-path`/usr/include
         fi
         # Headless install may have failed, so fallback to original 'xcode-select' method
-        if should_install_command_line_tools && test -t 0; then
-          echo -e "Installing the Command Line Tools (expect a GUI popup):"
+        if ! have_command_line_tools && test -t 0; then
+          echo -e "${IGreen}>>>${RST} Installing the Command Line Tools (expect a GUI popup):"
           execute_sudo "/usr/bin/xcode-select" "--install"
-          echo "Press any key when the installation has completed."
+          echo -e "${BIPurple}___${RST} Press any key when the installation has completed."
           getc
           execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
         fi
 
-        if [[ -z "${HOMEBREW_ON_LINUX-}" ]] && ! output="$(/usr/bin/xcrun clang 2>&1)" && [[ "$output" == *"license"* ]]; then
-          abort "$(cat <<EOABORT
-You have not agreed to the Xcode license.
-Before running the installer again please agree to the license by opening
-Xcode.app or running:
-sudo xcodebuild -license
-EOABORT
-)"
+        if ! output="$(/usr/bin/xcrun clang 2>&1)" && [[ "$output" == *"license"* ]]; then
+          echo -e "${BIRed}!!! WARNING:${RST} You have not agreed to the Xcode license."
+          echo -e "${BIYellow}  *${RST} Before running the installer again please agree to the license by opening"
+          echo -e "${BIYellow}  *${RST} ${UCyan}Xcode.app${RST} or running: ${BIWhite}sudo xcodebuild -license${RST}"
+          return 1
         fi
       fi
 
