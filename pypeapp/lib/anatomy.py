@@ -125,11 +125,11 @@ class Anatomy:
 
     def root_environments(self):
         """Returns PYPE_ROOT_* environments for current project in dict."""
-        return self.roots_obj.root_environments()
+        return self._roots_obj.root_environments()
 
     def set_root_environments(self):
         """Sets PYPE_ROOT_* environments for current project."""
-        self.roots_obj.set_root_environments()
+        self._roots_obj.set_root_environments()
 
     def root_names(self):
         """Returns root names for current project."""
@@ -917,11 +917,8 @@ class Templates:
 
 
 class RootItem:
-    default_root_replacement_key = "root"
-
     def __init__(
-        self, root_raw_data, name=None, parent_keys=[],
-        root_replacement_key=None, parent=None
+        self, root_raw_data, name=None, parent_keys=[], parent=None
     ):
         lowered_platform_keys = {}
         for key, value in root_raw_data.items():
@@ -931,7 +928,6 @@ class RootItem:
         self.name = name
         self.parent_keys = parent_keys
         self.parent = parent
-        self._root_replacement_key = root_replacement_key
 
         self.available_platforms = list(lowered_platform_keys.keys())
         self.value = lowered_platform_keys.get(platform.system().lower())
@@ -962,23 +958,14 @@ class RootItem:
             )
         )
 
-    @property
-    def root_replacement_key(self):
-        if self.parent:
-            return self.parent.root_replacement_key
-        return self._root_replacement_key or self.default_root_replacement_key
-
     def full_key(self):
         if not self.name:
-            return str(self.default_root_replacement_key)
+            return "root"
 
         joined_parent_keys = "".join(
             ["[{}]".format(key) for key in self.parent_keys]
         )
-        return "{}{}".format(
-            self.default_root_replacement_key,
-            joined_parent_keys
-        )
+        return "root{}".format(joined_parent_keys)
 
     def exists(self):
         return self.root_exists(self.value)
@@ -1012,7 +999,7 @@ class RootItem:
             if not dst_root_clean:
                 key_part = ""
                 full_key = self.full_key()
-                if full_key != self.root_replacement_key:
+                if full_key != "root":
                     key_part += "\"{}\" ".format(full_key)
 
                 log.warning(
@@ -1080,20 +1067,15 @@ class RootItem:
 
 
 class Roots:
-    default_root_replacement_key = (
-        RootItem.default_root_replacement_key
-    )
     env_prefix = "PYPE_ROOT"
     roots_filename = "roots.json"
 
     def __init__(
-        self, project_name=None, keep_updated=False,
-        root_replacement_key=None, parent=None
+        self, project_name=None, keep_updated=False, parent=None
     ):
         self.loaded_project = None
         self._project_name = project_name
         self._keep_updated = keep_updated
-        self._root_replacement_key = root_replacement_key
 
         if parent is None and project_name is None:
             log.warning((
@@ -1123,7 +1105,9 @@ class Roots:
             raise ValueError("Roots are not set. Can't find path.")
 
         if "{root" in path:
-            return path.format(**{"root": roots})
+            path = path.format(**{"root": roots})
+            if not dst_platform:
+                return path
 
         if isinstance(roots, RootItem):
             return roots.path_remapper(path, dst_platform, src_platform)
@@ -1181,14 +1165,6 @@ class Roots:
             _keys.append(_key)
             output.update(self._root_environments(_keys, _value))
         return output
-
-    @property
-    def root_replacement_key(self):
-        return self._root_replacement_key or self.default_root_replacement_key
-
-    @root_replacement_key.setter
-    def root_replacement_key(self, value):
-        self._root_replacement_key = value
 
     @property
     def project_name(self):
