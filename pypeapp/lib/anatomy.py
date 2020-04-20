@@ -146,9 +146,11 @@ class Anatomy:
     def _root_keys_from_templates(self, data):
         """Extract root key from templates in data.
 
-        :param data: Data that may contain templates as string.
-        :type data: dict
-        :rtype: set
+        Args:
+            data (dict): Data that may contain templates as string.
+
+        Returns:
+            set: Set of all root names from templates as strings.
 
         Output example: `{"root[work]", "root[publish]"}`
         """
@@ -175,9 +177,12 @@ class Anatomy:
         RootCombinationError is raised when templates contain both root types,
         basic "{root}" and with root name specification "{root[work]}".
 
-        :param templates: Anatomy templates where roots are not filled.
-        :type templates: dict
-        :rtype: list, None
+        Args:
+            templates (dict): Anatomy templates where roots are not filled.
+
+        Returns:
+            list/None: List of all root names from templates as strings when
+            multiroot setup is used, otherwise None is returned.
         """
         roots = list(self._root_keys_from_templates(templates))
         # Return empty list if no roots found in templates
@@ -245,18 +250,17 @@ class TemplateUnsolved(Exception):
 class TemplateResult(str):
     """Result (formatted template) of anatomy with most of information in.
 
-    used_values <dict>
-        - Dictionary of template filling data (only used keys).
-    solved <bool>
-        - For check if all required keys were filled.
-    template <str>
-        - Original template.
-    missing_keys <list>
-        - Missing keys that were not in the data.
-        - With optional keys.
-    invalid_types <dict {key: type}>
-        - Key was found in data, but value had not allowed DataType.
-        - Allowed data types are `numbers` and `str`(`basestring`)
+    Args:
+        used_values (dict): Dictionary of template filling data (only used keys).
+        solved (bool): For check if all required keys were filled.
+        template (str): Original template.
+        missing_keys (list): Missing keys that were not in the data. Include
+            missing optional keys.
+        invalid_types (dict): When key was found in data, but value had not
+            allowed DataType. Allowed data types are `numbers`,
+            `str`(`basestring`) and `dict`. Dictionary may cause invalid type
+            when value of key in data is dictionary but template expect string
+            of number.
     """
 
     def __new__(
@@ -368,7 +372,7 @@ class TemplatesDict(dict):
         return used_values
 
     def get_solved(self):
-        """Get only solved templates."""
+        """Get only solved key from templates."""
         result = {}
         for key, value in self.items():
             if isinstance(value, self.__class__):
@@ -456,6 +460,7 @@ class Templates:
 
     @staticmethod
     def default_templates_raw():
+        """Return default templates raw data."""
         path = os.path.join(
             default_anatomy_dir_path(),
             Templates.templates_file_name
@@ -469,6 +474,7 @@ class Templates:
 
     @staticmethod
     def default_templates():
+        """Return default templates data with solved inner keys."""
         return Templates.solve_template_inner_links(
             Templates.default_templates_raw()
         )
@@ -481,10 +487,23 @@ class Templates:
         )
 
     def _project_overrides_path(self):
+        """Returns path to project's overide template file."""
         return Templates.project_overrides_path(self.project_name)
 
     @staticmethod
     def save_project_overrides(project_name, templates=None, override=False):
+        """Save templates values into projects overrides.
+
+        Creates or replace "default.yaml" file in project overrides.
+
+        Args:
+            project_name (str): Project name for which overrides will be saved.
+            templates (dict, optional): Templates values to save into
+                project's overrides. Filled with `default_templates_raw` when
+                set to None.
+            override (bool): Allows to override already existing templates
+                file. This option is set to False by default.
+        """
         if templates is None:
             templates = Templates.default_templates_raw()
 
@@ -508,13 +527,15 @@ class Templates:
             yaml_obj.dump(templates, yaml_file)
 
     def _discover(self):
-        ''' Loads anatomy templates from yaml.
+        """ Loads anatomy templates from yaml.
         Default templates are loaded if project is not set or project does
         not have set it's own.
         TODO: create templates if not exist.
 
-        :rtype: dictionary
-        '''
+        Returns:
+            TemplatesDict: Contain templates data for current project of
+                default templates.
+        """
 
         if self.project_name is not None:
             project_templates_path = self._project_overrides_path()
@@ -537,6 +558,7 @@ class Templates:
 
     @classmethod
     def replace_inner_keys(cls, matches, value, key_values, key):
+        """Replacement of inner keys in template values."""
         for match in matches:
             anatomy_sub_keys = (
                 cls.inner_key_name_pattern.findall(match)
@@ -572,6 +594,13 @@ class Templates:
 
     @classmethod
     def prepare_inner_keys(cls, key_values):
+        """Check values of inner keys.
+
+        Check if inner key exist in template group and has valid value.
+        It is also required to avoid infinite loop with unsolvable recursion
+        when first inner key's value refers to second inner key's value where
+        first is used.
+        """
         keys_to_solve = set(key_values.keys())
         while True:
             found = False
@@ -617,6 +646,46 @@ class Templates:
 
     @classmethod
     def solve_template_inner_links(cls, templates):
+        """Solve templates inner keys identified by "{@*}".
+
+        Process is split into 2 parts.
+        First is collecting all global keys (keys in top hierarchy where value
+        is not dictionary). All global keys are set for all group keys (keys
+        in top hierarchy where value is dictionary). Value of a key is not
+        overriden in group if already contain value for the key.
+
+        In second part all keys with "at" symbol in value are replaced with
+        value of the key afterward "at" symbol from the group.
+
+        Args:
+            templates (dict): Raw templates data.
+
+        Example:
+            templates::
+                key_1: "value_1",
+                key_2: "{@key_1}/{filling_key}"
+
+                group_1:
+                    key_3: "value_3/{@key_2}"
+
+                group_2:
+                    key_2": "value_2"
+                    key_4": "value_4/{@key_2}"
+
+            output::
+                key_1: "value_1"
+                key_2: "value_1/{filling_key}"
+
+                group_1: {
+                    key_1: "value_1"
+                    key_2: "value_1/{filling_key}"
+                    key_3: "value_3/value_1/{filling_key}"
+
+                group_2: {
+                    key_1: "value_1"
+                    key_2: "value_2"
+                    key_4: "value_3/value_2"
+        """
         default_key_values = {}
         for key, value in tuple(templates.items()):
             if isinstance(value, dict):
@@ -642,11 +711,15 @@ class Templates:
 
         Invalid keys may be missing keys of with invalid value DataType.
 
-        :param template: Anatomy template which will be formatted.
-        :type template: str
-        :param data: Containing keys to be filled into template.
-        :type data: dict
-        :rtype: str
+        Args:
+            template (str): Anatomy template which will be formatted.
+            data (dict): Containing keys to be filled into template.
+
+        Result:
+            tuple: Contain origin template without missing optional keys and
+                withoud optional keys identificator ("<" and ">"), information
+                about missing optional keys and invalid types of optional keys.
+
         """
 
         # Remove optional missing keys
@@ -696,6 +769,7 @@ class Templates:
         return (template, missing_keys, invalid_types)
 
     def _validate_data_key(self, key, data):
+        """Check and prepare missing keys and invalid types of template."""
         result = {
             "missing_key": None,
             "invalid_type": None
@@ -776,16 +850,19 @@ class Templates:
         return current_used
 
     def _format(self, orig_template, data):
-        ''' Figure out with whole formatting.
+        """ Figure out with whole formatting.
+
         Separate advanced keys (*Like '{project[name]}') from string which must
         be formatted separatelly in case of missing or incomplete keys in data.
 
-        :param template: Anatomy template which will be formatted.
-        :type template: str
-        :param data: Containing keys to be filled into template.
-        :type data: dict
-        :rtype: TemplateResult
-        '''
+        Args:
+            template (str): Anatomy template which will be formatted.
+            data (dict): Containing keys to be filled into template.
+
+        Returns:
+            TemplateResult: Filled or partially filled template containing all
+                data needed or missing for filling template.
+        """
         template, missing_optional, invalid_optional = (
             self._filter_optional(orig_template, data)
         )
@@ -858,14 +935,16 @@ class Templates:
         return result
 
     def solve_dict(self, templates, data):
-        ''' Solves templates with entered data.
+        """ Solves templates with entered data.
 
-        :param templates: All Anatomy templates which will be formatted.
-        :type templates: dict
-        :param data: Containing keys to be filled into template.
-        :type data: dict
-        :rtype: dictionary
-        '''
+        Args:
+            templates (dict): All Anatomy templates which will be formatted.
+            data (dict): Containing keys to be filled into template.
+
+        Returns:
+            dict: With `TemplateResult` in values containing filled or
+                partially filled templates.
+        """
         output = collections.defaultdict(dict)
         for key, orig_value in templates.items():
             if isinstance(orig_value, StringType):
@@ -884,29 +963,35 @@ class Templates:
         return output
 
     def format_all(self, in_data, only_keys=True):
-        ''' Solves templates based on entered data.
-        :param data: Containing keys to be filled into template.
-        :type data: dict
-        :param only_keys: Decides if environ will be used to fill templates
-        or only keys in data.
-        :type only_keys: bool
-        :rtype: dictionary
-        Returnes dictionary split into 3 categories: solved/partial/unsolved
-        '''
+        """ Solves templates based on entered data.
+
+        Args:
+            data (dict): Containing keys to be filled into template.
+            only_keys (bool, optional): Decides if environ will be used to
+                fill templates or only keys in data.
+
+        Returns:
+            TemplatesDict: Output `TemplateResult` have `strict` attribute
+                set to False so accessing unfilled keys in templates won't
+                raise any exceptions.
+        """
         output = self.format(in_data, only_keys)
         output.strict = False
         return output
 
     def format(self, in_data, only_keys=True):
-        ''' Solves templates based on entered data.
-        :param data: Containing keys to be filled into template.
-        :type data: dict
-        :param only_keys: Decides if environ will be used to fill templates
-        or only keys in data.
-        :type only_keys: bool
-        :rtype: dictionary
-        Returnes only solved
-        '''
+        """ Solves templates based on entered data.
+
+        Args:
+            data (dict): Containing keys to be filled into template.
+            only_keys (bool, optional): Decides if environ will be used to
+                fill templates or only keys in data.
+
+        Returns:
+            TemplatesDict: Output `TemplateResult` have `strict` attribute
+                set to True so accessing unfilled keys in templates will
+                raise exceptions with explaned error.
+        """
         # Create a copy of inserted data
         data = copy.deepcopy(in_data)
 
@@ -925,6 +1010,25 @@ class Templates:
 
 
 class RootItem:
+    """Represents one item or roots.
+
+    Holds raw data of root item specification. Raw data contain value
+    for each platform, but current platform value is used when object
+    is used for formatting of template.
+
+    Args:
+        root_raw_data (dict): Dictionary containing root values by platform
+            names. ["windows", "linux" and "darwin"]
+        name (str, optional): Root name which is representing. Used with
+            multi root setup otherwise None value is expected.
+        parent_keys (list, optional): All dictionary parent keys. Values of
+            `parent_keys` are used for get full key which RootItem is
+            representing. Used for replacing root value in path with
+            formattable key. e.g. parent_keys == ["work"] -> {root[work]}
+        parent (object, optional): It is expected to be `Roots` object.
+            Value of `parent` won't affect code logic much.
+    """
+
     def __init__(
         self, root_raw_data, name=None, parent_keys=[], parent=None
     ):
@@ -967,6 +1071,13 @@ class RootItem:
         )
 
     def full_key(self):
+        """Full key value for dictionary formatting in template.
+
+        Returns:
+            str: Return full replacement key for formatting. This helps when
+                multiple roots are set. In that case e.g. `"root[work]"` is
+                returned.
+        """
         if not self.name:
             return "root"
 
@@ -976,9 +1087,11 @@ class RootItem:
         return "root{}".format(joined_parent_keys)
 
     def clean_path(self, path):
+        """Just replace backslashes with forward slashes."""
         return path.replace("\\", "/")
 
     def clean_root(self, root):
+        """Makes sure root value does not end with slash."""
         if root:
             root = self.clean_path(root)
             while root.endswith("/"):
@@ -986,12 +1099,31 @@ class RootItem:
         return root
 
     def _clean_roots(self, raw_data):
+        """Clean all values of raw root item values."""
         cleaned = {}
         for key, value in raw_data.items():
             cleaned[key] = self.clean_root(value)
         return cleaned
 
     def path_remapper(self, path, dst_platform=None, src_platform=None):
+        """Remap path for specific platform.
+
+        Args:
+            path (str): Source path which need to be remapped.
+            dst_platform (str, optional): Specify destination platform
+                for which remapping should happen.
+            src_platform (str, optional): Specify source platform. This is
+                recommended to not use and keep unset until you really want
+                to use specific platform.
+            roots (dict/RootItem/None, optional): It is possible to remap
+                path with different roots then instance where method was
+                called has.
+
+        Returns:
+            str/None: When path does not contain known root then
+                None is returned else returns remapped path with "{root}"
+                or "{root[<name>]}".
+        """
         cleaned_path = self.clean_path(path)
         if dst_platform:
             dst_root_clean = self.cleaned_data.get(dst_platform)
@@ -1050,6 +1182,34 @@ class RootItem:
         return template.format(**{"root": format_value})
 
     def find_root_template_from_path(self, path):
+        """Replaces known root value with formattable key in path.
+
+        All platform values are checked for this replacement.
+
+        Args:
+            path (str): Path where root value should be found.
+
+        Returns:
+            tuple: Tuple contain 2 values: `success` (bool) and `path` (str).
+                When success it True then path should contain replaced root
+                value with formattable key.
+
+        Example:
+            When input path is::
+                "C:/windows/path/root/projects/my_project/file.ext"
+
+            And raw data of item looks like::
+                {
+                    "windows": "C:/windows/path/root",
+                    "linux": "/mount/root"
+                }
+
+            Output will be::
+                (True, "{root}/projects/my_project/file.ext")
+
+            If any of raw data value wouldn't match path's root output is::
+                (False, "C:/windows/path/root/projects/my_project/file.ext")
+        """
         result = False
         output = str(path)
 
@@ -1066,6 +1226,17 @@ class RootItem:
 
 
 class Roots:
+    """Object which should be used for formatting "root" key in templates.
+
+    Args:
+        project_name (str, optional): Project name to look on overrides.
+        keep_updated (bool, optional): Project name is updated by
+            AVALON_PROJECT environ.
+        parent (object, optional): Expected that parent is Anatomy object.
+            When parent is set then values of attributes `project_name` and
+            `keep_updated` are ignored and are used parent's values.
+    """
+
     env_prefix = "PYPE_ROOT"
     roots_filename = "roots.json"
 
@@ -1105,7 +1276,8 @@ class Roots:
             dst_platform (str, optional): Specify destination platform
                 for which remapping should happen.
             src_platform (str, optional): Specify source platform. This is
-                recommended to not use until you really want to use.
+                recommended to not use and keep unset until you really want
+                to use specific platform.
             roots (dict/RootItem/None, optional): It is possible to remap
                 path with different roots then instance where method was
                 called has.
