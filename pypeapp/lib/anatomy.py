@@ -975,15 +975,6 @@ class RootItem:
         )
         return "root{}".format(joined_parent_keys)
 
-    def exists(self):
-        return self.root_exists(self.value)
-
-    def root_exists(self, root):
-        drive = os.path.splitdrive(root)[0]
-        if not os.path.exists(drive + "/"):
-            return False
-        return True
-
     def clean_path(self, path):
         return path.replace("\\", "/")
 
