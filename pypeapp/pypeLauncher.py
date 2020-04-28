@@ -21,8 +21,6 @@ class PypeLauncher(object):
             os.environ.get('PYPE_SETUP_PATH')))
         t.echo("... Using config at\t\t\t[ {} ]".format(
             os.environ.get('PYPE_CONFIG')))
-        t.echo("... Projects root\t\t\t[ {} ]".format(
-            os.environ.get('PYPE_STUDIO_PROJECTS_PATH')))
         t.echo("... Using mongodb\t\t\t[ {} ]".format(
             os.environ.get("AVALON_MONGO")))
         if os.environ.get('FTRACK_SERVER'):
