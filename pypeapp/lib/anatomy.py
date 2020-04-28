@@ -1088,7 +1088,7 @@ class RootItem:
 
     def clean_path(self, path):
         """Just replace backslashes with forward slashes."""
-        return path.replace("\\", "/")
+        return str(path).replace("\\", "/")
 
     def clean_root(self, root):
         """Makes sure root value does not end with slash."""
