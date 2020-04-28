@@ -15,7 +15,9 @@ class PypeLauncher(object):
         from pypeapp.lib.log import _mongo_settings
 
         t = Terminal()
-        host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa: E501
+        (
+            host, port, database, username, password, collection, auth_db
+        ) = _mongo_settings()
 
         t.echo("... Running pype from\t\t\t[ {} ]".format(
             os.environ.get('PYPE_SETUP_PATH')))
@@ -63,7 +65,9 @@ class PypeLauncher(object):
         paths.append(os.environ.get('PYPE_SETUP_PATH'))
 
         # additional vendor packages
-        vendor_path = os.path.join(os.getenv('PYPE_SETUP_PATH'), 'vendor', 'python')
+        vendor_path = os.path.join(
+            os.getenv('PYPE_SETUP_PATH'), 'vendor', 'python'
+        )
 
         with os.scandir(vendor_path) as vp:
             for entry in vp:
