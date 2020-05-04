@@ -100,6 +100,11 @@ if($arguments -eq "clean") {
 # -----------------------------------------------------------------------------
 # Initialize important environment variables
 
+# override Python interpreter if needed
+if (-not (Test-Path 'env:PYPE_PYTHON_EXE')) {
+  $env:PYPE_PYTHON_EXE = "python"
+}
+
 # set PYPE_ROOT to current directory.
 if (-not (Test-Path 'env:PYPE_ROOT')) {
   $env:PYPE_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
@@ -273,14 +278,14 @@ function Update-Requirements {
 
 function Install-Environment {
   if($help -eq $true) {
-    & python -m "pypeapp" install --help
+    & $env:PYPE_PYTHON_EXE -m "pypeapp" install --help
     exit 0
   }
   Log-Msg -Text ">>> ", "Installing environment to [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
   if($force -eq $true) {
-      & python -m "pypeapp" install --force
+      & $env:PYPE_PYTHON_EXE -m "pypeapp" install --force
   } else {
-      & python -m "pypeapp" install
+      & $env:PYPE_PYTHON_EXE -m "pypeapp" install
   }
   if ($LASTEXITCODE -ne 0) {
     Log-Msg -Text "!!! ", "Installation failed (", $LASTEXITCODE, ")" -Color Red, Yellow, Magenta, Yellow
@@ -297,7 +302,7 @@ function Install-Environment {
 function Check-Environment {
   # get current pip environment
   Log-Msg -Text ">>> ", "Validating environment dependencies ... " -Color Green, Gray -NoNewLine
-  & python "$($env:PYPE_ROOT)\pypeapp\requirements.py"
+  & $env:PYPE_PYTHON_EXE "$($env:PYPE_ROOT)\pypeapp\requirements.py"
   # get requirements file
   if ($LASTEXITCODE -ne 0) {
     # environment differs from requirements.txt
@@ -331,7 +336,7 @@ function Upgrade-pip {
   {
     Log-Msg -Text ">>> ", "Updating pip ... " -Color Green, Gray -NoNewLine
     Start-Progress {
-      & python -m pip install --upgrade pip | out-null
+      & $env:PYPE_PYTHON_EXE -m pip install --upgrade pip | out-null
     }
     Write-Host ""
   }
@@ -380,14 +385,14 @@ function Deploy-Pype {
   )
   # process pype deployment
   if ($help -eq $true) {
-    & python -m "pypeapp" deploy --help
+    & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy --help
     Deactivate-Venv
     exit 0
   }
   if ($Force -eq $true) {
-    & python -m "pypeapp" deploy --force
+    & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy --force
   } else {
-    & python -m "pypeapp" deploy
+    & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy
   }
   <#
   .SYNOPSIS
@@ -401,11 +406,11 @@ function Deploy-Pype {
 
 function Validate-Pype {
   if ($help -eq $true) {
-      & python -m "pypeapp" validate --help
+      & $env:PYPE_PYTHON_EXE -m "pypeapp" validate --help
       Deactivate-Venv
       exit 0
   }
-  & python -m "pypeapp" validate
+  & $env:PYPE_PYTHON_EXE -m "pypeapp" validate
   <#
   .SYNOPSIS
   This will validate pype deployment
@@ -453,17 +458,21 @@ function Detect-Mongo {
 
 
 function Detect-Python {
-  Log-Msg -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
-  if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-    Log-Msg -Text "FAILED", " Python not detected" -Color Red, Yellow
-    exit
+  if(-not ($env:PYPE_PYTHON_EXE -eq "python")) {
+    Log-Msg -Text ">>> ", "Forced using python at [ ", $env:PYPE_PYTHON_EXE ," ] ... " -Color Yellow, Gray, White, Gray -NoNewLine
+  } else {
+    Log-Msg -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
+    if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
+      Log-Msg -Text "FAILED", " Python not detected" -Color Red, Yellow
+      exit 1
+    }
   }
   $version_command = @'
 import sys
 print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
-  $p = &{python -c $version_command}
+  $p = & $env:PYPE_PYTHON_EXE -c $version_command
   $m = $p -match '(\d+)\.(\d+)'
   if(-not $m) {
     Log-Msg -Text "FAILED", " Cannot determine version" -Color Red, Yellow
@@ -718,6 +727,6 @@ if ($deploy -eq $true) {
 
 Log-Msg -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
 Write-Host ""
-& python -m "pypeapp" @arguments
+& $env:PYPE_PYTHON_EXE -m "pypeapp" @arguments
 Log-Msg -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
 Deactivate-Venv

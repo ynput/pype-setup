@@ -123,6 +123,8 @@ if [[ -z $PYPE_LOG_NO_COLORS ]]; then
   source "$PYPE_ROOT/pypeapp/colors.sh"
 fi
 
+
+
 ###############################################################################
 # Display spinner for running job. Job must be running in a background.
 # Usage:
@@ -406,28 +408,45 @@ detect_mongo () {
 #   None
 ###############################################################################
 detect_python () {
-  echo -e "${BIGreen}>>>${RST} looking for ${BIWhite}[ python ]${RST} ... \c"
-  command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
-  # Parse version string
-  local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
-  local python_version="$($PYTHON <<< ${version_command})"
-  oIFS="$IFS"
-  IFS=.
-  set -- $python_version
-  IFS="$oIFS"
-  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    echo -e "${BIGreen}$1.$2${RST}"
-  else
-    # Python is old, but maybe we have newer just not symlinked to `python`
-    PYTHON="python3.6"
-    command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
-    # If so, change python interpreter name
+  # override Python interpreter if needed
+  if [[ -z $PYPE_PYTHON_EXE ]]; then
+    echo -e "${BIGreen}>>>${RST} looking for ${BIWhite}[ python ]${RST} ... \c"
+    command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
+    # Parse version string
+    local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
     local python_version="$($PYTHON <<< ${version_command})"
     oIFS="$IFS"
     IFS=.
     set -- $python_version
     IFS="$oIFS"
-    echo -e "${BIGreen}$1.$2${RST}"
+    if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
+      echo -e "${BIGreen}$1.$2${RST}"
+    else
+      # Python is old, but maybe we have newer just not symlinked to `python`
+      PYTHON="python3.6"
+      command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+      # If so, change python interpreter name
+      local python_version="$($PYTHON <<< ${version_command})"
+      oIFS="$IFS"
+      IFS=.
+      set -- $python_version
+      IFS="$oIFS"
+      echo -e "${BIGreen}$1.$2${RST}"
+    fi
+  else
+    echo -e "${BIYellow}>>>${RST} Forced using python at [ ${BIWhite}[ $PYPE_PYTHON_EXE ]${RST} ... \c"
+    local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
+    local python_version="$($PYPE_PYTHON_EXE <<< ${version_command})"
+    oIFS="$IFS"
+    IFS=.
+    set -- $python_version
+    IFS="$oIFS"
+    if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
+      echo -e "${BIGreen}$1.$2${RST}"
+      PYTHON=$PYPE_PYTHON_EXE
+    else
+      command -v $PYPE_PYTHON_EXE >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    fi
   fi
 }
 
