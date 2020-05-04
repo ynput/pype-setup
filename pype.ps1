@@ -132,6 +132,12 @@ if($env:PATH -NotLike "*$($env:PYPE_ROOT);*") {
 
 $env:PATH = "$($env:PYPE_ROOT)\vendor\bin\ffmpeg_exec\windows\bin;$($env:PATH)"
 
+
+function ExitWithCode($exitcode) {
+  $host.SetShouldExit($exitcode)
+  exit $exitcode
+}
+
 function Start-Progress {
   param(
     [ScriptBlock]
@@ -236,7 +242,7 @@ function Activate-Venv {
   catch {
     Log-Msg -Text "!!! ", "Failed to activate." -Color Red, Gray
     Write-Host $_.Exception.Message
-    exit 1
+    ExitWithCode 1
   }
   Set-Variable -scope 1 -Name "venv_activated" -Value $true
   <#
@@ -279,7 +285,7 @@ function Update-Requirements {
 function Install-Environment {
   if($help -eq $true) {
     & $env:PYPE_PYTHON_EXE -m "pypeapp" install --help
-    exit 0
+    ExitWithCode 0
   }
   Log-Msg -Text ">>> ", "Installing environment to [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
   if($force -eq $true) {
@@ -289,7 +295,7 @@ function Install-Environment {
   }
   if ($LASTEXITCODE -ne 0) {
     Log-Msg -Text "!!! ", "Installation failed (", $LASTEXITCODE, ")" -Color Red, Yellow, Magenta, Yellow
-    exit 1
+    ExitWithCode $LASTEXITCODE
   }
   Pyc-Cleaner
   <#
@@ -317,7 +323,7 @@ function Check-Environment {
     }
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
-      return 1
+      return $LASTEXITCODE
     }
     Pyc-Cleaner -Path $env:PYPE_ENV
     Pyc-Cleaner
@@ -360,7 +366,7 @@ function Bootstrap-Pype {
     & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
-      return 1
+      return $LASTEXITCODE
     }
   } else {
     # in offline mode, install all from vendor
@@ -368,7 +374,7 @@ function Bootstrap-Pype {
     & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" --no-index --find-links "$($env:PYPE_ROOT)\vendor\packages"
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
-      return 1
+      return $LASTEXITCODE
     }
   }
   Pyc-Cleaner
@@ -387,7 +393,7 @@ function Deploy-Pype {
   if ($help -eq $true) {
     & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy --help
     Deactivate-Venv
-    exit 0
+    ExitWithCode 0
   }
   if ($Force -eq $true) {
     & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy --force
@@ -408,7 +414,7 @@ function Validate-Pype {
   if ($help -eq $true) {
       & $env:PYPE_PYTHON_EXE -m "pypeapp" validate --help
       Deactivate-Venv
-      exit 0
+      ExitWithCode 0
   }
   & $env:PYPE_PYTHON_EXE -m "pypeapp" validate
   <#
@@ -435,12 +441,12 @@ function Detect-Mongo {
       } else {
           Log-Msg -Text "FAILED", " MongoDB not detected" -Color Red, Yellow
           Log-Msg -Text "!!! ", "tried to find it on standard location [ ", "C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\", " ] but failed." -Color Red, Yellow, White, Yellow
-          exit
+          ExitWithCode 1
       }
     } else {
       Log-Msg -Text "FAILED", " MongoDB not detected" -Color Red, Yellow
       Log-Msg -Text "!!! ", "'mongod' wasn't found in PATH" -Color Red, Yellow
-      exit
+      ExitWithCode 1
     }
 
   } else {
@@ -464,7 +470,7 @@ function Detect-Python {
     Log-Msg -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
     if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
       Log-Msg -Text "FAILED", " Python not detected" -Color Red, Yellow
-      exit 1
+      ExitWithCode 1
     }
   }
   $version_command = @'
@@ -476,12 +482,12 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
   $m = $p -match '(\d+)\.(\d+)'
   if(-not $m) {
     Log-Msg -Text "FAILED", " Cannot determine version" -Color Red, Yellow
-    exit
+    ExitWithCode 1
   }
   # We are supporting python 3.6 and up
   if(($matches[1] -lt 3) -or ($matches[2] -lt 6)) {
     Log-Msg -Text "FAILED", " Version [ ", $p, " ] is old and unsupported" -Color Red, Yellow, Cyan, Yellow
-    exit
+    ExitWithCode 1
   }
 
   Log-Msg -Text "OK" -Color Green -NoNewLine
@@ -497,7 +503,7 @@ function Detect-Git {
   Log-Msg -Text ">>> ", "Detecting Git ... " -Color Green, Gray -NoNewLine
   if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
     Log-Msg -Text "FAILED", " git not detected" -Color Red, Yellow
-    exit
+    ExitWithCode 1
   }
   Log-Msg -Text "OK" -Color Green
   <#
@@ -578,13 +584,13 @@ Log-Msg -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White, Gra
 if ($clean -eq $true) {
   Pyc-Cleaner
   Log-Msg -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
-  exit 0
+  ExitWithCode 0
 }
 
 # Check invalid argument combination
 if ($offline -eq $true -and $deploy -eq $true) {
   Log-Msg -Text "!!! ", "Invalid invocation. Cannot deploy in offline mode." -Color Red, Gray
-  exit 1
+  ExitWithCode 1
 }
 
 # Test if python is available and test its version
@@ -649,14 +655,14 @@ if ($needToInstall -eq $true) {
 if ($install -eq $true) {
   Log-Msg -Text "*** ", "Installation complete. ", "Have a nice day!" -Color Green, White, Gray
   Deactivate-Venv
-  exit 0
+  ExitWithCode 0
 }
 
 # Update
 if ($update -eq $true) {
   Update-Requirements
   Deactivate-Venv
-  exit 0
+  ExitWithCode 0
 }
 
 # Download
@@ -664,7 +670,7 @@ if ($update -eq $true) {
 if ($download -eq $true) {
   Download
   Deactivate-Venv
-  exit
+  ExitWithCode 0
 }
 
 # Validate deployment
@@ -680,7 +686,7 @@ if ($validate -eq $true) {
     Log-Msg -Text "  * ", "Contact your system administrator to resolve this issue." -Color Yellow, Gray
     Log-Msg -Text "  * ", "You can try to fix deployment with ", "pype deploy --force" -Color Green, Gray, White
     Deactivate-Venv
-    exit 0
+    ExitWithCode $LASTEXITCODE
   }
 }
 
@@ -691,7 +697,7 @@ if ($deploy -eq $true) {
     # If we are offline, we cannot deploy
     Log-Msg -Text "!!! ", "Cannot deploy in offline mode." -Color Red, Gray
     Deactivate-Venv
-    exit 1
+    ExitWithCode 1
   }
   # if force set, then re-deploy
   if ($force -eq $true) {
@@ -700,7 +706,7 @@ if ($deploy -eq $true) {
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
       Deactivate-Venv
-      exit 1
+      ExitWithCode $LASTEXITCODE
     }
   } else {
     Log-Msg -Text ">>> ", "Deploying ", "Pype", " ..." -Color Green, Gray, White, Gray
@@ -708,7 +714,7 @@ if ($deploy -eq $true) {
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Deployment ", "FAILED" -Color Red, Yellow
       Deactivate-Venv
-      exit 1
+      ExitWithCode $LASTEXITCODE
     }
   }
 
@@ -717,16 +723,21 @@ if ($deploy -eq $true) {
   if ($LASTEXITCODE -ne 0) {
     Log-Msg -Text "!!! ", "Deployment is ", "INVALID" -Color Yellow, Gray, Red
     Deactivate-Venv
-    exit 1
+    ExitWithCode $LASTEXITCODE
   } else {
     Log-Msg -Text ">>> ", "Deployment is ", "OK" -Color Green, Gray, Green
     Deactivate-Venv
-    exit
+    ExitWithCode 0
   }
 }
 
 Log-Msg -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
 Write-Host ""
+$return_code = 0
 & $env:PYPE_PYTHON_EXE -m "pypeapp" @arguments
+if ($LASTEXITCODE -ne 0) {
+  $return_code = $LASTEXITCODE
+}
 Log-Msg -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
 Deactivate-Venv
+ExitWithCode $return_code

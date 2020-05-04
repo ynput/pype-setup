@@ -661,9 +661,11 @@ main () {
   fi
 
   echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
-  $PYTHON -m pypeapp $args
+  $PYTHON -m pypeapp $args || return $?
   echo -e "${IPurple}xxx${RST} Finishing up. ${IWhite}Have a nice day!${RST}"
 }
 
-main "$args"
+return_code=0
+main "$args" || return_code=$?
 deactivate_venv $PYPE_ENV
+exit $return_code
