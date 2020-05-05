@@ -62,6 +62,7 @@ $art = @'
 # .
 
 $arguments=$ARGS
+$python="python"
 $traydebug=$false
 $venv_activated=$false
 # map double hyphens to single for powershell use
@@ -99,11 +100,6 @@ if($arguments -eq "clean") {
 
 # -----------------------------------------------------------------------------
 # Initialize important environment variables
-
-# override Python interpreter if needed
-if (-not (Test-Path 'env:PYPE_PYTHON_EXE')) {
-  $env:PYPE_PYTHON_EXE = "python"
-}
 
 # set PYPE_ROOT to current directory.
 if (-not (Test-Path 'env:PYPE_ROOT')) {
@@ -284,14 +280,14 @@ function Update-Requirements {
 
 function Install-Environment {
   if($help -eq $true) {
-    & $env:PYPE_PYTHON_EXE -m "pypeapp" install --help
+    & $python -m "pypeapp" install --help
     ExitWithCode 0
   }
   Log-Msg -Text ">>> ", "Installing environment to [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
   if($force -eq $true) {
-      & $env:PYPE_PYTHON_EXE -m "pypeapp" install --force
+      & $python -m "pypeapp" install --force
   } else {
-      & $env:PYPE_PYTHON_EXE -m "pypeapp" install
+      & $python -m "pypeapp" install
   }
   if ($LASTEXITCODE -ne 0) {
     Log-Msg -Text "!!! ", "Installation failed (", $LASTEXITCODE, ")" -Color Red, Yellow, Magenta, Yellow
@@ -308,7 +304,7 @@ function Install-Environment {
 function Check-Environment {
   # get current pip environment
   Log-Msg -Text ">>> ", "Validating environment dependencies ... " -Color Green, Gray -NoNewLine
-  & $env:PYPE_PYTHON_EXE "$($env:PYPE_ROOT)\pypeapp\requirements.py"
+  & $python "$($env:PYPE_ROOT)\pypeapp\requirements.py"
   # get requirements file
   if ($LASTEXITCODE -ne 0) {
     # environment differs from requirements.txt
@@ -342,7 +338,7 @@ function Upgrade-pip {
   {
     Log-Msg -Text ">>> ", "Updating pip ... " -Color Green, Gray -NoNewLine
     Start-Progress {
-      & $env:PYPE_PYTHON_EXE -m pip install --upgrade pip | out-null
+      & $python -m pip install --upgrade pip | out-null
     }
     Write-Host ""
   }
@@ -391,14 +387,14 @@ function Deploy-Pype {
   )
   # process pype deployment
   if ($help -eq $true) {
-    & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy --help
+    & $python -m "pypeapp" deploy --help
     Deactivate-Venv
     ExitWithCode 0
   }
   if ($Force -eq $true) {
-    & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy --force
+    & $python -m "pypeapp" deploy --force
   } else {
-    & $env:PYPE_PYTHON_EXE -m "pypeapp" deploy
+    & $python -m "pypeapp" deploy
   }
   <#
   .SYNOPSIS
@@ -412,11 +408,11 @@ function Deploy-Pype {
 
 function Validate-Pype {
   if ($help -eq $true) {
-      & $env:PYPE_PYTHON_EXE -m "pypeapp" validate --help
+      & $python -m "pypeapp" validate --help
       Deactivate-Venv
       ExitWithCode 0
   }
-  & $env:PYPE_PYTHON_EXE -m "pypeapp" validate
+  & $python -m "pypeapp" validate
   <#
   .SYNOPSIS
   This will validate pype deployment
@@ -464,8 +460,9 @@ function Detect-Mongo {
 
 
 function Detect-Python {
-  if(-not ($env:PYPE_PYTHON_EXE -eq "python")) {
+  if (Test-Path 'env:PYPE_PYTHON_EXE') {
     Log-Msg -Text ">>> ", "Forced using python at [ ", $env:PYPE_PYTHON_EXE ," ] ... " -Color Yellow, Gray, White, Gray -NoNewLine
+    $python = $env:PYPE_PYTHON_EXE
   } else {
     Log-Msg -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
     if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
@@ -478,7 +475,7 @@ import sys
 print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
-  $p = & $env:PYPE_PYTHON_EXE -c $version_command
+  $p = & $python -c $version_command
   $m = $p -match '(\d+)\.(\d+)'
   if(-not $m) {
     Log-Msg -Text "FAILED", " Cannot determine version" -Color Red, Yellow
@@ -734,7 +731,7 @@ if ($deploy -eq $true) {
 Log-Msg -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
 Write-Host ""
 $return_code = 0
-& $env:PYPE_PYTHON_EXE -m "pypeapp" @arguments
+& $python -m "pypeapp" @arguments
 if ($LASTEXITCODE -ne 0) {
   $return_code = $LASTEXITCODE
 }
