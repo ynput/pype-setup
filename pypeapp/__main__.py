@@ -7,7 +7,8 @@ import traceback
 if __name__ == '__main__':
     try:
         cli.main(obj={}, prog_name="pype")
-    except Exception as e:
+    except Exception:
+        exc_info = sys.exc_info()
         print("!!! Pype crashed:")
-        traceback.print_exception(type(e), e, e.__traceback__)
+        traceback.print_exception(*exc_info)
         sys.exit(1)
