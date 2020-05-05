@@ -460,9 +460,9 @@ function Detect-Mongo {
 
 
 function Detect-Python {
-  if (Test-Path 'env:PYPE_PYTHON_EXE') {
-    Log-Msg -Text ">>> ", "Forced using python at [ ", $env:PYPE_PYTHON_EXE ," ] ... " -Color Yellow, Gray, White, Gray -NoNewLine
-    $python = $env:PYPE_PYTHON_EXE
+  if (Test-Path "$($env:PYPE_PYTHON_EXE)") {
+    Log-Msg -Text ">>> ", "Forced using python at [ ", "$($env:PYPE_PYTHON_EXE)" ," ] ... " -Color Yellow, Gray, White, Gray -NoNewLine
+    $python = "$($env:PYPE_PYTHON_EXE)"
   } else {
     Log-Msg -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
     if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
