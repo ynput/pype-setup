@@ -451,6 +451,28 @@ class Deployment(object):
         else:
             return False
 
+    def _download_file_from_google_drive(self, id, destination):
+        URL = "https://docs.google.com/uc?export=download"
+        CHUNK_SIZE = 32768
+
+        session = requests.Session()
+
+        token = None
+        response = session.get(URL, params={"id": id}, stream=True)
+        for key, value in response.cookies.items():
+            if key.startswith("download_warning"):
+                token = value
+
+        if token:
+            params = {"id": id, "confirm": token}
+            response = session.get(URL, params=params, stream=True)
+
+        with open(destination, "wb") as file_stream:
+            for chunk in response.iter_content(CHUNK_SIZE):
+                # filter out keep-alive new chunks
+                if chunk:
+                    file_stream.write(chunk)
+
     def deploy(self, force=False):
         """ Do repositories deployment and install python dependencies.
 
@@ -607,6 +629,12 @@ class Deployment(object):
                             "Checksum failed {} != {} on {}".format(
                                 md5, calc, archive_file_path)
                         )
+
+                if item.get("google_id"):
+                    self._download_file_from_google_drive(
+                        item["google_id"], archive_file_path
+                    )
+
                 # Extract files from archive
                 if archive_type in ['zip']:
                     zip_file = zipfile.ZipFile(archive_file_path)
