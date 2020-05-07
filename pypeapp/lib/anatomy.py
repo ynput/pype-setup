@@ -1179,19 +1179,18 @@ class RootItem:
         if not result:
             return None
 
+        def parent_dict(keys, value):
+            if not keys:
+                return value
+
+            key = keys.pop(0)
+            return {key: parent_dict(keys, value)}
+
         if dst_platform:
-            def parent_dict(keys, value):
-                if not keys:
-                    return value
-
-                key = keys.pop(0)
-                return {key: parent_dict(keys, value)}
-
-            format_value = parent_dict(
-                list(self.parent_keys), dst_root_clean
-            )
+            format_value = parent_dict(list(self.parent_keys), dst_root_clean)
         else:
-            format_value = self.value
+            format_value = parent_dict(list(self.parent_keys), self.value)
+
         return template.format(**{"root": format_value})
 
     def find_root_template_from_path(self, path):
