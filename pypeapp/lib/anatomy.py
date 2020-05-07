@@ -204,6 +204,19 @@ class Anatomy:
                 names.add(group)
         return list(names)
 
+    def fill_root(self, template_path):
+        """Fill template path where is only "root" key unfilled.
+
+        Args:
+            template_path (str): Path with "root" key in.
+                Example path: "{root}/projects/MyProject/Shot01/Lighting/..."
+
+        Returns:
+            str: formatted path
+        """
+        # NOTE does not care if there are different keys than "root"
+        return template_path.format(**{"root": self.roots})
+
 
 class TemplateMissingKey(Exception):
     """Exception for cases when key does not exist in Anatomy."""
