@@ -192,7 +192,7 @@ def eventserver(debug,
 
 
 @main.command()
-@click.argument("paths", nargs=-1, type=click.Path(exists=True))
+@click.argument("paths", nargs=-1)
 @click.option("-g", "--gui", is_flag=True, help="Run pyblish GUI")
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 def publish(gui, debug, paths):
