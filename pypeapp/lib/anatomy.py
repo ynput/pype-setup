@@ -1191,7 +1191,7 @@ class RootItem:
                 list(self.parent_keys), dst_root_clean
             )
         else:
-            format_value = self
+            format_value = self.value
         return template.format(**{"root": format_value})
 
     def find_root_template_from_path(self, path):
