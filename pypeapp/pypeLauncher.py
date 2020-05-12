@@ -195,12 +195,13 @@ class PypeLauncher(object):
             os.makedirs(location)
 
         # Start server.
-        if platform.system().lower() == "linux" \
-            or platform.system().lower() == "darwin":
-                if platform.system().lower() == "darwin":
-                    t.echo(("*** You may need to allow mongod "
-                            "to run in "
-                            "[ System Settings / Security & Privacy ]"))
+        if (platform.system().lower() == "linux"
+                or platform.system().lower() == "darwin"):
+
+            if platform.system().lower() == "darwin":
+                t.echo(("*** You may need to allow mongod "
+                        "to run in "
+                        "[ System Settings / Security & Privacy ]"))
                 t.echo("Local mongodb is running...")
                 t.echo("Using port {} and db at {}".format(
                     os.environ["AVALON_MONGO_PORT"], location))

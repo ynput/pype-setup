@@ -4,7 +4,7 @@
   "repositories": [{
       "name": "avalon-core",
       "url": "https://github.com/pypeclub/avalon-core.git",
-      "branch": "2.7.0-pype"
+      "tag": "2.8.0-pype"
     },
     {
       "name": "avalon-launcher",
@@ -29,24 +29,15 @@
     {
       "name": "pype",
       "url": "https://github.com/pypeclub/pype.git",
-      "tag": "2.7.0"
+      "tag": "2.8.0"
     },
     {
       "name": "pype-config",
       "url": "https://github.com/pypeclub/pype-config.git",
-      "tag": "2.7.0"
+      "tag": "2.8.0"
     }
   ],
-  "pip": [
-    "colorama",
-    "six",
-    "toml",
-    "pymongo",
-    "gitpython",
-    "psutil",
-    "Xlib",
-    "pyqt5"
-  ],
+  "pip": [],
   "archive_files": [
 	{
 	  "extract_path": "vendor/bin/ffmpeg_exec",
