@@ -1,5 +1,6 @@
 import os
 import sys
+import platform
 from pypeapp import style, Logger
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
 from pypeapp.lib.config import get_presets
@@ -57,6 +58,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
     def on_systray_activated(self, reason):
         # show contextMenu if left click
+        if platform.system().lower() == "darwin":
+            return
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             position = QtGui.QCursor().pos()
             self.contextMenu().popup(position)

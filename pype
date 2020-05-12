@@ -31,7 +31,11 @@ pushd $DIR > /dev/null
 # Set python interpreter name
 PYTHON="python3"
 # Set path to environment if not set
-export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
+if [[ "$OSTYPE" =~ ^darwin.* ]]; then
+  export PYPE_ENV=${PYPE_ENV:="/usr/local/pype/pype_env2"}
+else
+  export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
+fi
 # Set debug level if not set
 export PYPE_DEBUG=${PYPE_DEBUG:=0}
 # Process passed arguments
@@ -124,6 +128,69 @@ if [[ -z $PYPE_LOG_NO_COLORS ]]; then
 fi
 
 
+
+###############################################################################
+# Test if Xcode Command Line tools are installed in MacOS
+###############################################################################
+have_command_line_tools() {
+  [[ -e "/Library/Developer/CommandLineTools/usr/bin/git" ]]
+}
+
+###############################################################################
+# Get command any key from user
+###############################################################################
+getc() {
+  local save_state
+  save_state=$(/bin/stty -g)
+  /bin/stty raw -echo
+  IFS= read -r -n 1 -d '' "$@"
+  /bin/stty "$save_state"
+}
+
+###############################################################################
+# Test if we have access via sudo
+# Used in MacOS
+###############################################################################
+have_sudo_access() {
+  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
+    /usr/bin/sudo -l mkdir &>/dev/null
+    HAVE_SUDO_ACCESS="$?"
+  fi
+
+  if [[ "$HAVE_SUDO_ACCESS" -ne 0 ]]; then
+    echo -e "${BIRed}!!!${RST} Need sudo access on MacOS"
+    return 1
+  fi
+
+  return "$HAVE_SUDO_ACCESS"
+}
+
+###############################################################################
+# Execute command and report failure
+###############################################################################
+execute() {
+  if ! "$@"; then
+    echo -e "${BIRed}!!!${RST} Failed execution of ${BIWhite}[ $@ ]${RST}"
+  fi
+}
+
+###############################################################################
+# Execute command using sudo
+# This is used on MacOS to handle Xcode command line tools installation
+###############################################################################
+execute_sudo() {
+  local -a args=("$@")
+  if [[ -n "${SUDO_ASKPASS-}" ]]; then
+    args=("-A" "${args[@]}")
+  fi
+  if have_sudo_access; then
+    echo -e "${BIGreen}>->${RST} sudo: [${BIWhite} ${args[@]} ${RST}]"
+    execute "/usr/bin/sudo" "${args[@]}"
+  else
+    echo -e "${BIGreen}>->${RST} [${BIWhite} ${args[@]} ${RST}]"
+    execute "${args[@]}"
+  fi
+}
 
 ###############################################################################
 # Display spinner for running job. Job must be running in a background.
@@ -478,7 +545,11 @@ detect_git () {
 ###############################################################################
 test_offline () {
   echo -e "${BIGreen}>>>${RST} Testing if we are online ... \c"
-  ping -q -w1 -c1 8.8.8.8 &> /dev/null || { echo -e "${BIYellow}OFFLINE${RST}"; f_offline=1; return 1; }
+  local wait="-w1"
+  if [[ "$OSTYPE" =~ ^darwin.* ]]; then
+    local wait="-W1"
+  fi
+  ping -q ${wait} -c1 8.8.8.8 &> /dev/null || { echo -e "${BIYellow}OFFLINE${RST}"; f_offline=1; return 1; }
   echo -e "${BIGreen}ONLINE${RST}"
 }
 
@@ -597,6 +668,60 @@ main () {
         echo -e "${BIYellow}NOT FOUND${RST}"
       fi
       test_offline
+
+      if [[ $OSTYPE =~ ^darwin.* ]]; then
+        if ! have_command_line_tools; then
+          echo -e "${BIYellow}>>>${RST} We need to install ${IWhite}Xcode Command Line Tools${RST}"
+          if [ "$_offline" == 1 ] ; then
+            echo -e "${BIRed}!!!${RST} but you are offline, so we cannot download it. Install it manually or go online and try again"
+            return 1
+          fi
+          echo -e "${IGreen}>>>${RST} Searching online for the Command Line Tools"
+          # This is taken and modified from Homebrew installation script.
+          # All credits should go there.
+          # It seems that we need Xcode command line tools to install dependencies
+          # via pip on MacOS, like Pillow, etc. Also we need to use them to set
+          # few things on newer systems (like 10.14 and 10.15) to point to corrent
+          # location of various header files (zlib, ...)
+          #
+          # This temporary file prompts the 'softwareupdate' utility to list the Command Line Tools
+          clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+          execute_sudo "/usr/bin/touch" "$clt_placeholder"
+
+          clt_label_command="/usr/sbin/softwareupdate -l |
+                              grep -B 1 -E 'Command Line Tools' |
+                              awk -F'*' '/^ *\\*/ {print \$2}' |
+                              sed -e 's/^ *Label: //' -e 's/^ *//' |
+                              sort -V |
+                              tail -n1"
+          clt_label="$(chomp "$(/bin/bash -c "$clt_label_command")")"
+
+          if [[ -n "$clt_label" ]]; then
+            echo -e "${IGreen}>>>${RST} Installing $clt_label"
+            execute_sudo "/usr/sbin/softwareupdate" "-i" "$clt_label"
+            execute_sudo "/bin/rm" "-f" "$clt_placeholder"
+            execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
+          fi
+        else
+          echo -e "${IGreen}>>>${RST} Fixing SDK paths ..."
+          export CPATH=`xcrun --show-sdk-path`/usr/include
+        fi
+        # Headless install may have failed, so fallback to original 'xcode-select' method
+        if ! have_command_line_tools && test -t 0; then
+          echo -e "${IGreen}>>>${RST} Installing the Command Line Tools (expect a GUI popup):"
+          execute_sudo "/usr/bin/xcode-select" "--install"
+          echo -e "${BIPurple}___${RST} Press any key when the installation has completed."
+          getc
+          execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
+        fi
+
+        if ! output="$(/usr/bin/xcrun clang 2>&1)" && [[ "$output" == *"license"* ]]; then
+          echo -e "${BIRed}!!! WARNING:${RST} You have not agreed to the Xcode license."
+          echo -e "${BIYellow}  *${RST} Before running the installer again please agree to the license by opening"
+          echo -e "${BIYellow}  *${RST} ${UCyan}Xcode.app${RST} or running: ${BIWhite}sudo xcodebuild -license${RST}"
+          return 1
+        fi
+      fi
 
       # install environment
       install_environment || return 1

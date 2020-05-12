@@ -9,6 +9,7 @@ __pycache__/
 /vendor/packages/*
 !/vendor/packages/README.md
 /vendor/bin/*
+.DS_Store
 
 /pypeapp/config.ini
 /repos/*
