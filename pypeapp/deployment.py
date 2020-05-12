@@ -347,7 +347,12 @@ class Deployment(object):
         """
         import git
         repo = git.Repo(path)
-        if str(repo.active_branch) != str(branch):
+        try:
+            if str(repo.active_branch) != str(branch):
+                return False
+        except TypeError:
+            # type error can happen when active branch is in detached state
+            # one case is the repository was checked out nonexistent branch
             return False
         return True
 
