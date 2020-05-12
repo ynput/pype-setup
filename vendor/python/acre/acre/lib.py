@@ -46,6 +46,8 @@ def partial_format(s, data, missing="{{{key}}}"):
         f = formatter.vformat(s, (), mapping)
     except ValueError:
         return s
+    except TypeError:
+        return s
     return f
 
 
