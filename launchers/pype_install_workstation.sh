@@ -13,6 +13,6 @@
 THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
 # The directory where current script resides
 DIR=`dirname "${THIS}"`
-export PYPE_ROOT="$(cd $DIR/../ ; pwd)"
+export PYPE_SETUP_PATH="$(cd $DIR/../ ; pwd)"
 
-source "$PYPE_ROOT/pype" install --force
+source "$PYPE_SETUP_PATH/pype" install --force

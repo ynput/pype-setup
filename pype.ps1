@@ -5,7 +5,7 @@
 
 .DESCRIPTION
   pype script will set all necessary environment variables if they are not set,
-  mainly PYPE_ROOT, and adds pype to PYTHONPATH and PATH.DESCRIPTION
+  mainly PYPE_SETUP_PATH, and adds pype to PYTHONPATH and PATH.DESCRIPTION
 
   Then it checks if we have python with correct version. When doing
   deployment or validation, git presence is checked. If launching mongodb,
@@ -101,32 +101,32 @@ if($arguments -eq "clean") {
 # -----------------------------------------------------------------------------
 # Initialize important environment variables
 
-# set PYPE_ROOT to current directory.
-if (-not (Test-Path 'env:PYPE_ROOT')) {
-  $env:PYPE_ROOT = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+# set PYPE_SETUP_PATH to current directory.
+if (-not (Test-Path 'env:PYPE_SETUP_PATH')) {
+  $env:PYPE_SETUP_PATH = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 }
 
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($env:PYPE_ROOT)\vendor\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($env:PYPE_SETUP_PATH)\vendor\powershell"
 
 # Set default environment variables if not already set
 if (-not (Test-Path 'env:PYPE_ENV')) { $env:PYPE_ENV = "C:\Users\Public\pype_env2" }
 if (-not (Test-Path 'env:PYPE_DEBUG')) { $env:PYPE_DEBUG = 0 }
 
 # Add pypeapp to PYTHONPATH
-if($env:PYTHONPATH -NotLike "*$($env:PYPE_ROOT);*") {
-  $env:PYTHONPATH = "$($env:PYPE_ROOT);$($env:PYTHONPATH)"
+if($env:PYTHONPATH -NotLike "*$($env:PYPE_SETUP_PATH);*") {
+  $env:PYTHONPATH = "$($env:PYPE_SETUP_PATH);$($env:PYTHONPATH)"
 }
-if($env:PYTHONPATH -NotLike "*$($env:PYPE_ROOT)\pypeapp;*") {
-    $env:PYTHONPATH = "$($env:PYPE_ROOT)\pypeapp;$($env:PYTHONPATH)"
+if($env:PYTHONPATH -NotLike "*$($env:PYPE_SETUP_PATH)\pypeapp;*") {
+    $env:PYTHONPATH = "$($env:PYPE_SETUP_PATH)\pypeapp;$($env:PYTHONPATH)"
 }
 
 # Add pype-setup to PATH
-if($env:PATH -NotLike "*$($env:PYPE_ROOT);*") {
-  $env:PATH = "$($env:PYPE_ROOT);$($env:PATH)"
+if($env:PATH -NotLike "*$($env:PYPE_SETUP_PATH);*") {
+  $env:PATH = "$($env:PYPE_SETUP_PATH);$($env:PATH)"
 }
 
-$env:PATH = "$($env:PYPE_ROOT)\vendor\bin\ffmpeg_exec\windows\bin;$($env:PATH)"
+$env:PATH = "$($env:PYPE_SETUP_PATH)\vendor\bin\ffmpeg_exec\windows\bin;$($env:PATH)"
 
 
 function ExitWithCode($exitcode) {
@@ -270,7 +270,7 @@ function Deactivate-Venv {
 
 function Update-Requirements {
   Log-Msg -Text "  -", " Updating requirements ..." -Color Cyan, Gray
-  & pip freeze | Out-File -encoding ASCII "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
+  & pip freeze | Out-File -encoding ASCII "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt"
   <#
   .SYNOPSIS
   This will update requirements.txt based on what's in virtual environment
@@ -304,7 +304,7 @@ function Install-Environment {
 function Check-Environment {
   # get current pip environment
   Log-Msg -Text ">>> ", "Validating environment dependencies ... " -Color Green, Gray -NoNewLine
-  & $python "$($env:PYPE_ROOT)\pypeapp\requirements.py"
+  & $python "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.py"
   # get requirements file
   if ($LASTEXITCODE -ne 0) {
     # environment differs from requirements.txt
@@ -313,9 +313,9 @@ function Check-Environment {
     Log-Msg -Text "*** ", "Environment dependencies inconsistent, fixing ... " -Color Yellow, Gray
     Test-Offline
     if ($offline -ne $true) {
-      & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
+      & pip install -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt"
     } else {
-      & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" --no-index --find-links "$($env:PYPE_ROOT)\vendor\packages"
+      & pip install -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt" --no-index --find-links "$($env:PYPE_SETUP_PATH)\vendor\packages"
     }
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
@@ -359,7 +359,7 @@ function Bootstrap-Pype {
 
     # install essential dependecies
     Log-Msg -Text "  - ", "Installing dependencies ... " -Color Cyan, Gray
-    & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt"
+    & pip install -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt"
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
       return $LASTEXITCODE
@@ -367,7 +367,7 @@ function Bootstrap-Pype {
   } else {
     # in offline mode, install all from vendor
     Log-Msg -Text ">>> ", "Offline installation ... " -Color Green, Gray
-    & pip install -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" --no-index --find-links "$($env:PYPE_ROOT)\vendor\packages"
+    & pip install -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt" --no-index --find-links "$($env:PYPE_SETUP_PATH)\vendor\packages"
     if ($LASTEXITCODE -ne 0) {
       Log-Msg -Text "!!! ", "Installation ", "FAILED" -Color Red, Gray, Red
       return $LASTEXITCODE
@@ -533,7 +533,7 @@ function Download {
   }
   Log-Msg -Text ">>> ", "Downloading packages for offline installation ... " -Color Green, Gray
   Log-Msg -Text "  - ", "For platform [ ", "win_amd64", " ]... " -Color Cyan, Gray, White, Gray
-  & pip download -r "$($env:PYPE_ROOT)\pypeapp\requirements.txt" -d "$($env:PYPE_ROOT)\vendor\packages"
+  & pip download -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt" -d "$($env:PYPE_SETUP_PATH)\vendor\packages"
   Log-Msg -Text "<-- ", "Deactivating environment ..." -Color Cyan, Gray
   Deactivate-Venv
   Log-Msg -Text "+++ ", "Terminating ..." -Color Magenta, Gray
@@ -546,7 +546,7 @@ function Download {
 
 function Localize-Bin {
   Log-Msg -Text ">>> ", "Localizing [ ", "vendor\bin", " ]" -Color Green, Gray, White, Gray
-  Copy-Item -Force -Recurse "$($env:PYPE_ROOT)\vendor\bin\" -Destination "$($env:PYPE_ENV)\localized\"
+  Copy-Item -Force -Recurse "$($env:PYPE_SETUP_PATH)\vendor\bin\" -Destination "$($env:PYPE_ENV)\localized\"
   <#
   .SYNOPSIS
   Copy stuff in vendor/bin to $PYPE_ENV/localized
