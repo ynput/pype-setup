@@ -105,26 +105,26 @@ done
 # -----------------------------------------------------------------------------
 # Initialize important environment variables
 
-# Set PYPE_ROOT to path to this script
-export PYPE_ROOT="$(cd $DIR; pwd)"
-# Add PYPE_ROOT to PYTHONPATH if missing
-export PYTHONPATH=${PYTHONPATH:="$PYPE_ROOT/pypeapp"}
-if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT/pypeapp:"* ]]; then
-  export PYTHONPATH="$PYPE_ROOT/pypeapp:$PYTHONPATH"
+# Set PYPE_SETUP_PATH to path to this script
+export PYPE_SETUP_PATH="$(cd $DIR; pwd)"
+# Add PYPE_SETUP_PATH to PYTHONPATH if missing
+export PYTHONPATH=${PYTHONPATH:="$PYPE_SETUP_PATH/pypeapp"}
+if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_PATH/pypeapp:"* ]]; then
+  export PYTHONPATH="$PYPE_SETUP_PATH/pypeapp:$PYTHONPATH"
 fi
-if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT:"* ]]; then
-  export PYTHONPATH="$PYPE_ROOT:$PYTHONPATH"
+if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_PATH:"* ]]; then
+  export PYTHONPATH="$PYPE_SETUP_PATH:$PYTHONPATH"
 fi
-# add PYPE_ROOT to PATH
-export PATH=${PATH:="$PYPE_ROOT"}
-if [[ ":$PATH:" != *":$PYPE_ROOT:"* ]]; then
-  export PATH="$PYPE_ROOT:$PATH"
+# add PYPE_SETUP_PATH to PATH
+export PATH=${PATH:="$PYPE_SETUP_PATH"}
+if [[ ":$PATH:" != *":$PYPE_SETUP_PATH:"* ]]; then
+  export PATH="$PYPE_SETUP_PATH:$PATH"
 fi
-export PATH="$PYPE_ROOT/vendor/bin/ffmpeg_exec/linux/bin:$PATH"
+export PATH="$PYPE_SETUP_PATH/vendor/bin/ffmpeg_exec/linux/bin:$PATH"
 
 # Load colors definitions for easy output coloring
 if [[ -z $PYPE_LOG_NO_COLORS ]]; then
-  source "$PYPE_ROOT/pypeapp/colors.sh"
+  source "$PYPE_SETUP_PATH/pypeapp/colors.sh"
 fi
 
 
@@ -311,7 +311,7 @@ install_environment () {
 # Globals:
 #   colors
 #   f_offline
-#   PYPE_ROOT
+#   PYPE_SETUP_PATH
 # Arguments:
 #   None
 # Returns:
@@ -319,15 +319,15 @@ install_environment () {
 ###############################################################################
 check_environment () {
   echo -e "${IGreen}>>>${RST} Validating environment dependencies ... \c"
-  $PYTHON "$PYPE_ROOT/pypeapp/requirements.py"
+  $PYTHON "$PYPE_SETUP_PATH/pypeapp/requirements.py"
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}FAILED${RST}"
     echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
     test_offline
     if [ "$f_offline" -ne 1 ]; then
-      pip3 install -r "$PYPE_ROOT/pypeapp/requirements.txt"
+      pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt"
     else
-      pip3 install -r "$PYPE_ROOT/pypeapp/requirements.txt" --no-index --find-links "$PYPE_ROOT/vendor/packages"
+      pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt" --no-index --find-links "$PYPE_SETUP_PATH/vendor/packages"
     fi
     if [ $? -ne 0 ] ; then
       echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
@@ -361,7 +361,7 @@ upgrade_pip () {
 # Globals:
 #   colors
 #   f_offline
-#   PYPE_ROOT
+#   PYPE_SETUP_PATH
 # Arguments:
 #   None
 # Returns:
@@ -375,7 +375,7 @@ bootstrap_pype () {
 
     # install essential dependecies
     echo -e "${BICyan}  -${RST} Installing dependecies ..."
-    pip3 install -r "$PYPE_ROOT/pypeapp/requirements.txt"
+    pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt"
     if [ $? -ne 0 ] ; then
       echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
       return 1
@@ -383,7 +383,7 @@ bootstrap_pype () {
   else
     # in offline mode, install all from vendor
     echo -e "${BIGreen}>>>${RST} Offline installation ..."
-    pip3 install -r "$PYPE_ROOT/pypeapp/requirements.txt" --no-index --find-links vendor/packages
+    pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt" --no-index --find-links vendor/packages
     if [ $? -ne 0 ] ; then
       echo -e "${BIRed}!!! ${RST} Installation ${BIRed}FAILED${RST}"
       return 1
@@ -565,7 +565,7 @@ test_offline () {
 ###############################################################################
 download () {
   echo -e "${IGreen}>>>${RST} Downloading packages for offline installation ..."
-  $PYTHON -m pip download -r "$PYPE_ROOT/pypeapp/requirements.txt" -d "$PYPE_ROOT/vendor/packages"
+  $PYTHON -m pip download -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt" -d "$PYPE_SETUP_PATH/vendor/packages"
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}!!!${RST} Download failed"
     return 1
@@ -577,7 +577,7 @@ download () {
 # Copy vendor/bin to local pype env
 # Globals:
 #   PYPE_ENV
-#   PYPE_ROOT
+#   PYPE_SETUP_PATH
 # Arguments:
 #   None
 # Returns:
@@ -586,7 +586,7 @@ download () {
 localize_bin () {
   echo -e "${IGreen}>>>${RST} Localizing [ ${BIWhite}vendor/bin${RST} ] ..."
   mkdir -p $PYPE_ENV/localized
-  cp -aR $PYPE_ROOT/vendor/bin/* $PYPE_ENV/localized/
+  cp -aR $PYPE_SETUP_PATH/vendor/bin/* $PYPE_ENV/localized/
 }
 
 ##############################################################################
@@ -599,7 +599,7 @@ localize_bin () {
 #   None
 ###############################################################################
 clean_pyc () {
-  path=${1:-$PYPE_ROOT}
+  path=${1:-$PYPE_SETUP_PATH}
   echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find . -name '*.py?' -delete
   echo -e "${BIGreen}DONE${RST}"
