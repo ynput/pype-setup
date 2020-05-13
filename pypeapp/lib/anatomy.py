@@ -180,8 +180,15 @@ class Anatomy:
         return output
 
     def root_value_for_template(self, template):
-        root_template = self.root_names_from_templates({"_temp_": template})
-        return root_template.format(**{"root": self.roots})
+        """Returns value of root key from template."""
+        root_templates = []
+        for group in re.findall(self.root_key_regex, template):
+            root_templates.append(group)
+
+        if not root_templates:
+            return None
+
+        return root_templates[0].format(**{"root": self.roots})
 
     def root_names_from_templates(self, templates):
         """Extract root names form anatomy templates.
