@@ -167,6 +167,10 @@ class Anatomy:
                         output.add(group)
         return output
 
+    def root_value_for_template(self, template):
+        root_template = self.root_names_from_templates({"_temp_": template})
+        return root_template.format(**{"root": self.roots})
+
     def root_names_from_templates(self, templates):
         """Extract root names form anatomy templates.
 
