@@ -1403,6 +1403,21 @@ class Roots:
         """
         return self._root_environments()
 
+    def all_root_paths(self, roots=None):
+        """Return all paths for all roots of all platforms."""
+        if roots is None:
+            roots = self.roots
+
+        output = []
+        if isinstance(roots, RootItem):
+            for value in roots.raw_data.values():
+                output.append(value)
+            return output
+
+        for _roots in roots.values():
+            output.extend(self.all_root_paths(_roots))
+        return output
+
     def _root_environments(self, keys=[], roots=None):
         if roots is None:
             roots = self.roots
