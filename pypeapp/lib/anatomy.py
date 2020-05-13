@@ -135,6 +135,18 @@ class Anatomy:
         """Returns PYPE_ROOT_* environments for current project in dict."""
         return self._roots_obj.root_environments()
 
+    def find_root_template_from_path(self, *args, **kwargs):
+        """Wrapper for Roots `find_root_template_from_path`."""
+        return self.roots_obj.find_root_template_from_path(*args, **kwargs)
+
+    def path_remapper(self, *args, **kwargs):
+        """Wrapper for Roots `path_remapper`."""
+        return self.roots_obj.path_remapper(*args, **kwargs)
+
+    def all_root_paths(self):
+        """Wrapper for Roots `all_root_paths`."""
+        return self.roots_obj.all_root_paths()
+
     def set_root_environments(self):
         """Sets PYPE_ROOT_* environments for current project."""
         self._roots_obj.set_root_environments()
