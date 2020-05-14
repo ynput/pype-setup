@@ -100,47 +100,60 @@ class Anatomy:
         self._roots_obj = Roots(parent=self)
 
     def reset(self):
+        """Reset values of cached data in templates and roots objects."""
         self.templates_obj.reset()
         self.roots_obj.reset()
 
     @property
     def templates(self):
-        """Wraps property `templates` of Anatomy's Templates instance."""
+        """Wrap property `templates` of Anatomy's Templates instance."""
         return self._templates_obj.templates
 
     @property
     def templates_obj(self):
-        """Returns `Templates` object of current Anatomy instance."""
+        """Return `Templates` object of current Anatomy instance."""
         return self._templates_obj
 
     def format(self, *args, **kwargs):
-        """Wraps `format` method of Anatomy's `templates_obj`."""
+        """Wrap `format` method of Anatomy's `templates_obj`."""
         return self._templates_obj.format(*args, **kwargs)
 
     def format_all(self, *args, **kwargs):
-        """Wraps `format_all` method of Anatomy's `templates_obj`."""
+        """Wrap `format_all` method of Anatomy's `templates_obj`."""
         return self._templates_obj.format_all(*args, **kwargs)
 
     @property
     def roots(self):
-        """Wraps `roots` property of Anatomy's `roots_obj`."""
+        """Wrap `roots` property of Anatomy's `roots_obj`."""
         return self._roots_obj.roots
 
     @property
     def roots_obj(self):
-        """Returns `Roots` object of current Anatomy instance."""
+        """Return `Roots` object of current Anatomy instance."""
         return self._roots_obj
 
     def root_environments(self):
-        """Returns PYPE_ROOT_* environments for current project in dict."""
+        """Return PYPE_ROOT_* environments for current project in dict."""
         return self._roots_obj.root_environments()
 
+    def find_root_template_from_path(self, *args, **kwargs):
+        """Wrapper for Roots `find_root_template_from_path`."""
+        return self.roots_obj.find_root_template_from_path(*args, **kwargs)
+
+    def path_remapper(self, *args, **kwargs):
+        """Wrapper for Roots `path_remapper`."""
+        return self.roots_obj.path_remapper(*args, **kwargs)
+
+    def all_root_paths(self):
+        """Wrapper for Roots `all_root_paths`."""
+        return self.roots_obj.all_root_paths()
+
     def set_root_environments(self):
-        """Sets PYPE_ROOT_* environments for current project."""
+        """Set PYPE_ROOT_* environments for current project."""
         self._roots_obj.set_root_environments()
 
     def root_names(self):
-        """Returns root names for current project."""
+        """Return root names for current project."""
         return self.root_names_from_templates(self.templates)
 
     def _root_keys_from_templates(self, data):
@@ -149,7 +162,7 @@ class Anatomy:
         Args:
             data (dict): Data that may contain templates as string.
 
-        Returns:
+        Return:
             set: Set of all root names from templates as strings.
 
         Output example: `{"root[work]", "root[publish]"}`
@@ -167,6 +180,17 @@ class Anatomy:
                         output.add(group)
         return output
 
+    def root_value_for_template(self, template):
+        """Returns value of root key from template."""
+        root_templates = []
+        for group in re.findall(self.root_key_regex, template):
+            root_templates.append(group)
+
+        if not root_templates:
+            return None
+
+        return root_templates[0].format(**{"root": self.roots})
+
     def root_names_from_templates(self, templates):
         """Extract root names form anatomy templates.
 
@@ -180,7 +204,7 @@ class Anatomy:
         Args:
             templates (dict): Anatomy templates where roots are not filled.
 
-        Returns:
+        Return:
             list/None: List of all root names from templates as strings when
             multiroot setup is used, otherwise None is returned.
         """
@@ -211,7 +235,7 @@ class Anatomy:
             template_path (str): Path with "root" key in.
                 Example path: "{root}/projects/MyProject/Shot01/Lighting/..."
 
-        Returns:
+        Return:
             str: formatted path
         """
         # NOTE does not care if there are different keys than "root"
@@ -264,7 +288,8 @@ class TemplateResult(str):
     """Result (formatted template) of anatomy with most of information in.
 
     Args:
-        used_values (dict): Dictionary of template filling data (only used keys).
+        used_values (dict): Dictionary of template filling data with
+            only used keys.
         solved (bool): For check if all required keys were filled.
         template (str): Original template.
         missing_keys (list): Missing keys that were not in the data. Include
@@ -277,13 +302,14 @@ class TemplateResult(str):
     """
 
     def __new__(
-        cls, filled_template, template, solved,
+        cls, filled_template, template, solved, rootless_path,
         used_values, missing_keys, invalid_types
     ):
         new_obj = super(TemplateResult, cls).__new__(cls, filled_template)
         new_obj.used_values = used_values
         new_obj.solved = solved
         new_obj.template = template
+        new_obj.rootless = rootless_path
         new_obj.missing_keys = list(set(missing_keys))
         _invalid_types = {}
         for invalid_type in invalid_types:
@@ -862,6 +888,62 @@ class Templates:
             )
         return current_used
 
+    def _dict_to_subkeys_list(self, subdict, pre_keys=None):
+        if pre_keys is None:
+            pre_keys = []
+        output = []
+        for key in subdict:
+            value = subdict[key]
+            result = list(pre_keys)
+            result.append(key)
+            if isinstance(value, dict):
+                for item in self._dict_to_subkeys_list(value, result):
+                    output.append(item)
+            else:
+                output.append(result)
+        return output
+
+    def _keys_to_dicts(self, key_list, value):
+        if not key_list:
+            return None
+        if len(key_list) == 1:
+            return {key_list[0]: value}
+        return {key_list[0]: self._keys_to_dicts(key_list[1:], value)}
+
+    def _rootless_path(
+        self, template, final_data, missing_keys, invalid_types
+    ):
+        if (
+            "root" not in final_data
+            or "root" in missing_keys
+            or "{root" not in template
+        ):
+            return
+
+        for invalid_type in invalid_types:
+            if "root" in invalid_type:
+                return
+
+        root_keys = self._dict_to_subkeys_list({"root": final_data["root"]})
+        if not root_keys:
+            return
+
+        used_root_keys = root_keys[0]
+        if not used_root_keys:
+            return
+        root_key = None
+        for key in used_root_keys:
+            if root_key is None:
+                root_key = key
+            else:
+                root_key += "[{}]".format(key)
+
+        root_key = "{" + root_key + "}"
+        roots_dict = self._keys_to_dicts(used_root_keys, root_key)
+
+        final_data["root"] = roots_dict["root"]
+        return template.format(**final_data)
+
     def _format(self, orig_template, data):
         """ Figure out with whole formatting.
 
@@ -941,8 +1023,14 @@ class Templates:
         invalid_types = invalid_required + invalid_optional
 
         filled_template = template.format(**final_data)
+        rootless_path = self._rootless_path(
+            template, final_data, missing_keys, invalid_types
+        )
+        if rootless_path is None:
+            rootless_path = filled_template
+
         result = TemplateResult(
-            filled_template, orig_template, solved,
+            filled_template, orig_template, solved, rootless_path,
             used_values, missing_keys, invalid_types
         )
         return result
@@ -1398,6 +1486,21 @@ class Roots:
                 }
         """
         return self._root_environments()
+
+    def all_root_paths(self, roots=None):
+        """Return all paths for all roots of all platforms."""
+        if roots is None:
+            roots = self.roots
+
+        output = []
+        if isinstance(roots, RootItem):
+            for value in roots.raw_data.values():
+                output.append(value)
+            return output
+
+        for _roots in roots.values():
+            output.extend(self.all_root_paths(_roots))
+        return output
 
     def _root_environments(self, keys=[], roots=None):
         if roots is None:
