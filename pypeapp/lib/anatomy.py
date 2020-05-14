@@ -302,13 +302,14 @@ class TemplateResult(str):
     """
 
     def __new__(
-        cls, filled_template, template, solved,
+        cls, filled_template, template, solved, rootless_path,
         used_values, missing_keys, invalid_types
     ):
         new_obj = super(TemplateResult, cls).__new__(cls, filled_template)
         new_obj.used_values = used_values
         new_obj.solved = solved
         new_obj.template = template
+        new_obj.rootless = rootless_path
         new_obj.missing_keys = list(set(missing_keys))
         _invalid_types = {}
         for invalid_type in invalid_types:
@@ -887,6 +888,62 @@ class Templates:
             )
         return current_used
 
+    def _dict_to_subkeys_list(self, subdict, pre_keys=None):
+        if pre_keys is None:
+            pre_keys = []
+        output = []
+        for key in subdict:
+            value = subdict[key]
+            result = list(pre_keys)
+            result.append(key)
+            if isinstance(value, dict):
+                for item in self._dict_to_subkeys_list(value, result):
+                    output.append(item)
+            else:
+                output.append(result)
+        return output
+
+    def _keys_to_dicts(self, key_list, value):
+        if not key_list:
+            return None
+        if len(key_list) == 1:
+            return {key_list[0]: value}
+        return {key_list[0]: self._keys_to_dicts(key_list[1:], value)}
+
+    def _rootless_path(
+        self, template, final_data, missing_keys, invalid_types
+    ):
+        if (
+            "root" not in final_data
+            or "root" in missing_keys
+            or "{root" not in template
+        ):
+            return
+
+        for invalid_type in invalid_types:
+            if "root" in invalid_type:
+                return
+
+        root_keys = self._dict_to_subkeys_list({"root": final_data["root"]})
+        if not root_keys:
+            return
+
+        used_root_keys = root_keys[0]
+        if not used_root_keys:
+            return
+        root_key = None
+        for key in used_root_keys:
+            if root_key is None:
+                root_key = key
+            else:
+                root_key += "[{}]".format(key)
+
+        root_key = "{" + root_key + "}"
+        roots_dict = self._keys_to_dicts(used_root_keys, root_key)
+
+        final_data["root"] = roots_dict["root"]
+        return template.format(**final_data)
+
     def _format(self, orig_template, data):
         """ Figure out with whole formatting.
 
@@ -966,8 +1023,14 @@ class Templates:
         invalid_types = invalid_required + invalid_optional
 
         filled_template = template.format(**final_data)
+        rootless_path = self._rootless_path(
+            template, final_data, missing_keys, invalid_types
+        )
+        if rootless_path is None:
+            rootless_path = filled_template
+
         result = TemplateResult(
-            filled_template, orig_template, solved,
+            filled_template, orig_template, solved, rootless_path,
             used_values, missing_keys, invalid_types
         )
         return result
