@@ -100,39 +100,40 @@ class Anatomy:
         self._roots_obj = Roots(parent=self)
 
     def reset(self):
+        """Reset values of cached data in templates and roots objects."""
         self.templates_obj.reset()
         self.roots_obj.reset()
 
     @property
     def templates(self):
-        """Wraps property `templates` of Anatomy's Templates instance."""
+        """Wrap property `templates` of Anatomy's Templates instance."""
         return self._templates_obj.templates
 
     @property
     def templates_obj(self):
-        """Returns `Templates` object of current Anatomy instance."""
+        """Return `Templates` object of current Anatomy instance."""
         return self._templates_obj
 
     def format(self, *args, **kwargs):
-        """Wraps `format` method of Anatomy's `templates_obj`."""
+        """Wrap `format` method of Anatomy's `templates_obj`."""
         return self._templates_obj.format(*args, **kwargs)
 
     def format_all(self, *args, **kwargs):
-        """Wraps `format_all` method of Anatomy's `templates_obj`."""
+        """Wrap `format_all` method of Anatomy's `templates_obj`."""
         return self._templates_obj.format_all(*args, **kwargs)
 
     @property
     def roots(self):
-        """Wraps `roots` property of Anatomy's `roots_obj`."""
+        """Wrap `roots` property of Anatomy's `roots_obj`."""
         return self._roots_obj.roots
 
     @property
     def roots_obj(self):
-        """Returns `Roots` object of current Anatomy instance."""
+        """Return `Roots` object of current Anatomy instance."""
         return self._roots_obj
 
     def root_environments(self):
-        """Returns PYPE_ROOT_* environments for current project in dict."""
+        """Return PYPE_ROOT_* environments for current project in dict."""
         return self._roots_obj.root_environments()
 
     def find_root_template_from_path(self, *args, **kwargs):
@@ -148,11 +149,11 @@ class Anatomy:
         return self.roots_obj.all_root_paths()
 
     def set_root_environments(self):
-        """Sets PYPE_ROOT_* environments for current project."""
+        """Set PYPE_ROOT_* environments for current project."""
         self._roots_obj.set_root_environments()
 
     def root_names(self):
-        """Returns root names for current project."""
+        """Return root names for current project."""
         return self.root_names_from_templates(self.templates)
 
     def _root_keys_from_templates(self, data):
@@ -161,7 +162,7 @@ class Anatomy:
         Args:
             data (dict): Data that may contain templates as string.
 
-        Returns:
+        Return:
             set: Set of all root names from templates as strings.
 
         Output example: `{"root[work]", "root[publish]"}`
@@ -203,7 +204,7 @@ class Anatomy:
         Args:
             templates (dict): Anatomy templates where roots are not filled.
 
-        Returns:
+        Return:
             list/None: List of all root names from templates as strings when
             multiroot setup is used, otherwise None is returned.
         """
@@ -234,7 +235,7 @@ class Anatomy:
             template_path (str): Path with "root" key in.
                 Example path: "{root}/projects/MyProject/Shot01/Lighting/..."
 
-        Returns:
+        Return:
             str: formatted path
         """
         # NOTE does not care if there are different keys than "root"
@@ -287,7 +288,8 @@ class TemplateResult(str):
     """Result (formatted template) of anatomy with most of information in.
 
     Args:
-        used_values (dict): Dictionary of template filling data (only used keys).
+        used_values (dict): Dictionary of template filling data with
+            only used keys.
         solved (bool): For check if all required keys were filled.
         template (str): Original template.
         missing_keys (list): Missing keys that were not in the data. Include
