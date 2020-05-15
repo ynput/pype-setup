@@ -4,13 +4,13 @@ import platform
 
 
 class PypeLauncher(object):
-    """ Class handling start of different modes of Pype.
+    """Class handling start of different modes of Pype.
 
-        Most of its methods are called by :mod:`cli` module.
+    Most of its methods are called by :mod:`cli` module.
     """
 
     def print_info(self):
-        """ This will print additional information to console. """
+        """Print additional information to console."""
         from pypeapp.lib.Terminal import Terminal
         from pypeapp.lib.log import _mongo_settings
 
@@ -19,42 +19,53 @@ class PypeLauncher(object):
             host, port, database, username, password, collection, auth_db
         ) = _mongo_settings()
 
-        t.echo("... Running pype from\t\t\t[ {} ]".format(
-            os.environ.get('PYPE_SETUP_PATH')))
-        t.echo("... Using config at\t\t\t[ {} ]".format(
-            os.environ.get('PYPE_CONFIG')))
-        t.echo("... Using mongodb\t\t\t[ {} ]".format(
-            os.environ.get("AVALON_MONGO")))
-        if os.environ.get('FTRACK_SERVER'):
-            t.echo("... Using FTrack at\t\t\t[ {} ]".format(
-                os.environ.get("FTRACK_SERVER")))
+        infos = []
+        if os.getenv('PYPE_DEV'):
+            infos.append(("Pype variant", "staging"))
+        else:
+            infos.append(("Pype variant", "production"))
+        infos.append(("Running pype from", os.environ.get('PYPE_SETUP_PATH')))
+        infos.append(("Using config at", os.environ.get('PYPE_CONFIG')))
+        infos.append(("Using mongodb", os.environ.get("AVALON_MONGO")))
+
+        if os.environ.get("FTRACK_SERVER"):
+            infos.append(("Using FTrack at",
+                          os.environ.get("FTRACK_SERVER")))
+
         if os.environ.get('DEADLINE_REST_URL'):
-            t.echo("... Using Deadline webservice at\t[ {} ]".format(
-                os.environ.get("DEADLINE_REST_URL")))
+            infos.append(("Using Deadline webservice at",
+                          os.environ.get("DEADLINE_REST_URL")))
+
         if os.environ.get('MUSTER_REST_URL'):
-            t.echo("... Using Muster at\t\t\t[ {} ]".format(
-                os.environ.get("MUSTER_REST_URL")))
+            infos.append(("Using Muster at",
+                          os.environ.get("MUSTER_REST_URL")))
+
         if host:
-            t.echo("... Logging to mongodb\t\t\t[ {}/{} ]".format(
-                host, database))
+            infos.append(("Logging to mongodb", "{}/{}".format(
+                host, database)))
             if port:
-                t.echo("  - port\t\t\t\t[ {} ]".format(port))
+                infos.append(("  - port", port))
             if username:
-                t.echo("  - user\t\t\t\t[ {} ]".format(username))
+                infos.append(("  - user", username))
             if collection:
-                t.echo("  - collection\t\t\t\t[ {} ]".format(collection))
+                infos.append(("  - collection", collection))
             if auth_db:
-                t.echo("  - auth source\t\t\t\t[ {} ]".format(auth_db))
+                infos.append(("  - auth source", auth_db))
+
+        maximum = max([len(i[0]) for i in infos])
+        for info in infos:
+            padding = (maximum - len(info[0])) + 1
+            t.echo("... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))
         print('\n')
 
     def _add_modules(self):
-        """ Include in **PYTHONPATH** all necessary packages.
+        """Include in **PYTHONPATH** all necessary packages.
 
-            This will add all paths to deployed repos and also everything
-            in ""vendor/python"". It will add it to :class:`sys.path` and to
-            **PYTHONPATH** environment variable.
+        This will add all paths to deployed repos and also everything
+        in ""vendor/python"". It will add it to :class:`sys.path` and to
+        **PYTHONPATH** environment variable.
 
-            .. note:: This will append, not overwrite existing paths
+        .. note:: This will append, not overwrite existing paths
         """
         from pypeapp.deployment import Deployment
 
@@ -95,8 +106,7 @@ class PypeLauncher(object):
                     sys.path.append(p)
 
     def _load_default_environments(self, tools):
-        """ Load and apply default environment files. """
-
+        """Load and apply default environment files."""
         import acre
         os.environ['PLATFORM'] = platform.system().lower()
         tools_env = acre.get_tools(tools)
@@ -111,12 +121,12 @@ class PypeLauncher(object):
         os.environ = acre.compute(os.environ, cleanup=False)
 
     def launch_tray(self, debug=False):
-        """ Method will launch tray.py
+        """Run tray.py.
 
-            :param debug: if True, tray will run in debug mode (not detached)
-            :type debug: bool
+        :param debug: if True, tray will run in debug mode (not detached)
+        :type debug: bool
 
-            .. seealso:: :func:`subprocess.Popen`
+        .. seealso:: :func:`subprocess.Popen`
         """
         import subprocess
         from pypeapp import Logger
@@ -136,7 +146,7 @@ class PypeLauncher(object):
                 ])
             return
 
-        DETACHED_PROCESS = 0x00000008
+        DETACHED_PROCESS = 0x00000008  # noqa: N806
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [pype_setup, "pypeapp", "tray.py"]
@@ -172,7 +182,7 @@ class PypeLauncher(object):
             )
 
     def launch_local_mongodb(self):
-        """ This will run local instance of mongodb.
+        """Run local instance of mongodb.
 
         :returns: process return code
         :rtype: int
@@ -226,8 +236,7 @@ class PypeLauncher(object):
         return p.returncode
 
     def launch_eventserver(self):
-        """
-        This will run standalone ftrack eventserver.
+        """Run standalone ftrack eventserver.
 
         :returns: process return code
         :rtype: int
@@ -252,7 +261,7 @@ class PypeLauncher(object):
         return returncode
 
     def launch_eventservercli(self, args):
-        """ This will run standalone ftrack eventserver headless.
+        """Run standalone ftrack eventserver headless.
 
         :param args: arguments passed to event server script. See event server
                      help for more info.
@@ -276,7 +285,7 @@ class PypeLauncher(object):
         return returncode
 
     def install(self, force):
-        """ This will run venv installation process.
+        """Run venv installation process.
 
         :param force: forcefully overwrite existing environment
         :type force: bool
@@ -287,7 +296,7 @@ class PypeLauncher(object):
         install(force)
 
     def validate(self):
-        """ This will run deployment validation process.
+        """Run deployment validation process.
 
         Upon failure it will exit with return code 200
         to signal shell installation process about validation error.
@@ -302,7 +311,7 @@ class PypeLauncher(object):
             sys.exit(200)
 
     def deploy(self, force):
-        """ This will run deployment process.
+        """Run deployment process.
 
         Upon failure it will exit with return code 200
         to signal shell installation process about deployment error.
@@ -321,6 +330,22 @@ class PypeLauncher(object):
     def _initialize(self):
         from pypeapp.deployment import Deployment
         from pypeapp.lib.Terminal import Terminal
+        try:
+            import configparser
+        except Exception:
+            import ConfigParser as configparser
+
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file_path = os.path.join(cur_dir, "config.ini")
+        if os.path.exists(config_file_path):
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            try:
+                value = config["DEFAULT"]["dev"]
+                if value.lower() == "true":
+                    os.environ["PYPE_DEV"] = "1"
+            except KeyError:
+                pass
 
         # if not called, console coloring will get mangled in python.
         Terminal()
@@ -339,8 +364,9 @@ class PypeLauncher(object):
         self.print_info()
 
     def texture_copy(self, project, asset, path):
-        """ This will copy textures specified in path asset publish
-        directory. It doesn't interact with avalon, just copying files.
+        """Copy textures specified in path asset publish directory.
+
+        It doesn't interact with avalon, just copying files.
 
         :param project: name of project
         :type project: str
@@ -366,7 +392,7 @@ class PypeLauncher(object):
         return returncode
 
     def publish(self, gui=False, paths=None):
-        """ Starts headless publishing.
+        """Start headless publishing.
 
         Publish collects json from current working directory
         or supplied paths argument.
@@ -418,8 +444,7 @@ class PypeLauncher(object):
         uninstall()
 
     def run_pype_tests(self, keyword=None, id=None):
-        """ Run pytest on `pype/pype/tests` directory """
-
+        """Run pytest on `pype/pype/tests` directory."""
         from pypeapp.lib.Terminal import Terminal
         import pytest
 
@@ -447,8 +472,7 @@ class PypeLauncher(object):
         pytest.main(args)
 
     def run_pype_setup_tests(self, keyword=None, id=None):
-        """ Run pytest on `tests` directory """
-
+        """Run pytest on `tests` directory."""
         from pypeapp.lib.Terminal import Terminal
         import pytest
 
@@ -474,8 +498,7 @@ class PypeLauncher(object):
         pytest.main(args)
 
     def pype_setup_coverage(self, pype):
-        """ Generate code coverage on pype-setup """
-
+        """Generate code coverage on pype-setup."""
         from pypeapp.lib.Terminal import Terminal
         import pytest
 
@@ -492,11 +515,10 @@ class PypeLauncher(object):
                      ])
 
     def make_docs(self):
-        """
-        Generate documentation using Sphinx for both **pype-setup** and
-        **pype**.
-        """
+        """Generate documentation using Sphinx.
 
+        Documentation is generated for both **pype-setup** and **pype**.
+        """
         from pypeapp.lib.Terminal import Terminal
         from pypeapp import execute
 
@@ -509,9 +531,11 @@ class PypeLauncher(object):
             os.environ.get("PYPE_SETUP_PATH"), "docs", "build")
 
         source_dir_pype = os.path.join(
-            os.environ.get("PYPE_SETUP_PATH"), "repos", "pype", "docs", "source")
+            os.environ.get("PYPE_SETUP_PATH"), "repos",
+            "pype", "docs", "source")
         build_dir_pype = os.path.join(
-            os.environ.get("PYPE_SETUP_PATH"), "repos", "pype", "docs", "build")
+            os.environ.get("PYPE_SETUP_PATH"), "repos",
+            "pype", "docs", "build")
 
         t.echo(">>> Generating documentation ...")
         t.echo("  - Cleaning up ...")
@@ -526,7 +550,8 @@ class PypeLauncher(object):
                  '--ext-intersphinx', '--ext-viewcode', '-o',
                  source_dir_setup, 'pypeapp'], shell=True)
         vendor_ignore = os.path.join(
-            os.environ.get("PYPE_SETUP_PATH"), "repos", "pype", "pype", "vendor")
+            os.environ.get("PYPE_SETUP_PATH"), "repos",
+            "pype", "pype", "vendor")
         execute(['sphinx-apidoc', '-M', '-f', '-d', '6', '--ext-autodoc',
                  '--ext-intersphinx', '--ext-viewcode', '-o',
                  source_dir_pype, 'pype',
@@ -543,13 +568,13 @@ class PypeLauncher(object):
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
 
     def run_application(self, app, project, asset, task, tools, arguments):
-        """
-        Run application in project/asset/task context with default or
-        specified tools enviornment. This uses pre-defined launcher in
-        `pype-config/launchers` where there must be *toml* file with
-        definition and in platform directory its launcher shell script or
-        binary executables. Arguments will be passed to this script or
-        executable.
+        """Run application in project/asset/task context.
+
+        With default or specified tools enviornment. This uses pre-defined
+        launcher in `pype-config/launchers` where there must be *toml*
+        file with definition and in platform directory its launcher shell
+        script or binary executables. Arguments will be passed to this script
+        or executable.
 
         :param app: Full application name (`maya_2018`)
         :type app: Str
@@ -738,6 +763,7 @@ class PypeLauncher(object):
                 return
 
     def validate_jsons(self):
+        """Validate configuration JSON files for syntax errors."""
         import json
         import glob
         from pypeapp.lib.Terminal import Terminal

@@ -5,23 +5,6 @@ from pypeapp import style, Logger
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
 from pypeapp.lib.config import get_presets
 from pypeapp.resources import get_resource
-try:
-    import configparser
-except Exception:
-    import ConfigParser as configparser
-
-IS_DEV = False
-cur_dir = os.path.dirname(os.path.abspath(__file__))
-config_file_path = os.path.join(cur_dir, "config.ini")
-if os.path.exists(config_file_path):
-    config = configparser.ConfigParser()
-    config.read(config_file_path)
-    try:
-        value = config["DEFAULT"]["dev"]
-        if value.lower() == "true":
-            IS_DEV = True
-    except KeyError:
-        pass
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
@@ -31,7 +14,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :type parent: QtWidgets.QMainWindow
     """
     def __init__(self, parent):
-        if IS_DEV:
+        if os.getenv("PYPE_DEV"):
             icon_file_name = "icon_dev.png"
         else:
             icon_file_name = "icon.png"
@@ -506,7 +489,7 @@ class Application(QtWidgets.QApplication):
         self.splash.hide()
 
     def set_splash(self):
-        if IS_DEV:
+        if os.getenv("PYPE_DEV"):
             splash_file_name = "splash_dev.png"
         else:
             splash_file_name = "splash.png"
