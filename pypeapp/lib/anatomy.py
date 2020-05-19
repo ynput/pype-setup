@@ -911,10 +911,10 @@ class Templates:
         return {key_list[0]: self._keys_to_dicts(key_list[1:], value)}
 
     def _rootless_path(
-        self, template, final_data, missing_keys, invalid_types
+        self, template, used_values, final_data, missing_keys, invalid_types
     ):
         if (
-            "root" not in final_data
+            "root" not in used_values
             or "root" in missing_keys
             or "{root" not in template
         ):
@@ -924,24 +924,27 @@ class Templates:
             if "root" in invalid_type:
                 return
 
-        root_keys = self._dict_to_subkeys_list({"root": final_data["root"]})
+        root_keys = self._dict_to_subkeys_list({"root": used_values["root"]})
         if not root_keys:
             return
 
-        used_root_keys = root_keys[0]
-        if not used_root_keys:
-            return
-        root_key = None
-        for key in used_root_keys:
-            if root_key is None:
-                root_key = key
-            else:
-                root_key += "[{}]".format(key)
+        roots_dict = {}
+        for used_root_keys in root_keys:
+            if not used_root_keys:
+                continue
 
-        root_key = "{" + root_key + "}"
-        roots_dict = self._keys_to_dicts(used_root_keys, root_key)
+            root_key = None
+            for key in used_root_keys:
+                if root_key is None:
+                    root_key = key
+                else:
+                    root_key += "[{}]".format(key)
 
-        final_data["root"] = roots_dict["root"]
+            root_key = "{" + root_key + "}"
+            roots_dict.update(
+                self._keys_to_dicts(used_root_keys, root_key)["root"]
+            )
+        final_data["root"] = roots_dict
         return template.format(**final_data)
 
     def _format(self, orig_template, data):
@@ -1023,8 +1026,10 @@ class Templates:
         invalid_types = invalid_required + invalid_optional
 
         filled_template = template.format(**final_data)
+        # WARNING `_rootless_path` change values in `final_data` please keep
+        # in midn when changing order
         rootless_path = self._rootless_path(
-            template, final_data, missing_keys, invalid_types
+            template, used_values, final_data, missing_keys, invalid_types
         )
         if rootless_path is None:
             rootless_path = filled_template
