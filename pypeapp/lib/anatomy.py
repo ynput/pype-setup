@@ -941,10 +941,13 @@ class Templates:
                     root_key += "[{}]".format(key)
 
             root_key = "{" + root_key + "}"
-            roots_dict.update(
-                self._keys_to_dicts(used_root_keys, root_key)["root"]
+
+            roots_dict = config.update_dict(
+                roots_dict,
+                self._keys_to_dicts(used_root_keys, root_key)
             )
-        final_data["root"] = roots_dict
+
+        final_data["root"] = roots_dict["root"]
         return template.format(**final_data)
 
     def _format(self, orig_template, data):
