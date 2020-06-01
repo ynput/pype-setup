@@ -1,5 +1,6 @@
 import os
 import string
+import re
 
 from collections import defaultdict, namedtuple
 
@@ -44,8 +45,15 @@ def partial_format(s, data, missing="{{{key}}}"):
     mapping = FormatDict(**data)
     try:
         f = formatter.vformat(s, (), mapping)
-    except ValueError:
-        return s
+    except Exception:
+        r_token = re.compile(r"({.*?})")
+        matches = re.findall(r_token, s)
+        f = s
+        for m in matches:
+            try:
+                f = re.sub(m, m.format(**data), f)
+            except KeyError:
+                continue
     return f
 
 

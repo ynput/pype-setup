@@ -51,7 +51,10 @@ if _mongo_logging:
 
 system_name, pc_name = platform.uname()[:2]
 host_name = socket.gethostname()
-host_id = socket.gethostbyname(host_name)
+try:
+    ip = socket.gethostbyname(host_name)
+except socket.gaierror:
+    ip = "127.0.0.1"
 
 # Get process name
 if len(sys.argv) > 0 and os.path.basename(sys.argv[0]) == "tray.py":
@@ -267,7 +270,7 @@ class PypeMongoFormatter(logging.Formatter):
             'lineNumber': record.lineno,
             'process_id': MONGO_PROCESS_ID,
             'hostname': host_name,
-            'hostip': host_id,
+            'hostip': ip,
             'username': getpass.getuser(),
             'system_name': system_name,
             'process_name': process_name

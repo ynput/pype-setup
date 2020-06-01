@@ -69,12 +69,13 @@
         "type": "object",
         "oneOf": [
             {"required": ["extract_path", "url", "archive_type"]},
+            {"required": ["extract_path", "google_id", "archive_type"]},
             {"required": ["extract_path", "vendor", "archive_type"]}
         ],
         "properties": {
           "extract_path": {
             "type": "string",
-            "description": "Archive file will be extracted into this path. Result will be concatenated: {$PYPE_ROOT}/{extract_path} - Example: vendor/bin/ffmpeg"
+            "description": "Archive file will be extracted into this path. Result will be concatenated: {$PYPE_SETUP_PATH}/{extract_path} - Example: vendor/bin/ffmpeg"
           },
           "url": {
             "type": "string",

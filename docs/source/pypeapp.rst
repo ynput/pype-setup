@@ -51,14 +51,6 @@ pypeapp.pypeLauncher module
     :undoc-members:
     :show-inheritance:
 
-pypeapp.storage module
-----------------------
-
-.. automodule:: pypeapp.storage
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pypeapp.tray module
 -------------------
 
@@ -66,5 +58,3 @@ pypeapp.tray module
     :members:
     :undoc-members:
     :show-inheritance:
-
-

@@ -4,68 +4,81 @@ import platform
 
 
 class PypeLauncher(object):
-    """ Class handling start of different modes of Pype.
+    """Class handling start of different modes of Pype.
 
-        Most of its methods are called by :mod:`cli` module.
+    Most of its methods are called by :mod:`cli` module.
     """
 
     def print_info(self):
-        """ This will print additional information to console. """
+        """Print additional information to console."""
         from pypeapp.lib.Terminal import Terminal
         from pypeapp.lib.log import _mongo_settings
 
         t = Terminal()
-        host, port, database, username, password, collection, auth_db = _mongo_settings()  # noqa: E501
+        (
+            host, port, database, username, password, collection, auth_db
+        ) = _mongo_settings()
 
-        t.echo("... Running pype from\t\t\t[ {} ]".format(
-            os.environ.get('PYPE_ROOT')))
-        t.echo("... Using config at\t\t\t[ {} ]".format(
-            os.environ.get('PYPE_CONFIG')))
-        t.echo("... Projects root\t\t\t[ {} ]".format(
-            os.environ.get('PYPE_STUDIO_PROJECTS_PATH')))
-        t.echo("... Using mongodb\t\t\t[ {} ]".format(
-            os.environ.get("AVALON_MONGO")))
-        if os.environ.get('FTRACK_SERVER'):
-            t.echo("... Using FTrack at\t\t\t[ {} ]".format(
-                os.environ.get("FTRACK_SERVER")))
+        infos = []
+        if os.getenv('PYPE_DEV'):
+            infos.append(("Pype variant", "staging"))
+        else:
+            infos.append(("Pype variant", "production"))
+        infos.append(("Running pype from", os.environ.get('PYPE_SETUP_PATH')))
+        infos.append(("Using config at", os.environ.get('PYPE_CONFIG')))
+        infos.append(("Using mongodb", os.environ.get("AVALON_MONGO")))
+
+        if os.environ.get("FTRACK_SERVER"):
+            infos.append(("Using FTrack at",
+                          os.environ.get("FTRACK_SERVER")))
+
         if os.environ.get('DEADLINE_REST_URL'):
-            t.echo("... Using Deadline webservice at\t[ {} ]".format(
-                os.environ.get("DEADLINE_REST_URL")))
+            infos.append(("Using Deadline webservice at",
+                          os.environ.get("DEADLINE_REST_URL")))
+
         if os.environ.get('MUSTER_REST_URL'):
-            t.echo("... Using Muster at\t\t\t[ {} ]".format(
-                os.environ.get("MUSTER_REST_URL")))
+            infos.append(("Using Muster at",
+                          os.environ.get("MUSTER_REST_URL")))
+
         if host:
-            t.echo("... Logging to mongodb\t\t\t[ {}/{} ]".format(
-                host, database))
+            infos.append(("Logging to mongodb", "{}/{}".format(
+                host, database)))
             if port:
-                t.echo("  - port\t\t\t\t[ {} ]".format(port))
+                infos.append(("  - port", port))
             if username:
-                t.echo("  - user\t\t\t\t[ {} ]".format(username))
+                infos.append(("  - user", username))
             if collection:
-                t.echo("  - collection\t\t\t\t[ {} ]".format(collection))
+                infos.append(("  - collection", collection))
             if auth_db:
-                t.echo("  - auth source\t\t\t\t[ {} ]".format(auth_db))
+                infos.append(("  - auth source", auth_db))
+
+        maximum = max([len(i[0]) for i in infos])
+        for info in infos:
+            padding = (maximum - len(info[0])) + 1
+            t.echo("... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))
         print('\n')
 
     def _add_modules(self):
-        """ Include in **PYTHONPATH** all necessary packages.
+        """Include in **PYTHONPATH** all necessary packages.
 
-            This will add all paths to deployed repos and also everything
-            in ""vendor/python"". It will add it to :class:`sys.path` and to
-            **PYTHONPATH** environment variable.
+        This will add all paths to deployed repos and also everything
+        in ""vendor/python"". It will add it to :class:`sys.path` and to
+        **PYTHONPATH** environment variable.
 
-            .. note:: This will append, not overwrite existing paths
+        .. note:: This will append, not overwrite existing paths
         """
         from pypeapp.deployment import Deployment
 
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        d = Deployment(os.environ.get('PYPE_SETUP_PATH', None))
         paths = d.get_deployment_paths()
 
         # add self
-        paths.append(os.environ.get('PYPE_ROOT'))
+        paths.append(os.environ.get('PYPE_SETUP_PATH'))
 
         # additional vendor packages
-        vendor_path = os.path.join(os.getenv('PYPE_ROOT'), 'vendor', 'python')
+        vendor_path = os.path.join(
+            os.getenv('PYPE_SETUP_PATH'), 'vendor', 'python'
+        )
 
         with os.scandir(vendor_path) as vp:
             for entry in vp:
@@ -93,8 +106,7 @@ class PypeLauncher(object):
                     sys.path.append(p)
 
     def _load_default_environments(self, tools):
-        """ Load and apply default environment files. """
-
+        """Load and apply default environment files."""
         import acre
         os.environ['PLATFORM'] = platform.system().lower()
         tools_env = acre.get_tools(tools)
@@ -109,12 +121,12 @@ class PypeLauncher(object):
         os.environ = acre.compute(os.environ, cleanup=False)
 
     def launch_tray(self, debug=False):
-        """ Method will launch tray.py
+        """Run tray.py.
 
-            :param debug: if True, tray will run in debug mode (not detached)
-            :type debug: bool
+        :param debug: if True, tray will run in debug mode (not detached)
+        :type debug: bool
 
-            .. seealso:: :func:`subprocess.Popen`
+        .. seealso:: :func:`subprocess.Popen`
         """
         import subprocess
         from pypeapp import Logger
@@ -123,7 +135,7 @@ class PypeLauncher(object):
         self._initialize()
 
         if debug:
-            pype_setup = os.getenv('PYPE_ROOT')
+            pype_setup = os.getenv('PYPE_SETUP_PATH')
             items = [pype_setup, "pypeapp", "tray.py"]
             fname = os.path.sep.join(items)
 
@@ -134,9 +146,9 @@ class PypeLauncher(object):
                 ])
             return
 
-        DETACHED_PROCESS = 0x00000008
+        DETACHED_PROCESS = 0x00000008  # noqa: N806
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [pype_setup, "pypeapp", "tray.py"]
         fname = os.path.sep.join(items)
 
@@ -170,7 +182,7 @@ class PypeLauncher(object):
             )
 
     def launch_local_mongodb(self):
-        """ This will run local instance of mongodb.
+        """Run local instance of mongodb.
 
         :returns: process return code
         :rtype: int
@@ -193,14 +205,20 @@ class PypeLauncher(object):
             os.makedirs(location)
 
         # Start server.
-        if platform.system().lower() == "linux":
-            t.echo("Local mongodb is running...")
-            t.echo("Using port {} and db at {}".format(
-                os.environ["AVALON_MONGO_PORT"], location))
-            p = subprocess.Popen(
-                ["mongod", "--dbpath", location, "--port",
-                 os.environ["AVALON_MONGO_PORT"]], close_fds=True
-            )
+        if (platform.system().lower() == "linux"
+                or platform.system().lower() == "darwin"):
+
+            if platform.system().lower() == "darwin":
+                t.echo(("*** You may need to allow mongod "
+                        "to run in "
+                        "[ System Settings / Security & Privacy ]"))
+                t.echo("Local mongodb is running...")
+                t.echo("Using port {} and db at {}".format(
+                    os.environ["AVALON_MONGO_PORT"], location))
+                p = subprocess.Popen(
+                    ["mongod", "--dbpath", location, "--port",
+                     os.environ["AVALON_MONGO_PORT"]], close_fds=True
+                )
         elif platform.system().lower() == "windows":
             t.echo("Local mongodb is running...")
             t.echo("Using port {} and db at {}".format(
@@ -210,11 +228,15 @@ class PypeLauncher(object):
                  location, "--port", os.environ["AVALON_MONGO_PORT"]],
                 shell=True
             )
+        else:
+            t.echo("!!! Unsupported platorm - [ {} ]".format(
+                platform.system().lower()
+            ))
+            return False
         return p.returncode
 
     def launch_eventserver(self):
-        """
-        This will run standalone ftrack eventserver.
+        """Run standalone ftrack eventserver.
 
         :returns: process return code
         :rtype: int
@@ -226,7 +248,7 @@ class PypeLauncher(object):
 
         self._initialize()
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server.py"
@@ -239,7 +261,7 @@ class PypeLauncher(object):
         return returncode
 
     def launch_eventservercli(self, args):
-        """ This will run standalone ftrack eventserver headless.
+        """Run standalone ftrack eventserver headless.
 
         :param args: arguments passed to event server script. See event server
                      help for more info.
@@ -250,7 +272,7 @@ class PypeLauncher(object):
         from pypeapp import execute
         self._initialize()
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
             pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
             "event_server_cli.py"
@@ -263,7 +285,7 @@ class PypeLauncher(object):
         return returncode
 
     def install(self, force):
-        """ This will run venv installation process.
+        """Run venv installation process.
 
         :param force: forcefully overwrite existing environment
         :type force: bool
@@ -274,7 +296,7 @@ class PypeLauncher(object):
         install(force)
 
     def validate(self):
-        """ This will run deployment validation process.
+        """Run deployment validation process.
 
         Upon failure it will exit with return code 200
         to signal shell installation process about validation error.
@@ -282,14 +304,14 @@ class PypeLauncher(object):
         .. seealso:: :func:`Deployment.validate`
         """
         from pypeapp.deployment import Deployment, DeployException
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        d = Deployment(os.environ.get('PYPE_SETUP_PATH', None))
         try:
             d.validate()
         except DeployException:
             sys.exit(200)
 
     def deploy(self, force):
-        """ This will run deployment process.
+        """Run deployment process.
 
         Upon failure it will exit with return code 200
         to signal shell installation process about deployment error.
@@ -298,7 +320,7 @@ class PypeLauncher(object):
 
         """
         from pypeapp.deployment import Deployment, DeployException
-        d = Deployment(os.environ.get('PYPE_ROOT', None))
+        d = Deployment(os.environ.get('PYPE_SETUP_PATH', None))
         try:
             d.deploy(force)
         except DeployException:
@@ -306,13 +328,28 @@ class PypeLauncher(object):
         pass
 
     def _initialize(self):
-        from pypeapp.storage import Storage
         from pypeapp.deployment import Deployment
         from pypeapp.lib.Terminal import Terminal
+        try:
+            import configparser
+        except Exception:
+            import ConfigParser as configparser
+
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file_path = os.path.join(cur_dir, "config.ini")
+        if os.path.exists(config_file_path):
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            try:
+                value = config["DEFAULT"]["dev"]
+                if value.lower() == "true":
+                    os.environ["PYPE_DEV"] = "1"
+            except KeyError:
+                pass
 
         # if not called, console coloring will get mangled in python.
         Terminal()
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         d = Deployment(pype_setup)
 
         tools, config_path = d.get_environment_data()
@@ -323,13 +360,13 @@ class PypeLauncher(object):
                 config_path,
                 'environments'))
         self._add_modules()
-        Storage().update_environment()
         self._load_default_environments(tools=tools)
         self.print_info()
 
     def texture_copy(self, project, asset, path):
-        """ This will copy textures specified in path asset publish
-        directory. It doesn't interact with avalon, just copying files.
+        """Copy textures specified in path asset publish directory.
+
+        It doesn't interact with avalon, just copying files.
 
         :param project: name of project
         :type project: str
@@ -342,7 +379,7 @@ class PypeLauncher(object):
 
         self._initialize()
 
-        pype_setup = os.getenv('PYPE_ROOT')
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
             pype_setup, "repos", "pype", "pype", "tools",
             "texture_copy", "app.py"
@@ -355,7 +392,7 @@ class PypeLauncher(object):
         return returncode
 
     def publish(self, gui=False, paths=None):
-        """ Starts headless publishing.
+        """Start headless publishing.
 
         Publish collects json from current working directory
         or supplied paths argument.
@@ -373,11 +410,6 @@ class PypeLauncher(object):
 
         self._initialize()
 
-        # find path from different platforms in environment and remap it to
-        # current platform paths. Only those paths specified in Storage
-        # will be remapped.
-        # os.environ.update(self.path_remapper())
-
         from pype import install, uninstall
         # Register target and host
         import pyblish.api
@@ -392,11 +424,7 @@ class PypeLauncher(object):
             t.echo("No publish paths specified")
             return False
 
-        remapped_path = self.path_remapper(
-            {
-                "PYPE_PUBLISH_DATA": os.pathsep.join(paths)
-            })
-        os.environ.update(remapped_path)
+        os.environ["PYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
         if gui:
             import pyblish_qml
@@ -416,8 +444,7 @@ class PypeLauncher(object):
         uninstall()
 
     def run_pype_tests(self, keyword=None, id=None):
-        """ Run pytest on `pype/pype/tests` directory """
-
+        """Run pytest on `pype/pype/tests` directory."""
         from pypeapp.lib.Terminal import Terminal
         import pytest
 
@@ -432,21 +459,20 @@ class PypeLauncher(object):
             t.echo("  - selecting [ {} ]".format(keyword))
             args.append('-k')
             args.append(keyword)
-            args.append(os.path.join(os.getenv('PYPE_ROOT'),
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'),
                                      'repos', 'pype', 'pype', 'tests'))
 
         elif id:
             t.echo("  - selecting test ID [ {} ]".format(id[0]))
             args.append(id[0])
         else:
-            args.append(os.path.join(os.getenv('PYPE_ROOT'),
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'),
                                      'repos', 'pype', 'pype', 'tests'))
 
         pytest.main(args)
 
     def run_pype_setup_tests(self, keyword=None, id=None):
-        """ Run pytest on `tests` directory """
-
+        """Run pytest on `tests` directory."""
         from pypeapp.lib.Terminal import Terminal
         import pytest
 
@@ -461,19 +487,18 @@ class PypeLauncher(object):
             t.echo("  - selecting [ {} ]".format(keyword))
             args.append('-k')
             args.append(keyword)
-            args.append(os.path.join(os.getenv('PYPE_ROOT'), 'tests'))
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'), 'tests'))
 
         elif id:
             t.echo("  - selecting test ID [ {} ]".format(id[0]))
             args.append(id[0])
         else:
-            args.append(os.path.join(os.getenv('PYPE_ROOT'), 'tests'))
+            args.append(os.path.join(os.getenv('PYPE_SETUP_PATH'), 'tests'))
 
         pytest.main(args)
 
     def pype_setup_coverage(self, pype):
-        """ Generate code coverage on pype-setup """
-
+        """Generate code coverage on pype-setup."""
         from pypeapp.lib.Terminal import Terminal
         import pytest
 
@@ -484,17 +509,16 @@ class PypeLauncher(object):
         pytest.main(['-v', '-x', '--color=yes', '--cov={}'.format(pype),
                      '--cov-config', '.coveragerc', '--cov-report=html',
                      '--ignore={}'.format(os.path.join(
-                        os.environ.get("PYPE_ROOT"), "vendor")),
+                        os.environ.get("PYPE_SETUP_PATH"), "vendor")),
                      '--ignore={}'.format(os.path.join(
-                        os.environ.get("PYPE_ROOT"), "repos"))
+                        os.environ.get("PYPE_SETUP_PATH"), "repos"))
                      ])
 
     def make_docs(self):
-        """
-        Generate documentation using Sphinx for both **pype-setup** and
-        **pype**.
-        """
+        """Generate documentation using Sphinx.
 
+        Documentation is generated for both **pype-setup** and **pype**.
+        """
         from pypeapp.lib.Terminal import Terminal
         from pypeapp import execute
 
@@ -502,14 +526,16 @@ class PypeLauncher(object):
         t = Terminal()
 
         source_dir_setup = os.path.join(
-            os.environ.get("PYPE_ROOT"), "docs", "source")
+            os.environ.get("PYPE_SETUP_PATH"), "docs", "source")
         build_dir_setup = os.path.join(
-            os.environ.get("PYPE_ROOT"), "docs", "build")
+            os.environ.get("PYPE_SETUP_PATH"), "docs", "build")
 
         source_dir_pype = os.path.join(
-            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "source")
+            os.environ.get("PYPE_SETUP_PATH"), "repos",
+            "pype", "docs", "source")
         build_dir_pype = os.path.join(
-            os.environ.get("PYPE_ROOT"), "repos", "pype", "docs", "build")
+            os.environ.get("PYPE_SETUP_PATH"), "repos",
+            "pype", "docs", "build")
 
         t.echo(">>> Generating documentation ...")
         t.echo("  - Cleaning up ...")
@@ -524,7 +550,8 @@ class PypeLauncher(object):
                  '--ext-intersphinx', '--ext-viewcode', '-o',
                  source_dir_setup, 'pypeapp'], shell=True)
         vendor_ignore = os.path.join(
-            os.environ.get("PYPE_ROOT"), "repos", "pype", "pype", "vendor")
+            os.environ.get("PYPE_SETUP_PATH"), "repos",
+            "pype", "pype", "vendor")
         execute(['sphinx-apidoc', '-M', '-f', '-d', '6', '--ext-autodoc',
                  '--ext-intersphinx', '--ext-viewcode', '-o',
                  source_dir_pype, 'pype',
@@ -540,122 +567,14 @@ class PypeLauncher(object):
         t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
 
-    def path_remapper(self, data=None, source=None, to=None):
-        """
-        This will search existing environment for strings defined by variables
-        in storage setting for all platforms. If found, it will be replaced
-        with string from current platform.
-
-        For example, we have `PYPE_STORAGE_PATH` pointing on windows to
-        `V:\\Projects`. In environment setting, there is variable
-        `FOO="V:\\Projects\\Foo\\Bar\\baz"`. But we are on linux where
-        `PYPE_STORAGE_PATH` is defined as `/mnt/projects`. This method will
-        change `FOO` to point to `/mnt/projects/Foo/Bar/baz`.
-
-        This is useful on scenarios, where these variables are set on different
-        platform then one currently running.
-
-        Source data can be dictionary or list and it can contain other
-        dictionaries and lists. Paths will be replaced recursively.
-
-        :param data: Source data. By default it is `os.environ`
-        :type data: dict
-        :param source: string defining plaform from which we want to remap.
-                     If not set, then all platforms other then current one will
-                     be searched.
-        :type source: dict or list
-        :param to: string defining platform to which we want to remap. If not
-                   set, we will remap to current platform.
-        :returns: modified data
-        :rtype: dict or list
-        """
-        from pypeapp.storage import Storage
-
-        _platform_name = [
-            ("win32", "windows"),
-            ("linux", "linux"),
-            ("darwin", "darwin")
-        ]
-
-        _current_platform = [p[1] for p in _platform_name if p[0] == sys.platform][0]  # noqa: E501
-        if not data:
-            data = os.environ.copy()
-
-        if source:
-            from_paths_platform = [source]
-        else:
-            from_paths_platform = ['windows', 'linux', 'darwin']
-            from_paths_platform.remove(_current_platform)
-
-        if to:
-            to_paths_platform = to
-        else:
-            to_paths_platform = _current_platform  # noqa: E501
-
-        result_strings = Storage().get_storage_vars(platform=to_paths_platform)
-        if isinstance(data, dict):
-            remapped = {}
-        else:
-            remapped = []
-        done_keys = []
-        for p in from_paths_platform:
-            search_strings = Storage().get_storage_vars(platform=p)
-            for key in data:
-                if isinstance(data, dict):
-                    var = data[key]
-                else:
-                    var = key
-                # TODO: handle all cases. Normalized path, backslashes, ...
-                for skey, string in search_strings.items():
-                    # skip empty strings
-                    if not string:
-                        continue
-                    # work only on strings
-                    if not isinstance(var, str):
-                        # if another dict is found, recurse
-                        if isinstance(var, dict) or isinstance(var, list):
-                            # don't get into empty oness
-                            if var:
-                                revar = self.path_remapper(data=var,
-                                                           source=source,
-                                                           to=to)
-                                if isinstance(data, dict):
-                                    remapped[key] = revar
-                                else:
-                                    remapped.append(revar)
-                        else:
-                            if isinstance(data, dict):
-                                remapped[key] = var
-                            else:
-                                remapped.append(var)
-                        continue
-
-                    if string in var and key not in done_keys:
-                        out = var.replace(string, result_strings[skey])
-                        if to_paths_platform in ["win32", "windows"]:
-                            out = os.path.normpath(out)
-                        else:
-                            out = out.replace("\\", "/")
-                        if isinstance(data, dict):
-                            remapped[key] = out
-                        else:
-                            remapped.append(out)
-                        done_keys.append(key)
-                    elif key not in done_keys:
-                        if isinstance(data, dict):
-                            remapped[key] = var
-                        else:
-                            remapped.append(var)
-        return remapped
-
     def run_application(self, app, project, asset, task, tools, arguments):
-        """
-        Run application in project/asset/task context with default or
-        specified tools enviornment. This uses pre-defined launcher in
-        `pype-config/launchers` where there must be *toml* file with
-        definition and in platform directory its launcher shell script or
-        binary executables. Arguments will be passed to this script or
-        executable.
+        """Run application in project/asset/task context.
+
+        With default or specified tools enviornment. This uses pre-defined
+        launcher in `pype-config/launchers` where there must be *toml*
+        file with definition and in platform directory its launcher shell
+        script or binary executables. Arguments will be passed to this script
+        or executable.
 
         :param app: Full application name (`maya_2018`)
         :type app: Str
@@ -685,11 +604,6 @@ class PypeLauncher(object):
         import acre
         from avalon import lib
         from pype import lib as pypelib
-
-        # find path from different platforms in environment and remap it to
-        # current platform paths. Only those paths specified in Storage
-        # will be remapped.
-        # os.environ.update(self.path_remapper())
 
         abspath = lib.which_app(app)
         if abspath is None:
@@ -731,8 +645,8 @@ class PypeLauncher(object):
         parents = avalon_asset["data"]["parents"] or []
         if parents:
             hierarchy = os.path.join(*parents)
+
         data = {
-            "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
             "project": {
                 "name": project,
                 "code": avalon_project['data']['code']
@@ -743,10 +657,12 @@ class PypeLauncher(object):
             "hierarchy": hierarchy,
         }
 
-        anatomy = Anatomy()
-        anatomy = anatomy.format(data)
-        work_template = anatomy["work"]["folder"]
-        workdir = os.path.normpath(work_template)
+        anatomy = Anatomy(project)
+        anatomy_filled = anatomy.format(data)
+        workdir = os.path.normpath(anatomy_filled["work"]["folder"])
+
+        # set PYPE_ROOT_* environments
+        anatomy.set_root_environments()
 
         # set environments for Avalon
         os.environ["AVALON_PROJECT"] = project
@@ -847,6 +763,7 @@ class PypeLauncher(object):
                 return
 
     def validate_jsons(self):
+        """Validate configuration JSON files for syntax errors."""
         import json
         import glob
         from pypeapp.lib.Terminal import Terminal

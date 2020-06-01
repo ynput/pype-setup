@@ -71,7 +71,7 @@ class Deployment(object):
         normalized = os.path.normpath(pype_root)
         if not os.path.exists(normalized):
             raise DeployException(
-                "PYPE_ROOT {} doesn't exists or wasn't set".format(normalized),
+                "PYPE_SETUP_PATH {} doesn't exists or wasn't set".format(normalized),
                 100)
         self._pype_root = normalized
         pass
@@ -347,7 +347,12 @@ class Deployment(object):
         """
         import git
         repo = git.Repo(path)
-        if str(repo.active_branch) != str(branch):
+        try:
+            if str(repo.active_branch) != str(branch):
+                return False
+        except TypeError:
+            # type error can happen when active branch is in detached state
+            # one case is the repository was checked out nonexistent branch
             return False
         return True
 
@@ -450,6 +455,28 @@ class Deployment(object):
             return True
         else:
             return False
+
+    def _download_file_from_google_drive(self, id, destination):
+        URL = "https://docs.google.com/uc?export=download"
+        CHUNK_SIZE = 32768
+
+        session = requests.Session()
+
+        token = None
+        response = session.get(URL, params={"id": id}, stream=True)
+        for key, value in response.cookies.items():
+            if key.startswith("download_warning"):
+                token = value
+
+        if token:
+            params = {"id": id, "confirm": token}
+            response = session.get(URL, params=params, stream=True)
+
+        with open(destination, "wb") as file_stream:
+            for chunk in response.iter_content(CHUNK_SIZE):
+                # filter out keep-alive new chunks
+                if chunk:
+                    file_stream.write(chunk)
 
     def deploy(self, force=False):
         """ Do repositories deployment and install python dependencies.
@@ -578,7 +605,7 @@ class Deployment(object):
 
                 if item.get("vendor"):
                     source = os.path.join(
-                                os.environ.get("PYPE_ROOT"),
+                                os.environ.get("PYPE_SETUP_PATH"),
                                 'vendor', 'packages', item.get("vendor"))
                     if not os.path.isfile(source):
                         raise DeployException(
@@ -607,6 +634,12 @@ class Deployment(object):
                             "Checksum failed {} != {} on {}".format(
                                 md5, calc, archive_file_path)
                         )
+
+                if item.get("google_id"):
+                    self._download_file_from_google_drive(
+                        item["google_id"], archive_file_path
+                    )
+
                 # Extract files from archive
                 if archive_type in ['zip']:
                     zip_file = zipfile.ZipFile(archive_file_path)
@@ -726,7 +759,7 @@ class Deployment(object):
         files = deploy.get("init_env")
         config_path = os.path.normpath(
             deploy.get('PYPE_CONFIG').format(
-                PYPE_ROOT=self._pype_root))
+                PYPE_SETUP_PATH=self._pype_root))
 
         return files, config_path
 
