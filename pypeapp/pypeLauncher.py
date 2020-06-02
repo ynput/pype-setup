@@ -136,7 +136,9 @@ class PypeLauncher(object):
 
         if debug:
             pype_setup = os.getenv('PYPE_SETUP_PATH')
-            items = [pype_setup, "pypeapp", "tray.py"]
+            items = [
+                pype_setup, "repos", "pype", "pype", "tools", "tray"
+            ]
             fname = os.path.sep.join(items)
 
             execute([
@@ -149,7 +151,9 @@ class PypeLauncher(object):
         DETACHED_PROCESS = 0x00000008  # noqa: N806
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
-        items = [pype_setup, "pypeapp", "tray.py"]
+        items = [
+            pype_setup, "repos", "pype", "pype", "tools", "tray"
+        ]
         fname = os.path.sep.join(items)
 
         args = ["python", "-d", fname]
