@@ -736,11 +736,6 @@ class PypeLauncher(object):
                     return
 
                 fp.close()
-                # check executable permission
-                if not os.access(execfile, os.X_OK):
-                    t.echo("!!! No executable permission on [ {} ]".format(
-                        execfile))
-                    return
             else:
                 t.echo("!!! Launcher doesn\'t exist [ {} ]".format(
                     execfile))
