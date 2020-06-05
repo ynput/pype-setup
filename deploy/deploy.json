@@ -24,12 +24,12 @@
     {
       "name": "pype",
       "url": "https://github.com/pypeclub/pype.git",
-      "tag": "2.8.0"
+      "tag": "2.9.0"
     },
     {
       "name": "pype-config",
       "url": "https://github.com/pypeclub/pype-config.git",
-      "tag": "2.8.0"
+      "tag": "2.9.0"
     }
   ],
   "pip": [],
