@@ -17,11 +17,6 @@
       "branch": "master"
     },
     {
-      "name": "pyblish-lite",
-      "url": "https://github.com/pypeclub/pyblish-lite.git",
-      "branch": "master"
-    },
-    {
       "name": "maya-look-assigner",
       "url": "https://github.com/pypeclub/maya-look-assigner.git",
       "branch": "master"
