@@ -115,10 +115,11 @@ class PypeLauncher(object):
             if key.startswith('PYPE_'):
                 pype_paths_env[key] = value
 
-        env = acre.append(tools_env, pype_paths_env)
+        env = tools_env
+        env.update(pype_paths_env)
         env = acre.compute(env, cleanup=True)
-        os.environ = acre.append(dict(os.environ), env)
-        os.environ = acre.compute(os.environ, cleanup=False)
+        env = acre.merge(env, os.environ)
+        os.environ = env
 
     def launch_tray(self, debug=False):
         """Run tray.py.
