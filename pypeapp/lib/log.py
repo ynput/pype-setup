@@ -22,12 +22,19 @@ import platform
 import getpass
 import socket
 
-from log4mongo.handlers import MongoHandler
-from bson.objectid import ObjectId
 from logging.handlers import TimedRotatingFileHandler
 
 from pypeapp.lib.Terminal import Terminal
 from .mongo import decompose_url, compose_url
+
+try:
+    from log4mongo.handlers import MongoHandler
+    from bson.objectid import ObjectId
+    MONGO_PROCESS_ID = ObjectId()
+except ImportError:
+    _mongo_logging = False
+else:
+    _mongo_logging = True
 
 try:
     unicode
@@ -39,7 +46,6 @@ except NameError:
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
 DATABASE = "pypeLogs"
 COLLECTION = "logs"
-MONGO_PROCESS_ID = ObjectId()
 
 system_name, pc_name = platform.uname()[:2]
 host_name = socket.gethostname()
