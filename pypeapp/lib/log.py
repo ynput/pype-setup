@@ -44,7 +44,7 @@ except NameError:
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
-DATABASE = "pypeLogs"
+DATABASE = "pype"
 COLLECTION = "logs"
 
 system_name, pc_name = platform.uname()[:2]
