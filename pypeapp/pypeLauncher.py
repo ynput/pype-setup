@@ -12,12 +12,10 @@ class PypeLauncher(object):
     def print_info(self):
         """Print additional information to console."""
         from pypeapp.lib.Terminal import Terminal
-        from pypeapp.lib.log import _mongo_settings
+        from pypeapp.lib.mongo import get_default_components
 
         t = Terminal()
-        (
-            host, port, database, username, password, collection, auth_db
-        ) = _mongo_settings()
+        components = get_default_components()
 
         infos = []
         if os.getenv('PYPE_DEV'):
@@ -26,7 +24,7 @@ class PypeLauncher(object):
             infos.append(("Pype variant", "production"))
         infos.append(("Running pype from", os.environ.get('PYPE_SETUP_PATH')))
         infos.append(("Using config at", os.environ.get('PYPE_CONFIG')))
-        infos.append(("Using mongodb", os.environ.get("AVALON_MONGO")))
+        infos.append(("Using mongodb", components["host"]))
 
         if os.environ.get("FTRACK_SERVER"):
             infos.append(("Using FTrack at",
@@ -40,17 +38,26 @@ class PypeLauncher(object):
             infos.append(("Using Muster at",
                           os.environ.get("MUSTER_REST_URL")))
 
-        if host:
-            infos.append(("Logging to mongodb", "{}/{}".format(
-                host, database)))
-            if port:
-                infos.append(("  - port", port))
-            if username:
-                infos.append(("  - user", username))
-            if collection:
-                infos.append(("  - collection", collection))
-            if auth_db:
-                infos.append(("  - auth source", auth_db))
+        if components["host"]:
+            if os.environ.get("PYPE_LOG_MONGO_COL"):
+                infos.append((
+                    "Logging to mongodb",
+                    "{}/{}".format(
+                        components["host"], os.environ["PYPE_LOG_MONGO_DB"]
+                    )
+                ))
+            else:
+                infos.append(("Logging to mongodb", components["host"]))
+            if components["port"]:
+                infos.append(("  - port", components["port"]))
+            if components["username"]:
+                infos.append(("  - user", components["username"]))
+            if os.environ.get("PYPE_LOG_MONGO_COL"):
+                infos.append((
+                    "  - collection", os.environ["PYPE_LOG_MONGO_COL"]
+                ))
+            if components["auth_db"]:
+                infos.append(("  - auth source", components["auth_db"]))
 
         maximum = max([len(i[0]) for i in infos])
         for info in infos:
@@ -335,6 +342,7 @@ class PypeLauncher(object):
     def _initialize(self):
         from pypeapp.deployment import Deployment
         from pypeapp.lib.Terminal import Terminal
+        from pypeapp.lib.mongo import get_default_components, compose_url
         try:
             import configparser
         except Exception:
@@ -367,6 +375,12 @@ class PypeLauncher(object):
         self._add_modules()
         self._load_default_environments(tools=tools)
         self.print_info()
+
+        components = get_default_components()
+        port = components.pop("port")
+        host = compose_url(**components)
+        os.environ["AVALON_MONGO_HOST"] = host
+        os.environ["AVALON_MONGO_PORT"] = str(port)
 
     def texture_copy(self, project, asset, path):
         """Copy textures specified in path asset publish directory.
