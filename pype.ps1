@@ -558,7 +558,10 @@ function Pyc-Cleaner {
     [alias ('P')][string]$Path = $pwd
   )
   Log-Msg -Text ">>> ", "Cleaning pyc [ ", $Path, " ] ... " -Color Green, Gray, White, Gray -NoNewLine
-  Get-ChildItem $path -Filter ".pyc" -Force -Recurse | Remove-Item -Force
+  Get-ChildItem $path -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+  Log-Msg -Text "DONE" -Color Green
+  Log-Msg -Text ">>> ", "Cleaning __pycache__ [ ", $Path, " ] ... " -Color Green, Gray, White, Gray -NoNewLine
+  Get-ChildItem $path -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
   Log-Msg -Text "DONE" -Color Green
   <#
   .SYNOPSIS
