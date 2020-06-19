@@ -44,8 +44,8 @@ except NameError:
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
-DATABASE = "pype"
-COLLECTION = "logs"
+DATABASE = os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
+COLLECTION = os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
 
 system_name, pc_name = platform.uname()[:2]
 host_name = socket.gethostname()
