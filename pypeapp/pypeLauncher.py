@@ -39,12 +39,15 @@ class PypeLauncher(object):
                           os.environ.get("MUSTER_REST_URL")))
 
         if components["host"]:
-            infos.append((
-                "Logging to mongodb",
-                "{}/{}".format(
-                    components["host"], os.environ["PYPE_LOG_MONGO_DB"]
-                )
-            ))
+            if os.environ.get("PYPE_LOG_MONGO_COL"):
+                infos.append((
+                    "Logging to mongodb",
+                    "{}/{}".format(
+                        components["host"], os.environ["PYPE_LOG_MONGO_DB"]
+                    )
+                ))
+            else:
+                infos.append(("Logging to mongodb", components["host"]))
             if components["port"]:
                 infos.append(("  - port", components["port"]))
             if components["username"]:
