@@ -66,5 +66,4 @@ Werkzeug==0.16.0
 wrapt==1.12.1
 xlib==0.21
 zope.interface==5.1.0
-pywin32==227
 dnspython==1.16.0
