@@ -17,7 +17,6 @@ import os
 import sys
 import datetime
 import time
-import datetime as dt
 import platform
 import getpass
 import socket
@@ -204,7 +203,7 @@ class PypeMongoFormatter(logging.Formatter):
         """Formats LogRecord into python dictionary."""
         # Standard document
         document = {
-            'timestamp': dt.datetime.now(),
+            'timestamp': datetime.datetime.now(),
             'level': record.levelname,
             'thread': record.thread,
             'threadName': record.threadName,
