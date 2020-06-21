@@ -88,7 +88,6 @@ def _bootstrap_mongo_log():
 
     uri = compose_url(**components)
 
-    print(">>> connecting to log [ {} ]".format(uri))
 
     port = components.pop("port")
     components.pop("database")
