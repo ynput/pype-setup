@@ -20,6 +20,7 @@ import time
 import platform
 import getpass
 import socket
+import traceback
 
 from logging.handlers import TimedRotatingFileHandler
 
@@ -346,20 +347,33 @@ class PypeLogger:
         else:
             logger.setLevel(logging.INFO)
 
-        if len(logger.handlers) > 0:
-            for handler in logger.handlers:
-                if (
-                    not isinstance(handler, MongoHandler) and
-                    not isinstance(handler, PypeStreamHandler)
-                ):
-                    if os.environ.get('PYPE_LOG_MONGO_HOST'):  # noqa
-                        logger.addHandler(self._get_mongo_handler())
-                        pass
-                    logger.addHandler(self._get_console_handler())
-        else:
-            if os.environ.get('PYPE_LOG_MONGO_HOST'):
-                logger.addHandler(self._get_mongo_handler())
-                pass
+        global _mongo_logging
+        add_mongo_handler = _mongo_logging
+        add_console_handler = True
+
+        for handler in logger.handlers:
+            if isinstance(handler, MongoHandler):
+                add_mongo_handler = False
+            elif isinstance(handler, PypeStreamHandler):
+                add_console_handler = False
+
+        if add_console_handler:
             logger.addHandler(self._get_console_handler())
+
+        if add_mongo_handler:
+            try:
+                logger.addHandler(self._get_mongo_handler())
+
+            except MongoEnvNotSet:
+                # Skip if mongo environments are not set yet
+                _mongo_logging = False
+
+            except Exception:
+                lines = traceback.format_exception(*sys.exc_info())
+                for line in lines:
+                    if line.endswith("\n"):
+                        line = line[:-1]
+                    Terminal.echo(line)
+                _mongo_logging = False
 
         return logger
