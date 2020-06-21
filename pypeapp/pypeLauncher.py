@@ -191,6 +191,7 @@ class PypeLauncher(object):
         """
         import subprocess
         from pypeapp.lib.Terminal import Terminal
+        from pypeapp.lib.mongo import get_default_components
 
         self._initialize()
         t = Terminal()
@@ -205,28 +206,36 @@ class PypeLauncher(object):
         if not os.path.exists(location):
             os.makedirs(location)
 
-        # Start server.
-        if (platform.system().lower() == "linux"
-                or platform.system().lower() == "darwin"):
+        components = get_default_components()
+        _mongo_port = components["port"]
+        if _mongo_port is None:
+            _mongo_port = "N/A"
+        mongo_port = "{}".format(_mongo_port)
 
-            if platform.system().lower() == "darwin":
-                t.echo(("*** You may need to allow mongod "
-                        "to run in "
-                        "[ System Settings / Security & Privacy ]"))
-                t.echo("Local mongodb is running...")
-                t.echo("Using port {} and db at {}".format(
-                    os.environ["AVALON_MONGO_PORT"], location))
-                p = subprocess.Popen(
-                    ["mongod", "--dbpath", location, "--port",
-                     os.environ["AVALON_MONGO_PORT"]], close_fds=True
-                )
+        # Start server.
+        if (
+            platform.system().lower() == "linux"
+            or platform.system().lower() == "darwin"
+        ):
+            t.echo(("*** You may need to allow mongod "
+                    "to run in "
+                    "[ System Settings / Security & Privacy ]"))
+            t.echo("Local mongodb is running...")
+            t.echo(
+                "Using port {} and db at {}".format(mongo_port, location)
+            )
+            p = subprocess.Popen(
+                ["mongod", "--dbpath", location, "--port", mongo_port],
+                close_fds=True
+            )
         elif platform.system().lower() == "windows":
             t.echo("Local mongodb is running...")
-            t.echo("Using port {} and db at {}".format(
-                os.environ["AVALON_MONGO_PORT"], location))
+            t.echo(
+                "Using port {} and db at {}".format(mongo_port, location)
+            )
             p = subprocess.Popen(
                 ["start", "Avalon MongoDB", "call", "mongod", "--dbpath",
-                 location, "--port", os.environ["AVALON_MONGO_PORT"]],
+                 location, "--port", mongo_port],
                 shell=True
             )
         else:
@@ -331,7 +340,6 @@ class PypeLauncher(object):
     def _initialize(self):
         from pypeapp.deployment import Deployment
         from pypeapp.lib.Terminal import Terminal
-        from pypeapp.lib.mongo import get_default_components, compose_url
         try:
             import configparser
         except Exception:
@@ -358,9 +366,8 @@ class PypeLauncher(object):
 
         os.environ['PYPE_CONFIG'] = config_path
         os.environ['TOOL_ENV'] = os.path.normpath(
-            os.path.join(
-                config_path,
-                'environments'))
+            os.path.join(config_path, 'environments')
+        )
         self._add_modules()
         self._load_default_environments(tools=tools)
         self.print_info()
