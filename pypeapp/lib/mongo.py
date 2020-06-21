@@ -17,6 +17,9 @@ def decompose_url(url):
     }
 
     result = urlparse(url)
+    if result.scheme is None:
+        _url = "mongodb://{}".format(url)
+        result = urlparse(_url)
 
     components["scheme"] = result.scheme
     components["host"] = result.hostname
