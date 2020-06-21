@@ -13,7 +13,7 @@ def decompose_url(url):
         "port": None,
         "username": None,
         "password": None,
-        "auth_db": ""
+        "auth_db": None
     }
 
     result = urlparse(url)
@@ -43,7 +43,7 @@ def compose_url(scheme=None,
                 database=None,
                 collection=None,
                 port=None,
-                auth_db=""):
+                auth_db=None):
 
     url = "{scheme}://"
 
@@ -61,7 +61,8 @@ def compose_url(scheme=None,
     if port:
         url += ":{port}"
 
-    url += auth_db
+    if auth_db:
+        url += "?authSource={auth_db}"
 
     return url.format(**{
         "scheme": scheme,
@@ -71,7 +72,7 @@ def compose_url(scheme=None,
         "database": database,
         "collection": collection,
         "port": port,
-        "auth_db": ""
+        "auth_db": auth_db
     })
 
 
