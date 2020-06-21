@@ -13,6 +13,7 @@ class PypeLauncher(object):
         """Print additional information to console."""
         from pypeapp.lib.Terminal import Terminal
         from pypeapp.lib.mongo import get_default_components
+        from pypeapp.lib.log import LOG_DATABASE_NAME, LOG_COLLECTION_NAME
 
         t = Terminal()
         components = get_default_components()
@@ -39,23 +40,11 @@ class PypeLauncher(object):
                           os.environ.get("MUSTER_REST_URL")))
 
         if components["host"]:
-            if os.environ.get("PYPE_LOG_MONGO_COL"):
-                infos.append((
-                    "Logging to mongodb",
-                    "{}/{}".format(
-                        components["host"], os.environ["PYPE_LOG_MONGO_DB"]
-                    )
-                ))
-            else:
-                infos.append(("Logging to mongodb", components["host"]))
-            if components["port"]:
-                infos.append(("  - port", components["port"]))
-            if components["username"]:
-                infos.append(("  - user", components["username"]))
-            if os.environ.get("PYPE_LOG_MONGO_COL"):
-                infos.append((
-                    "  - collection", os.environ["PYPE_LOG_MONGO_COL"]
-                ))
+            infos.append(("Logging to MongoDB", components["host"]))
+            infos.append(("  - port", components["port"] or "<N/A>"))
+            infos.append(("  - database", LOG_DATABASE_NAME))
+            infos.append(("  - collection", LOG_COLLECTION_NAME))
+            infos.append(("  - user", components["username"] or "<N/A>"))
             if components["auth_db"]:
                 infos.append(("  - auth source", components["auth_db"]))
 
