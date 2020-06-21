@@ -6,6 +6,10 @@ except ImportError:
     from urlparse import urlparse, parse_qs
 
 
+class MongoEnvNotSet(Exception):
+    pass
+
+
 def decompose_url(url):
     components = {
         "scheme": None,
@@ -80,4 +84,8 @@ def compose_url(scheme=None,
 
 def get_default_components():
     mongo_url = os.environ.get("AVALON_MONGO")
+    if mongo_url is None:
+        raise MongoEnvNotSet(
+            "URL for Mongo logging connection is not set."
+        )
     return decompose_url(mongo_url)
