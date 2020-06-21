@@ -24,7 +24,12 @@ import socket
 from logging.handlers import TimedRotatingFileHandler
 
 from pypeapp.lib.Terminal import Terminal
-from .mongo import decompose_url, compose_url
+from .mongo import (
+    MongoEnvNotSet,
+    decompose_url,
+    compose_url,
+    get_default_components
+)
 
 try:
     from log4mongo.handlers import MongoHandler
@@ -68,17 +73,23 @@ else:
             process_name = os.path.basename(sys.executable)
 
 
-def _bootstrap_mongo_log():
-    """
-    This will check if database and collection for logging exist on server.
-    """
-    import pymongo
-
+def _log_mongo_components():
     mongo_url = os.environ.get("PYPE_LOG_MONGO_URL")
     if mongo_url is not None:
         components = decompose_url(mongo_url)
     else:
         components = get_default_components()
+    return components
+
+
+def _bootstrap_mongo_log(components=None):
+    """
+    This will check if database and collection for logging exist on server.
+    """
+    import pymongo
+
+    if components is None:
+        components = _log_mongo_components()
 
     if not components["host"] or not components["port"]:
         # fail silently
