@@ -54,15 +54,14 @@ def compose_url(scheme=None,
         url += "{username}:{password}@"
 
     url += "{host}"
+    if port:
+        url += ":{port}"
 
     if database:
         url += "/{database}"
 
     if database and collection:
         url += "/{collection}"
-
-    if port:
-        url += ":{port}"
 
     if auth_db:
         url += "?authSource={auth_db}"
