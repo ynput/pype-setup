@@ -79,4 +79,5 @@ def compose_url(scheme=None,
 
 
 def get_default_components():
-    return decompose_url(os.environ["MONGO_URL"])
+    mongo_url = os.environ.get("AVALON_MONGO")
+    return decompose_url(mongo_url)
