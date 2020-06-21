@@ -95,24 +95,22 @@ def _bootstrap_mongo_log(components=None):
         # fail silently
         return
 
-    components["database"] = DATABASE
+    components["database"] = LOG_DATABASE_NAME
+    kwargs = {
+        "host": compose_url(**components)
+    }
 
-    uri = compose_url(**components)
+    port = components.get("port")
+    if port is not None:
+        kwargs["port"] = int(port)
 
-
-    port = components.pop("port")
-    components.pop("database")
-    host = compose_url(**components)
-    client = pymongo.MongoClient(
-        host=host, port=int(port)
-    )
-
-    logdb = client[DATABASE]
+    client = pymongo.MongoClient(**kwargs)
+    logdb = client[LOG_DATABASE_NAME]
 
     collist = logdb.list_collection_names()
-    if COLLECTION not in collist:
+    if LOG_COLLECTION_NAME not in collist:
         logdb.create_collection(
-            COLLECTION, capped=True, max=5000, size=1073741824
+            LOG_COLLECTION_NAME, capped=True, max=5000, size=1073741824
         )
     return logdb
 
@@ -312,19 +310,24 @@ class PypeLogger:
         return file_handler
 
     def _get_mongo_handler(self):
-        _bootstrap_mongo_log()
+        components = _log_mongo_components()
+        _bootstrap_mongo_log(components)
 
-        components = decompose_url(os.environ["MONGO_URL"])
+        kwargs = {
+            "host": components["host"],
+            "database_name": LOG_DATABASE_NAME,
+            "collection": LOG_COLLECTION_NAME,
+            "username": components["username"],
+            "password": components["password"],
+            "capped": True,
+            "formatter": PypeMongoFormatter()
+        }
+        if components["port"] is not None:
+            kwargs["port"] = int(components["port"])
+        if components["auth_db"]:
+            kwargs["authentication_db"] = components["auth_db"]
 
-        return MongoHandler(
-            host=components["host"],
-            port=int(components["port"]),
-            database_name=DATABASE,
-            username=components["username"],
-            password=components["password"],
-            capped=True,
-            formatter=PypeMongoFormatter()
-        )
+        return MongoHandler(**kwargs)
 
     def _get_console_handler(self):
 
