@@ -365,12 +365,6 @@ class PypeLauncher(object):
         self._load_default_environments(tools=tools)
         self.print_info()
 
-        components = get_default_components()
-        port = components.pop("port")
-        host = compose_url(**components)
-        os.environ["AVALON_MONGO_HOST"] = host
-        os.environ["AVALON_MONGO_PORT"] = str(port)
-
     def texture_copy(self, project, asset, path):
         """Copy textures specified in path asset publish directory.
 
