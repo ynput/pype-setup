@@ -74,7 +74,11 @@ def _bootstrap_mongo_log():
     """
     import pymongo
 
-    components = decompose_url(os.environ["MONGO_URL"])
+    mongo_url = os.environ.get("PYPE_LOG_MONGO_URL")
+    if mongo_url is not None:
+        components = decompose_url(mongo_url)
+    else:
+        components = get_default_components()
 
     if not components["host"] or not components["port"]:
         # fail silently
