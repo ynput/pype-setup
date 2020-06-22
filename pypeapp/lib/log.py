@@ -92,7 +92,7 @@ def _bootstrap_mongo_log(components=None):
     if components is None:
         components = _log_mongo_components()
 
-    if not components["host"] or not components["port"]:
+    if not components["host"]:
         # fail silently
         return
 
