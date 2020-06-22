@@ -315,7 +315,7 @@ class PypeLogger:
         _bootstrap_mongo_log(components)
 
         kwargs = {
-            "host": components["host"],
+            "host": compose_url(**components),
             "database_name": LOG_DATABASE_NAME,
             "collection": LOG_COLLECTION_NAME,
             "username": components["username"],
