@@ -17,15 +17,20 @@ import os
 import sys
 import datetime
 import time
-import datetime as dt
 import platform
 import getpass
 import socket
+import traceback
 
 from logging.handlers import TimedRotatingFileHandler
 
 from pypeapp.lib.Terminal import Terminal
-from .mongo import decompose_url, compose_url
+from .mongo import (
+    MongoEnvNotSet,
+    decompose_url,
+    compose_url,
+    get_default_components
+)
 
 try:
     from log4mongo.handlers import MongoHandler
@@ -44,8 +49,8 @@ except NameError:
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
-DATABASE = os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
-COLLECTION = os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
+LOG_DATABASE_NAME = os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
+LOG_COLLECTION_NAME = os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
 
 system_name, pc_name = platform.uname()[:2]
 host_name = socket.gethostname()
@@ -69,37 +74,44 @@ else:
             process_name = os.path.basename(sys.executable)
 
 
-def _bootstrap_mongo_log():
+def _log_mongo_components():
+    mongo_url = os.environ.get("PYPE_LOG_MONGO_URL")
+    if mongo_url is not None:
+        components = decompose_url(mongo_url)
+    else:
+        components = get_default_components()
+    return components
+
+
+def _bootstrap_mongo_log(components=None):
     """
     This will check if database and collection for logging exist on server.
     """
     import pymongo
 
-    components = decompose_url(os.environ["MONGO_URL"])
+    if components is None:
+        components = _log_mongo_components()
 
-    if not components["host"] or not components["port"]:
+    if not components["host"]:
         # fail silently
         return
 
-    components["database"] = DATABASE
+    components["database"] = LOG_DATABASE_NAME
+    kwargs = {
+        "host": compose_url(**components)
+    }
 
-    uri = compose_url(**components)
+    port = components.get("port")
+    if port is not None:
+        kwargs["port"] = int(port)
 
-    print(">>> connecting to log [ {} ]".format(uri))
-
-    port = components.pop("port")
-    components.pop("database")
-    host = compose_url(**components)
-    client = pymongo.MongoClient(
-        host=host, port=int(port)
-    )
-
-    logdb = client[DATABASE]
+    client = pymongo.MongoClient(**kwargs)
+    logdb = client[LOG_DATABASE_NAME]
 
     collist = logdb.list_collection_names()
-    if COLLECTION not in collist:
+    if LOG_COLLECTION_NAME not in collist:
         logdb.create_collection(
-            COLLECTION, capped=True, max=5000, size=1073741824
+            LOG_COLLECTION_NAME, capped=True, max=5000, size=1073741824
         )
     return logdb
 
@@ -204,7 +216,7 @@ class PypeMongoFormatter(logging.Formatter):
         """Formats LogRecord into python dictionary."""
         # Standard document
         document = {
-            'timestamp': dt.datetime.now(),
+            'timestamp': datetime.datetime.now(),
             'level': record.levelname,
             'thread': record.thread,
             'threadName': record.threadName,
@@ -299,19 +311,24 @@ class PypeLogger:
         return file_handler
 
     def _get_mongo_handler(self):
-        _bootstrap_mongo_log()
+        components = _log_mongo_components()
+        _bootstrap_mongo_log(components)
 
-        components = decompose_url(os.environ["MONGO_URL"])
+        kwargs = {
+            "host": compose_url(**components),
+            "database_name": LOG_DATABASE_NAME,
+            "collection": LOG_COLLECTION_NAME,
+            "username": components["username"],
+            "password": components["password"],
+            "capped": True,
+            "formatter": PypeMongoFormatter()
+        }
+        if components["port"] is not None:
+            kwargs["port"] = int(components["port"])
+        if components["auth_db"]:
+            kwargs["authentication_db"] = components["auth_db"]
 
-        return MongoHandler(
-            host=components["host"],
-            port=int(components["port"]),
-            database_name=DATABASE,
-            username=components["username"],
-            password=components["password"],
-            capped=True,
-            formatter=PypeMongoFormatter()
-        )
+        return MongoHandler(**kwargs)
 
     def _get_console_handler(self):
 
@@ -330,20 +347,33 @@ class PypeLogger:
         else:
             logger.setLevel(logging.INFO)
 
-        if len(logger.handlers) > 0:
-            for handler in logger.handlers:
-                if (
-                    not isinstance(handler, MongoHandler) and
-                    not isinstance(handler, PypeStreamHandler)
-                ):
-                    if os.environ.get('PYPE_LOG_MONGO_HOST'):  # noqa
-                        logger.addHandler(self._get_mongo_handler())
-                        pass
-                    logger.addHandler(self._get_console_handler())
-        else:
-            if os.environ.get('PYPE_LOG_MONGO_HOST'):
-                logger.addHandler(self._get_mongo_handler())
-                pass
+        global _mongo_logging
+        add_mongo_handler = _mongo_logging
+        add_console_handler = True
+
+        for handler in logger.handlers:
+            if isinstance(handler, MongoHandler):
+                add_mongo_handler = False
+            elif isinstance(handler, PypeStreamHandler):
+                add_console_handler = False
+
+        if add_console_handler:
             logger.addHandler(self._get_console_handler())
+
+        if add_mongo_handler:
+            try:
+                logger.addHandler(self._get_mongo_handler())
+
+            except MongoEnvNotSet:
+                # Skip if mongo environments are not set yet
+                _mongo_logging = False
+
+            except Exception:
+                lines = traceback.format_exception(*sys.exc_info())
+                for line in lines:
+                    if line.endswith("\n"):
+                        line = line[:-1]
+                    Terminal.echo(line)
+                _mongo_logging = False
 
         return logger

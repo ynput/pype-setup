@@ -13,6 +13,7 @@ class PypeLauncher(object):
         """Print additional information to console."""
         from pypeapp.lib.Terminal import Terminal
         from pypeapp.lib.mongo import get_default_components
+        from pypeapp.lib.log import LOG_DATABASE_NAME, LOG_COLLECTION_NAME
 
         t = Terminal()
         components = get_default_components()
@@ -39,23 +40,11 @@ class PypeLauncher(object):
                           os.environ.get("MUSTER_REST_URL")))
 
         if components["host"]:
-            if os.environ.get("PYPE_LOG_MONGO_COL"):
-                infos.append((
-                    "Logging to mongodb",
-                    "{}/{}".format(
-                        components["host"], os.environ["PYPE_LOG_MONGO_DB"]
-                    )
-                ))
-            else:
-                infos.append(("Logging to mongodb", components["host"]))
-            if components["port"]:
-                infos.append(("  - port", components["port"]))
-            if components["username"]:
-                infos.append(("  - user", components["username"]))
-            if os.environ.get("PYPE_LOG_MONGO_COL"):
-                infos.append((
-                    "  - collection", os.environ["PYPE_LOG_MONGO_COL"]
-                ))
+            infos.append(("Logging to MongoDB", components["host"]))
+            infos.append(("  - port", components["port"] or "<N/A>"))
+            infos.append(("  - database", LOG_DATABASE_NAME))
+            infos.append(("  - collection", LOG_COLLECTION_NAME))
+            infos.append(("  - user", components["username"] or "<N/A>"))
             if components["auth_db"]:
                 infos.append(("  - auth source", components["auth_db"]))
 
@@ -202,6 +191,7 @@ class PypeLauncher(object):
         """
         import subprocess
         from pypeapp.lib.Terminal import Terminal
+        from pypeapp.lib.mongo import get_default_components
 
         self._initialize()
         t = Terminal()
@@ -216,28 +206,36 @@ class PypeLauncher(object):
         if not os.path.exists(location):
             os.makedirs(location)
 
-        # Start server.
-        if (platform.system().lower() == "linux"
-                or platform.system().lower() == "darwin"):
+        components = get_default_components()
+        _mongo_port = components["port"]
+        if _mongo_port is None:
+            _mongo_port = "N/A"
+        mongo_port = "{}".format(_mongo_port)
 
-            if platform.system().lower() == "darwin":
-                t.echo(("*** You may need to allow mongod "
-                        "to run in "
-                        "[ System Settings / Security & Privacy ]"))
-                t.echo("Local mongodb is running...")
-                t.echo("Using port {} and db at {}".format(
-                    os.environ["AVALON_MONGO_PORT"], location))
-                p = subprocess.Popen(
-                    ["mongod", "--dbpath", location, "--port",
-                     os.environ["AVALON_MONGO_PORT"]], close_fds=True
-                )
+        # Start server.
+        if (
+            platform.system().lower() == "linux"
+            or platform.system().lower() == "darwin"
+        ):
+            t.echo(("*** You may need to allow mongod "
+                    "to run in "
+                    "[ System Settings / Security & Privacy ]"))
+            t.echo("Local mongodb is running...")
+            t.echo(
+                "Using port {} and db at {}".format(mongo_port, location)
+            )
+            p = subprocess.Popen(
+                ["mongod", "--dbpath", location, "--port", mongo_port],
+                close_fds=True
+            )
         elif platform.system().lower() == "windows":
             t.echo("Local mongodb is running...")
-            t.echo("Using port {} and db at {}".format(
-                os.environ["AVALON_MONGO_PORT"], location))
+            t.echo(
+                "Using port {} and db at {}".format(mongo_port, location)
+            )
             p = subprocess.Popen(
                 ["start", "Avalon MongoDB", "call", "mongod", "--dbpath",
-                 location, "--port", os.environ["AVALON_MONGO_PORT"]],
+                 location, "--port", mongo_port],
                 shell=True
             )
         else:
@@ -342,7 +340,6 @@ class PypeLauncher(object):
     def _initialize(self):
         from pypeapp.deployment import Deployment
         from pypeapp.lib.Terminal import Terminal
-        from pypeapp.lib.mongo import get_default_components, compose_url
         try:
             import configparser
         except Exception:
@@ -369,18 +366,11 @@ class PypeLauncher(object):
 
         os.environ['PYPE_CONFIG'] = config_path
         os.environ['TOOL_ENV'] = os.path.normpath(
-            os.path.join(
-                config_path,
-                'environments'))
+            os.path.join(config_path, 'environments')
+        )
         self._add_modules()
         self._load_default_environments(tools=tools)
         self.print_info()
-
-        components = get_default_components()
-        port = components.pop("port")
-        host = compose_url(**components)
-        os.environ["AVALON_MONGO_HOST"] = host
-        os.environ["AVALON_MONGO_PORT"] = str(port)
 
     def texture_copy(self, project, asset, path):
         """Copy textures specified in path asset publish directory.

@@ -6,6 +6,10 @@ except ImportError:
     from urlparse import urlparse, parse_qs
 
 
+class MongoEnvNotSet(Exception):
+    pass
+
+
 def decompose_url(url):
     components = {
         "scheme": None,
@@ -13,10 +17,13 @@ def decompose_url(url):
         "port": None,
         "username": None,
         "password": None,
-        "auth_db": ""
+        "auth_db": None
     }
 
     result = urlparse(url)
+    if result.scheme is None:
+        _url = "mongodb://{}".format(url)
+        result = urlparse(_url)
 
     components["scheme"] = result.scheme
     components["host"] = result.hostname
@@ -43,7 +50,7 @@ def compose_url(scheme=None,
                 database=None,
                 collection=None,
                 port=None,
-                auth_db=""):
+                auth_db=None):
 
     url = "{scheme}://"
 
@@ -51,6 +58,8 @@ def compose_url(scheme=None,
         url += "{username}:{password}@"
 
     url += "{host}"
+    if port:
+        url += ":{port}"
 
     if database:
         url += "/{database}"
@@ -58,10 +67,8 @@ def compose_url(scheme=None,
     if database and collection:
         url += "/{collection}"
 
-    if port:
-        url += ":{port}"
-
-    url += auth_db
+    if auth_db:
+        url += "?authSource={auth_db}"
 
     return url.format(**{
         "scheme": scheme,
@@ -71,9 +78,14 @@ def compose_url(scheme=None,
         "database": database,
         "collection": collection,
         "port": port,
-        "auth_db": ""
+        "auth_db": auth_db
     })
 
 
 def get_default_components():
-    return decompose_url(os.environ["MONGO_URL"])
+    mongo_url = os.environ.get("AVALON_MONGO")
+    if mongo_url is None:
+        raise MongoEnvNotSet(
+            "URL for Mongo logging connection is not set."
+        )
+    return decompose_url(mongo_url)
