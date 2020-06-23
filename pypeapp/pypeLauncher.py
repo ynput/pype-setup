@@ -260,8 +260,8 @@ class PypeLauncher(object):
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
-            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
-            "event_server.py"
+            pype_setup, "repos", "pype", "pype", "modules", "ftrack",
+            "ftrack_server", "event_server.py"
         ]
         fname = os.path.sep.join(items)
 
@@ -284,8 +284,8 @@ class PypeLauncher(object):
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
-            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
-            "event_server_cli.py"
+            pype_setup, "repos", "pype", "pype", "modules", "ftrack",
+            "ftrack_server", "event_server_cli.py"
         ]
         fname = os.path.sep.join(items)
 
