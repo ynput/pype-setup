@@ -1,6 +1,5 @@
 @echo off
 cls
-@pushd %~dp0
+net use
 echo "arguments: %*"
-..\pype.bat launch --app mayabatch_2019 %*
-@popd
+%PYPE_SETUP_PATH%\pype.bat launch --app mayabatch_%PYPE_MAYA_VERSION% %*
