@@ -12,12 +12,11 @@ class PypeLauncher(object):
     def print_info(self):
         """Print additional information to console."""
         from pypeapp.lib.Terminal import Terminal
-        from pypeapp.lib.log import _mongo_settings
+        from pypeapp.lib.mongo import get_default_components
+        from pypeapp.lib.log import LOG_DATABASE_NAME, LOG_COLLECTION_NAME
 
         t = Terminal()
-        (
-            host, port, database, username, password, collection, auth_db
-        ) = _mongo_settings()
+        components = get_default_components()
 
         infos = []
         if os.getenv('PYPE_DEV'):
@@ -26,7 +25,7 @@ class PypeLauncher(object):
             infos.append(("Pype variant", "production"))
         infos.append(("Running pype from", os.environ.get('PYPE_SETUP_PATH')))
         infos.append(("Using config at", os.environ.get('PYPE_CONFIG')))
-        infos.append(("Using mongodb", os.environ.get("AVALON_MONGO")))
+        infos.append(("Using mongodb", components["host"]))
 
         if os.environ.get("FTRACK_SERVER"):
             infos.append(("Using FTrack at",
@@ -40,17 +39,14 @@ class PypeLauncher(object):
             infos.append(("Using Muster at",
                           os.environ.get("MUSTER_REST_URL")))
 
-        if host:
-            infos.append(("Logging to mongodb", "{}/{}".format(
-                host, database)))
-            if port:
-                infos.append(("  - port", port))
-            if username:
-                infos.append(("  - user", username))
-            if collection:
-                infos.append(("  - collection", collection))
-            if auth_db:
-                infos.append(("  - auth source", auth_db))
+        if components["host"]:
+            infos.append(("Logging to MongoDB", components["host"]))
+            infos.append(("  - port", components["port"] or "<N/A>"))
+            infos.append(("  - database", LOG_DATABASE_NAME))
+            infos.append(("  - collection", LOG_COLLECTION_NAME))
+            infos.append(("  - user", components["username"] or "<N/A>"))
+            if components["auth_db"]:
+                infos.append(("  - auth source", components["auth_db"]))
 
         maximum = max([len(i[0]) for i in infos])
         for info in infos:
@@ -115,10 +111,11 @@ class PypeLauncher(object):
             if key.startswith('PYPE_'):
                 pype_paths_env[key] = value
 
-        env = acre.append(tools_env, pype_paths_env)
+        env = tools_env
+        env.update(pype_paths_env)
         env = acre.compute(env, cleanup=True)
-        os.environ = acre.append(dict(os.environ), env)
-        os.environ = acre.compute(os.environ, cleanup=False)
+        env = acre.merge(env, os.environ)
+        os.environ = env
 
     def launch_tray(self, debug=False):
         """Run tray.py.
@@ -136,7 +133,9 @@ class PypeLauncher(object):
 
         if debug:
             pype_setup = os.getenv('PYPE_SETUP_PATH')
-            items = [pype_setup, "pypeapp", "tray.py"]
+            items = [
+                pype_setup, "repos", "pype", "pype", "tools", "tray"
+            ]
             fname = os.path.sep.join(items)
 
             execute([
@@ -149,7 +148,9 @@ class PypeLauncher(object):
         DETACHED_PROCESS = 0x00000008  # noqa: N806
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
-        items = [pype_setup, "pypeapp", "tray.py"]
+        items = [
+            pype_setup, "repos", "pype", "pype", "tools", "tray"
+        ]
         fname = os.path.sep.join(items)
 
         args = ["python", "-d", fname]
@@ -190,6 +191,7 @@ class PypeLauncher(object):
         """
         import subprocess
         from pypeapp.lib.Terminal import Terminal
+        from pypeapp.lib.mongo import get_default_components
 
         self._initialize()
         t = Terminal()
@@ -204,28 +206,36 @@ class PypeLauncher(object):
         if not os.path.exists(location):
             os.makedirs(location)
 
-        # Start server.
-        if (platform.system().lower() == "linux"
-                or platform.system().lower() == "darwin"):
+        components = get_default_components()
+        _mongo_port = components["port"]
+        if _mongo_port is None:
+            _mongo_port = "N/A"
+        mongo_port = "{}".format(_mongo_port)
 
-            if platform.system().lower() == "darwin":
-                t.echo(("*** You may need to allow mongod "
-                        "to run in "
-                        "[ System Settings / Security & Privacy ]"))
-                t.echo("Local mongodb is running...")
-                t.echo("Using port {} and db at {}".format(
-                    os.environ["AVALON_MONGO_PORT"], location))
-                p = subprocess.Popen(
-                    ["mongod", "--dbpath", location, "--port",
-                     os.environ["AVALON_MONGO_PORT"]], close_fds=True
-                )
+        # Start server.
+        if (
+            platform.system().lower() == "linux"
+            or platform.system().lower() == "darwin"
+        ):
+            t.echo(("*** You may need to allow mongod "
+                    "to run in "
+                    "[ System Settings / Security & Privacy ]"))
+            t.echo("Local mongodb is running...")
+            t.echo(
+                "Using port {} and db at {}".format(mongo_port, location)
+            )
+            p = subprocess.Popen(
+                ["mongod", "--dbpath", location, "--port", mongo_port],
+                close_fds=True
+            )
         elif platform.system().lower() == "windows":
             t.echo("Local mongodb is running...")
-            t.echo("Using port {} and db at {}".format(
-                os.environ["AVALON_MONGO_PORT"], location))
+            t.echo(
+                "Using port {} and db at {}".format(mongo_port, location)
+            )
             p = subprocess.Popen(
                 ["start", "Avalon MongoDB", "call", "mongod", "--dbpath",
-                 location, "--port", os.environ["AVALON_MONGO_PORT"]],
+                 location, "--port", mongo_port],
                 shell=True
             )
         else:
@@ -250,8 +260,8 @@ class PypeLauncher(object):
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
-            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
-            "event_server.py"
+            pype_setup, "repos", "pype", "pype", "modules", "ftrack",
+            "ftrack_server", "event_server.py"
         ]
         fname = os.path.sep.join(items)
 
@@ -274,8 +284,8 @@ class PypeLauncher(object):
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
-            pype_setup, "repos", "pype", "pype", "ftrack", "ftrack_server",
-            "event_server_cli.py"
+            pype_setup, "repos", "pype", "pype", "modules", "ftrack",
+            "ftrack_server", "event_server_cli.py"
         ]
         fname = os.path.sep.join(items)
 
@@ -356,9 +366,8 @@ class PypeLauncher(object):
 
         os.environ['PYPE_CONFIG'] = config_path
         os.environ['TOOL_ENV'] = os.path.normpath(
-            os.path.join(
-                config_path,
-                'environments'))
+            os.path.join(config_path, 'environments')
+        )
         self._add_modules()
         self._load_default_environments(tools=tools)
         self.print_info()
@@ -736,11 +745,6 @@ class PypeLauncher(object):
                     return
 
                 fp.close()
-                # check executable permission
-                if not os.access(execfile, os.X_OK):
-                    t.echo("!!! No executable permission on [ {} ]".format(
-                        execfile))
-                    return
             else:
                 t.echo("!!! Launcher doesn\'t exist [ {} ]".format(
                     execfile))

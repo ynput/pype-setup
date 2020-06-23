@@ -17,24 +17,29 @@ import os
 import sys
 import datetime
 import time
-import datetime as dt
 import platform
 import getpass
 import socket
-try:
-    from urllib.parse import urlparse, parse_qs
-except ImportError:
-    from urlparse import urlparse, parse_qs
+import traceback
+
+from logging.handlers import TimedRotatingFileHandler
+
+from pypeapp.lib.Terminal import Terminal
+from .mongo import (
+    MongoEnvNotSet,
+    decompose_url,
+    compose_url,
+    get_default_components
+)
 
 try:
     from log4mongo.handlers import MongoHandler
+    from bson.objectid import ObjectId
+    MONGO_PROCESS_ID = ObjectId()
 except ImportError:
     _mongo_logging = False
 else:
     _mongo_logging = True
-
-from logging.handlers import TimedRotatingFileHandler
-from pypeapp.lib.Terminal import Terminal
 
 try:
     unicode
@@ -44,10 +49,8 @@ except NameError:
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
-
-if _mongo_logging:
-    from bson.objectid import ObjectId
-    MONGO_PROCESS_ID = ObjectId()
+LOG_DATABASE_NAME = os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
+LOG_COLLECTION_NAME = os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
 
 system_name, pc_name = platform.uname()[:2]
 host_name = socket.gethostname()
@@ -71,91 +74,46 @@ else:
             process_name = os.path.basename(sys.executable)
 
 
-def _mongo_settings():
-    host = None
-    port = None
-    username = None
-    password = None
-    collection = None
-    database = None
-    auth_db = ""
-
-    if os.environ.get('PYPE_LOG_MONGO_URL'):
-        result = urlparse(os.environ.get('PYPE_LOG_MONGO_URL'))
-
-        host = result.hostname
-        try:
-            port = result.port
-        except ValueError:
-            raise RuntimeError("invalid port specified")
-        username = result.username
-        password = result.password
-        try:
-            database = result.path.lstrip("/").split("/")[0]
-            collection = result.path.lstrip("/").split("/")[1]
-        except IndexError:
-            if not database:
-                raise RuntimeError("missing database name for logging")
-        try:
-            auth_db = parse_qs(result.query)['authSource'][0]
-        except KeyError:
-            # no auth db provided, mongo will use the one we are connecting to
-            pass
+def _log_mongo_components():
+    mongo_url = os.environ.get("PYPE_LOG_MONGO_URL")
+    if mongo_url is not None:
+        components = decompose_url(mongo_url)
     else:
-        host = os.environ.get('PYPE_LOG_MONGO_HOST')
-        port = int(os.environ.get('PYPE_LOG_MONGO_PORT', "0"))
-        database = os.environ.get('PYPE_LOG_MONGO_DB')
-        username = os.environ.get('PYPE_LOG_MONGO_USER')
-        password = os.environ.get('PYPE_LOG_MONGO_PASSWORD')
-        collection = os.environ.get('PYPE_LOG_MONGO_COL')
-        auth_db = os.environ.get('PYPE_LOG_MONGO_AUTH_DB', 'avalon')
-
-    return host, port, database, username, password, collection, auth_db
+        components = get_default_components()
+    return components
 
 
-def _bootstrap_mongo_log():
+def _bootstrap_mongo_log(components=None):
     """
     This will check if database and collection for logging exist on server.
     """
     import pymongo
 
-    host, port, database, username, password, collection, auth_db = _mongo_settings()
+    if components is None:
+        components = _log_mongo_components()
 
-    if not host or not port or not database or not collection:
+    if not components["host"]:
         # fail silently
         return
 
-    user_pass = ""
-    if username and password:
-        user_pass = "{}:{}@".format(username, password)
+    components["database"] = LOG_DATABASE_NAME
+    kwargs = {
+        "host": compose_url(**components)
+    }
 
-    socket_path = "{}:{}".format(host, port)
+    port = components.get("port")
+    if port is not None:
+        kwargs["port"] = int(port)
 
-    dab = ""
-    if database:
-        dab = "/{}".format(database)
-
-    auth = ""
-    if auth_db:
-        auth = "?authSource={}".format(auth_db)
-
-    uri = "mongodb://{}{}{}{}".format(user_pass, socket_path, dab, auth)
-
-    print(">>> connecting to log [ {} ]".format(uri))
-
-    client = pymongo.MongoClient(uri)
-
-    logdb = client[database]
+    client = pymongo.MongoClient(**kwargs)
+    logdb = client[LOG_DATABASE_NAME]
 
     collist = logdb.list_collection_names()
-    if collection not in collist:
-        logdb.create_collection(collection, capped=True,
-                                max=5000, size=1073741824)
+    if LOG_COLLECTION_NAME not in collist:
+        logdb.create_collection(
+            LOG_COLLECTION_NAME, capped=True, max=5000, size=1073741824
+        )
     return logdb
-
-
-if _mongo_logging:
-    _bootstrap_mongo_log()
 
 
 class PypeStreamHandler(logging.StreamHandler):
@@ -258,7 +216,7 @@ class PypeMongoFormatter(logging.Formatter):
         """Formats LogRecord into python dictionary."""
         # Standard document
         document = {
-            'timestamp': dt.datetime.now(),
+            'timestamp': datetime.datetime.now(),
             'level': record.levelname,
             'thread': record.thread,
             'threadName': record.threadName,
@@ -353,13 +311,24 @@ class PypeLogger:
         return file_handler
 
     def _get_mongo_handler(self):
-        handler = MongoHandler(
-            host=os.environ.get('PYPE_LOG_MONGO_HOST'),
-            port=int(os.environ.get('PYPE_LOG_MONGO_PORT')),
-            database_name=os.environ.get('PYPE_LOG_MONGO_DB'),
-            capped=True,
-            formatter=PypeMongoFormatter())
-        return handler
+        components = _log_mongo_components()
+        _bootstrap_mongo_log(components)
+
+        kwargs = {
+            "host": compose_url(**components),
+            "database_name": LOG_DATABASE_NAME,
+            "collection": LOG_COLLECTION_NAME,
+            "username": components["username"],
+            "password": components["password"],
+            "capped": True,
+            "formatter": PypeMongoFormatter()
+        }
+        if components["port"] is not None:
+            kwargs["port"] = int(components["port"])
+        if components["auth_db"]:
+            kwargs["authentication_db"] = components["auth_db"]
+
+        return MongoHandler(**kwargs)
 
     def _get_console_handler(self):
 
@@ -378,21 +347,33 @@ class PypeLogger:
         else:
             logger.setLevel(logging.INFO)
 
-        if len(logger.handlers) > 0:
-            for handler in logger.handlers:
-                if (
-                    _mongo_logging and
-                    not isinstance(handler, MongoHandler) and
-                    not isinstance(handler, PypeStreamHandler)
-                ):
-                    if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:  # noqa
-                        logger.addHandler(self._get_mongo_handler())
-                        pass
-                    logger.addHandler(self._get_console_handler())
-        else:
-            if os.environ.get('PYPE_LOG_MONGO_HOST') and _mongo_logging:
-                logger.addHandler(self._get_mongo_handler())
-                pass
+        global _mongo_logging
+        add_mongo_handler = _mongo_logging
+        add_console_handler = True
+
+        for handler in logger.handlers:
+            if isinstance(handler, MongoHandler):
+                add_mongo_handler = False
+            elif isinstance(handler, PypeStreamHandler):
+                add_console_handler = False
+
+        if add_console_handler:
             logger.addHandler(self._get_console_handler())
+
+        if add_mongo_handler:
+            try:
+                logger.addHandler(self._get_mongo_handler())
+
+            except MongoEnvNotSet:
+                # Skip if mongo environments are not set yet
+                _mongo_logging = False
+
+            except Exception:
+                lines = traceback.format_exception(*sys.exc_info())
+                for line in lines:
+                    if line.endswith("\n"):
+                        line = line[:-1]
+                    Terminal.echo(line)
+                _mongo_logging = False
 
         return logger

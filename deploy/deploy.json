@@ -9,16 +9,11 @@
     {
       "name": "avalon-launcher",
       "url": "https://github.com/pypeclub/avalon-launcher.git",
-      "branch": "develop"
+      "branch": "master"
     },
     {
       "name": "pyblish-base",
       "url": "https://github.com/pyblish/pyblish-base.git",
-      "branch": "master"
-    },
-    {
-      "name": "pyblish-lite",
-      "url": "https://github.com/pypeclub/pyblish-lite.git",
       "branch": "master"
     },
     {
