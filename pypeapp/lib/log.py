@@ -96,15 +96,15 @@ def _bootstrap_mongo_log(components=None):
         # fail silently
         return
 
-    components["database"] = LOG_DATABASE_NAME
+    timeout = int(os.environ.get("AVALON_TIMEOUT", 1000))
     kwargs = {
-        "host": compose_url(**components)
+        "host": compose_url(**components),
+        "serverSelectionTimeoutMS": timeout
     }
 
     port = components.get("port")
     if port is not None:
         kwargs["port"] = int(port)
-
     client = pymongo.MongoClient(**kwargs)
     logdb = client[LOG_DATABASE_NAME]
 
