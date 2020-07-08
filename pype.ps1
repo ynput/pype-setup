@@ -65,6 +65,7 @@ $arguments=$ARGS
 $python="python"
 $traydebug=$false
 $venv_activated=$false
+$script:offline=$false
 # map double hyphens to single for powershell use
 if($arguments -eq "install") {
   $install=$true
@@ -73,7 +74,7 @@ if($arguments -eq "--force") {
   $force=$true
 }
 if($arguments -eq "--offline") {
-  $offline=$true
+  $script:offline=$true
 }
 if($arguments -eq "--help") {
   $help=$true
@@ -252,10 +253,10 @@ function Activate-Venv {
 
 
 function Deactivate-Venv {
-  if ($venv_activated -eq $true) {
+  if ($script:venv_activated -eq $true) {
     Log-Msg -Text "<-- ", "Deactivating environment" -Color Cyan, Gray
     deactivate
-    $venv_activated=$false
+    $script:venv_activated=$false
   }
 
   <#
@@ -312,9 +313,10 @@ function Check-Environment {
     # TODO: Fix only if option flag present?
     Log-Msg -Text "*** ", "Environment dependencies inconsistent, fixing ... " -Color Yellow, Gray
     Test-Offline
-    if ($offline -ne $true) {
+    if ($script:offline -ne $true) {
       & pip install -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt"
     } else {
+      Log-Msg -Text "--- ", "Installing from [ ", $env:PYPE_SETUP_PATH," ]" -Color Yellow, Gray, White, Gray
       & pip install -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt" --no-index --find-links "$($env:PYPE_SETUP_PATH)\vendor\packages"
     }
     if ($LASTEXITCODE -ne 0) {
@@ -334,7 +336,7 @@ function Check-Environment {
 
 
 function Upgrade-pip {
-  if ($offline -ne $true)
+  if ($script:offline -ne $true)
   {
     Log-Msg -Text ">>> ", "Updating pip ... " -Color Green, Gray -NoNewLine
     Start-Progress {
@@ -351,7 +353,7 @@ function Upgrade-pip {
 
 function Bootstrap-Pype {
 
-  if ($offline -ne $true)
+  if ($script:offline -ne $true)
   {
     # ensure latest pip version
     Upgrade-Pip
@@ -462,7 +464,7 @@ function Detect-Mongo {
 function Detect-Python {
   if (Test-Path "env:PYPE_PYTHON_EXE") {
     Log-Msg -Text ">>> ", "Forced using python at [ ", "$($env:PYPE_PYTHON_EXE)" ," ] ... " -Color Yellow, Gray, White, Gray -NoNewLine
-    $python = $env:PYPE_PYTHON_EXE
+    $script:python = $env:PYPE_PYTHON_EXE
   } else {
     Log-Msg -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
     if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
@@ -515,9 +517,10 @@ function Test-Offline {
   if (-not (Test-Connection 8.8.8.8 -Count 2 -Quiet)) {
     Log-Msg -Text "OFFLINE" -Color Yellow
     Log-Msg -Text "--- ", "Enabling offline mode ..." -Color Green, Yellow
-    $offline=$true
+    $script:offline=$true
   } else {
     Log-Msg -Text "ONLINE" -Color Green
+    $script:offline=$false
   }
   <#
   .SYNOPSIS
@@ -528,7 +531,7 @@ function Test-Offline {
 
 function Download {
   Test-Offline
-  if ($offline -eq $true) {
+  if ($script:offline -eq $true) {
     Log-Msg -Text "!!! ", "Cannot download in offline mode." -Color Yellow, Gray
   }
   Log-Msg -Text ">>> ", "Downloading packages for offline installation ... " -Color Green, Gray
@@ -585,7 +588,7 @@ if ($clean -eq $true) {
 }
 
 # Check invalid argument combination
-if ($offline -eq $true -and $deploy -eq $true) {
+if ($script:offline -eq $true -and $deploy -eq $true) {
   Log-Msg -Text "!!! ", "Invalid invocation. Cannot deploy in offline mode." -Color Red, Gray
   ExitWithCode 1
 }
@@ -690,7 +693,7 @@ if ($validate -eq $true) {
 # Deploy
 if ($deploy -eq $true) {
   Test-Offline
-  if ($offline -eq $true) {
+  if ($script:offline -eq $true) {
     # If we are offline, we cannot deploy
     Log-Msg -Text "!!! ", "Cannot deploy in offline mode." -Color Red, Gray
     Deactivate-Venv
