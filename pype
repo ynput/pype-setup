@@ -615,7 +615,7 @@ main () {
 
   # Clean pyc
   if [ "$f_clean" == 1 ] ; then
-    clear_pyc
+    clean_pyc
     echo -e "${ICyan}<<<${RST} Terminating ${IWhite}Pype${RST} ..."
     return 0
   fi
