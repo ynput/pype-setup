@@ -41,6 +41,8 @@ except ImportError:
 else:
     _mongo_logging = True
 
+_first_handler = True
+
 try:
     unicode
     _unicode = True
@@ -310,9 +312,10 @@ class PypeLogger:
         file_handler.setFormatter(formatter)
         return file_handler
 
-    def _get_mongo_handler(self):
+    def _get_mongo_handler(self, check_connection):
         components = _log_mongo_components()
-        _bootstrap_mongo_log(components)
+        if check_connection:
+            _bootstrap_mongo_log(components)
 
         kwargs = {
             "host": compose_url(**components),
@@ -348,6 +351,7 @@ class PypeLogger:
             logger.setLevel(logging.INFO)
 
         global _mongo_logging
+        global _first_handler
         add_mongo_handler = _mongo_logging
         add_console_handler = True
 
@@ -362,7 +366,7 @@ class PypeLogger:
 
         if add_mongo_handler:
             try:
-                logger.addHandler(self._get_mongo_handler())
+                logger.addHandler(self._get_mongo_handler(_first_handler))
 
             except MongoEnvNotSet:
                 # Skip if mongo environments are not set yet
@@ -376,4 +380,6 @@ class PypeLogger:
                     Terminal.echo(line)
                 _mongo_logging = False
 
+        if _first_handler:
+            _first_handler = False
         return logger
