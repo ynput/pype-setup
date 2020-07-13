@@ -33,6 +33,7 @@ from .mongo import (
 )
 
 try:
+    import log4mongo
     from log4mongo.handlers import MongoHandler
     from bson.objectid import ObjectId
     MONGO_PROCESS_ID = ObjectId()
@@ -40,8 +41,6 @@ except ImportError:
     _mongo_logging = False
 else:
     _mongo_logging = True
-
-_first_handler = True
 
 try:
     unicode
@@ -312,9 +311,10 @@ class PypeLogger:
         file_handler.setFormatter(formatter)
         return file_handler
 
-    def _get_mongo_handler(self, check_connection):
+    def _get_mongo_handler(self):
         components = _log_mongo_components()
-        if check_connection:
+        # Check existence of mongo connection before creating Mongo handler
+        if log4mongo.handlers._connection is None:
             _bootstrap_mongo_log(components)
 
         kwargs = {
@@ -351,7 +351,6 @@ class PypeLogger:
             logger.setLevel(logging.INFO)
 
         global _mongo_logging
-        global _first_handler
         add_mongo_handler = _mongo_logging
         add_console_handler = True
 
@@ -366,7 +365,7 @@ class PypeLogger:
 
         if add_mongo_handler:
             try:
-                logger.addHandler(self._get_mongo_handler(_first_handler))
+                logger.addHandler(self._get_mongo_handler())
 
             except MongoEnvNotSet:
                 # Skip if mongo environments are not set yet
@@ -380,6 +379,4 @@ class PypeLogger:
                     Terminal.echo(line)
                 _mongo_logging = False
 
-        if _first_handler:
-            _first_handler = False
         return logger
