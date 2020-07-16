@@ -484,6 +484,7 @@ detect_python () {
     # Parse version string
     local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
     local python_version="$($PYTHON <<< ${version_command})"
+    export PYTHON_VERSION=$python_version
     oIFS="$IFS"
     IFS=.
     set -- $python_version

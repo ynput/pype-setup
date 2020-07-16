@@ -478,6 +478,7 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
   $p = & $python -c $version_command
+  $env:PYTHON_VERSION = $p
   $m = $p -match '(\d+)\.(\d+)'
   if(-not $m) {
     Log-Msg -Text "FAILED", " Cannot determine version" -Color Red, Yellow
