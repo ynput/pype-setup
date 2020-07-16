@@ -724,6 +724,14 @@ main () {
           echo -e "${BIYellow}  *${RST} ${UCyan}Xcode.app${RST} or running: ${BIWhite}sudo xcodebuild -license${RST}"
           return 1
         fi
+        # set icons on Mac
+        echo -e "${IGreen}>>>${RST} Setting icon on Pype files ..."
+        for i in "$PYPE_SETUP_PATH/launchers/*.command"; do
+          [ -f "$i" ] || break
+          $PYPE_SETUP_PATH/fileicon.sh set $i $PYPE_SETUP_PATH/pypeapp/pype.icns
+        done
+        $PYPE_SETUP_PATH/fileicon.sh set $PYPE_SETUP_PATH/pype $PYPE_SETUP_PATH/pypeapp/pype.icns
+
       fi
 
       # install environment
