@@ -106,7 +106,9 @@ done
 # Initialize important environment variables
 
 # Set PYPE_SETUP_PATH to path to this script
-export PYPE_SETUP_PATH="$(cd $DIR; pwd)"
+if [[ -z $PYPE_SETUP_PATH ]]; then
+  export PYPE_SETUP_PATH="$(cd $DIR; pwd)"
+fi
 # Add PYPE_SETUP_PATH to PYTHONPATH if missing
 export PYTHONPATH=${PYTHONPATH:="$PYPE_SETUP_PATH/pypeapp"}
 if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_PATH/pypeapp:"* ]]; then
