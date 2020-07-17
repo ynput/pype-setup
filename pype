@@ -106,7 +106,9 @@ done
 # Initialize important environment variables
 
 # Set PYPE_SETUP_PATH to path to this script
-export PYPE_SETUP_PATH="$(cd $DIR; pwd)"
+if [[ -z $PYPE_SETUP_PATH ]]; then
+  export PYPE_SETUP_PATH="$(cd $DIR; pwd)"
+fi
 # Add PYPE_SETUP_PATH to PYTHONPATH if missing
 export PYTHONPATH=${PYTHONPATH:="$PYPE_SETUP_PATH/pypeapp"}
 if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_PATH/pypeapp:"* ]]; then
@@ -482,6 +484,7 @@ detect_python () {
     # Parse version string
     local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
     local python_version="$($PYTHON <<< ${version_command})"
+    export PYTHON_VERSION=$python_version
     oIFS="$IFS"
     IFS=.
     set -- $python_version
@@ -721,6 +724,14 @@ main () {
           echo -e "${BIYellow}  *${RST} ${UCyan}Xcode.app${RST} or running: ${BIWhite}sudo xcodebuild -license${RST}"
           return 1
         fi
+        # set icons on Mac
+        echo -e "${IGreen}>>>${RST} Setting icon on Pype files ..."
+        for i in "$PYPE_SETUP_PATH/launchers/*.command"; do
+          [ -f "$i" ] || break
+          $PYPE_SETUP_PATH/fileicon.sh set $i $PYPE_SETUP_PATH/pypeapp/pype.icns
+        done
+        $PYPE_SETUP_PATH/fileicon.sh set $PYPE_SETUP_PATH/pype $PYPE_SETUP_PATH/pypeapp/pype.icns
+
       fi
 
       # install environment
