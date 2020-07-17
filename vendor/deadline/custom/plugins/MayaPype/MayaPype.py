@@ -2081,7 +2081,7 @@ class MayaBatchPlugin(DeadlinePlugin):
                 "Do not call CreateDelayedLoadingMelscript unless delayed loading is enabled."
             )
 
-        scriptBuilder.AppendJoin("\n", self.build_dirmap_commands())
+        scriptBuilder.AppendLine("\n".join(self.build_dirmap_commands()))
         scriptBuilder.AppendLine()
 
         # Force load plug-ins that Maya does not properly auto-load when the scene depends on them
