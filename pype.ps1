@@ -478,6 +478,7 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
   $p = & $python -c $version_command
+  $env:PYTHON_VERSION = $p
   $m = $p -match '(\d+)\.(\d+)'
   if(-not $m) {
     Log-Msg -Text "FAILED", " Cannot determine version" -Color Red, Yellow
@@ -561,7 +562,10 @@ function Pyc-Cleaner {
     [alias ('P')][string]$Path = $pwd
   )
   Log-Msg -Text ">>> ", "Cleaning pyc [ ", $Path, " ] ... " -Color Green, Gray, White, Gray -NoNewLine
-  Get-ChildItem $path -Filter ".pyc" -Force -Recurse | Remove-Item -Force
+  Get-ChildItem $path -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+  Log-Msg -Text "DONE" -Color Green
+  Log-Msg -Text ">>> ", "Cleaning __pycache__ [ ", $Path, " ] ... " -Color Green, Gray, White, Gray -NoNewLine
+  Get-ChildItem $path -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
   Log-Msg -Text "DONE" -Color Green
   <#
   .SYNOPSIS
