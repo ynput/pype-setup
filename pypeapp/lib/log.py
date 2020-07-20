@@ -33,6 +33,7 @@ from .mongo import (
 )
 
 try:
+    import log4mongo
     from log4mongo.handlers import MongoHandler
     from bson.objectid import ObjectId
     MONGO_PROCESS_ID = ObjectId()
@@ -312,7 +313,9 @@ class PypeLogger:
 
     def _get_mongo_handler(self):
         components = _log_mongo_components()
-        _bootstrap_mongo_log(components)
+        # Check existence of mongo connection before creating Mongo handler
+        if log4mongo.handlers._connection is None:
+            _bootstrap_mongo_log(components)
 
         kwargs = {
             "host": compose_url(**components),
