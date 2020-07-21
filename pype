@@ -749,6 +749,8 @@ main () {
   fi
 
   if [ "$f_install" == 1 ] ; then
+    echo -e "${IGreen}>>>${RST} Checking for and running any post-installation scripts ..."
+    find ./deploy -name 'post-install.sh' -print0 | xargs -0 bash -c
     echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
     return 0
   fi
@@ -796,6 +798,8 @@ main () {
     return
   fi
 
+  echo -e "${IGreen}>>>${RST} Checking for and running any pre run scripts ..."
+  find ./deploy -name 'prerun-install.sh' -print0 | xargs -0 bash -c
   echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
   $PYTHON -m pypeapp $args || return $?
   echo -e "${IPurple}xxx${RST} Finishing up. ${IWhite}Have a nice day!${RST}"
