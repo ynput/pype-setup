@@ -500,7 +500,7 @@ class Deployment(object):
         term.echo(">>> Deploying repositories ...")
         for ritem in deploy.get('repositories'):
             path = os.path.join(
-                self._pype_root, "repos", ritem.get('name'))
+                self._pype_root, "repos", os.path.expandvars(ritem.get('name')))
 
             term.echo(" -- processing [ {} / {} ]".format(
                 ritem.get('name'), ritem.get('branch') or ritem.get('tag')))
