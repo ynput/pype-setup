@@ -516,7 +516,7 @@ class Deployment(object):
                     # dir is repository
                     repo = git.Repo(path)
                     # is it right one?
-                    if not self._validate_origin(path, str(ritem.get('url'))):
+                    if not self._validate_origin(path, os.path.expandvars(str(ritem.get('url')))):
                         # repository has different origin then specified
                         term.echo("!!! repository has different origin. ")
                         if (self._validate_is_dirty(path) is True and
@@ -569,7 +569,7 @@ class Deployment(object):
                 # path doesn't exist, clone
                 try:
                     git.Repo.clone_from(
-                        ritem.get('url'),
+                        os.path.expandvars(ritem.get('url')),
                         path,
                         progress=_GitProgress(),
                         env=None,
