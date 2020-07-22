@@ -221,7 +221,7 @@ class Deployment(object):
                     "Repo on path [ {} ] is bare".format(test_path), 300)
 
             # check origin
-            if not self._validate_origin(test_path, ritem.get('url')):
+            if not self._validate_origin(test_path, os.path.expandvars(ritem.get('url'))):
                 raise DeployException(
                     "Repo {} origin {} should be {}.".format(
                         test_path,
@@ -432,7 +432,7 @@ class Deployment(object):
             # clone repo
             try:
                 git.Repo.clone_from(
-                    repo.get('url'),
+                    os.path.expandvars(repo.get('url')),
                     path,
                     progress=_GitProgress(),
                     env=None,
