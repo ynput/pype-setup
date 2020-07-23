@@ -97,6 +97,9 @@ if($arguments -eq "update-requirements") {
 if($arguments -eq "clean") {
   $clean=$true
 }
+if($arguments -eq "localize") {
+  $localize=$true
+}
 
 
 # -----------------------------------------------------------------------------
@@ -647,9 +650,6 @@ if ($needToInstall -eq $true) {
   # bootstrap pype
   Bootstrap-Pype
 
-  # localize bin
-  Localize-Bin
-
 } else {
   Log-Msg -Text "FOUND", " - [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
   Activate-Venv -Environment $env:PYPE_ENV
@@ -733,7 +733,16 @@ if ($deploy -eq $true) {
     Deactivate-Venv
     ExitWithCode 0
   }
+  # localize bin
+  Localize-Bin
 }
+if ($localize -eq $true) {
+  # localize bin
+  Localize-Bin
+  Deactivate-Venv
+  ExitWithCode 0
+}
+
 
 Log-Msg -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
 Write-Host ""
