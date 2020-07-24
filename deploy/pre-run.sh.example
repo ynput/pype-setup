@@ -7,7 +7,7 @@
 
 echo "--- Check Google Drive links ..."
 root_link_location="/usr/local/pype/root"
-root_cloud_location="/Users/annatar/Google Drive/novartis"
+root_cloud_location="/Users/user/Google Drive/path"
 if [[ -L "$root_link_location" && -d "$root_link_location" ]]; then
  echo "  - $root_link_location is link, no action needed."
 else
