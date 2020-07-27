@@ -657,6 +657,8 @@ if ($needToInstall -eq $true) {
   # Upgrade-pip
 }
 if ($install -eq $true) {
+  Log-Msg -Text ">>> ", "Checking for and running any post-installation scripts ..." -Color Green, Gray
+  Get-ChildItem "$($env:PYPE_SETUP_PATH)\deploy" -Filter "post-install.ps1" -Force -Recurse | Foreach {& $_.fullname}
   Log-Msg -Text "*** ", "Installation complete. ", "Have a nice day!" -Color Green, White, Gray
   Deactivate-Venv
   ExitWithCode 0
@@ -744,6 +746,8 @@ if ($localize -eq $true) {
 }
 
 
+Log-Msg -Text ">>> ", "Checking for and running any pre-run scripts ..." -Color Green, Gray
+Get-ChildItem "$($env:PYPE_SETUP_PATH)\deploy" -Filter "pre-run.ps1" -Force -Recurse | Foreach {& $_.fullname}
 Log-Msg -Text ">>> ", "Running ", "pype", " ..." -Color Green, Gray, White
 Write-Host ""
 $return_code = 0

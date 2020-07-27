@@ -6,6 +6,7 @@ will trigger packages installation in parent shell script.
 """
 import sys
 import subprocess
+import os
 
 # get pip installed packages
 installed_req = subprocess.check_output(
@@ -18,7 +19,9 @@ installed_req = [s.lower() for s in installed_req]
 
 # read required dependencies and expect it in UTF-8 BOM. This is produced
 # by default on Windows with Poweshell, but works with non-BOM and ASCII too.
-with open("pypeapp/requirements.txt", "r", encoding="utf-8-sig") as rf:
+requirements = os.path.join(os.getenv("PYPE_SETUP_PATH"),
+                            "pypeapp", "requirements.txt")
+with open(requirements, "r", encoding="utf-8-sig") as rf:
     requested_req = rf.readlines()
 
 # clear those from endlines and make it lower
