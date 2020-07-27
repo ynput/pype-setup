@@ -47,8 +47,6 @@ def compose_url(scheme=None,
                 host=None,
                 username=None,
                 password=None,
-                database=None,
-                collection=None,
                 port=None,
                 auth_db=None):
 
@@ -61,12 +59,6 @@ def compose_url(scheme=None,
     if port:
         url += ":{port}"
 
-    if database:
-        url += "/{database}"
-
-    if database and collection:
-        url += "/{collection}"
-
     if auth_db:
         url += "?authSource={auth_db}"
 
@@ -75,8 +67,6 @@ def compose_url(scheme=None,
         "host": host,
         "username": username,
         "password": password,
-        "database": database,
-        "collection": collection,
         "port": port,
         "auth_db": auth_db
     })
