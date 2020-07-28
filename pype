@@ -50,6 +50,7 @@ f_force=0
 f_mongodb=0
 f_update=0
 f_clean=0
+f_localize=0
 venv_activated=0
 # Process arguments
 # .
@@ -90,6 +91,9 @@ while :; do
       ;;
     clean)
       f_clean=1
+      ;;
+    localize)
+      f_localize=1
       ;;
     --)
       shift
@@ -795,6 +799,12 @@ main () {
     echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
     validate_pype || return 1
     echo -e "${BIGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+    localize_bin || return 1
+    return
+  fi
+
+  if [ "$f_localize" == 1 ] ; then
+    localize_bin || return 1
     return
   fi
 
