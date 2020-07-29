@@ -50,6 +50,7 @@ f_force=0
 f_mongodb=0
 f_update=0
 f_clean=0
+f_macIcons=0
 f_localize=0
 venv_activated=0
 # Process arguments
@@ -92,7 +93,10 @@ while :; do
     clean)
       f_clean=1
       ;;
-    localize)
+    mac-icons)
+      f_macIcons=1
+      ;;
+    localize-bin)
       f_localize=1
       ;;
     --)
@@ -341,6 +345,9 @@ check_environment () {
     fi
     clean_pyc $PYPE_ENV
     clean_pyc
+    if [[ $OSTYPE =~ ^darwin.* ]]; then
+      f_macIcons=1
+    fi
   else
     echo -e "${BIGreen}OK${RST}"
   fi
@@ -608,7 +615,7 @@ localize_bin () {
 clean_pyc () {
   path=${1:-$PYPE_SETUP_PATH}
   echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -name '*.py?' -delete
+  find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
 }
 
@@ -730,11 +737,11 @@ main () {
         fi
         # set icons on Mac
         echo -e "${IGreen}>>>${RST} Setting icon on Pype files ..."
-        for i in "$PYPE_SETUP_PATH/launchers/*.command"; do
+        for i in $PYPE_SETUP_PATH/launchers/*.command; do
           [ -f "$i" ] || break
-          $PYPE_SETUP_PATH/fileicon.sh set $i $PYPE_SETUP_PATH/pypeapp/pype.icns
+          $PYPE_SETUP_PATH/vendor/fileicon.sh set $i $PYPE_SETUP_PATH/pypeapp/pype.icns
         done
-        $PYPE_SETUP_PATH/fileicon.sh set $PYPE_SETUP_PATH/pype $PYPE_SETUP_PATH/pypeapp/pype.icns
+        $PYPE_SETUP_PATH/vendor/fileicon.sh set $PYPE_SETUP_PATH/pype $PYPE_SETUP_PATH/pypeapp/pype.icns
 
       fi
 
@@ -744,8 +751,24 @@ main () {
       # activate environment
       activate_venv $PYPE_ENV || return 1
 
+      # install wheel as it is sometimes missing in default venv
+      echo -e "${IGreen}>>>${RST} Installing wheel ..."
+      if [ "$_offline" == 1 ] ; then
+        pip3 install wheel --no-index --find-links "$PYPE_SETUP_PATH/vendor/packages" 2> /dev/null
+      else
+        pip3 install wheel 2> /dev/null
+      fi
+
       # bootstrap pype
       bootstrap_pype || return 1
+
+      if [[ $OSTYPE =~ ^darwin.* ]]; then
+        echo -e "${IGreen}>>>${RST} Fixing file permissions ...\c"
+        current_sudo_user=$(who -m | awk '{print $1;}')
+        execute_sudo chown -R $current_sudo_user $PYPE_ENV
+        execute_sudo chown -R $current_sudo_user "/Users/$current_sudo_user/Library/Caches/pip"
+        echo -e "${BIGreen}DONE${RST}"
+      fi
   else
     echo -e "${BIGreen}FOUND${RST} - [${BIWhite} $PYPE_ENV ${RST}]"
     activate_venv $PYPE_ENV || return 1
@@ -803,9 +826,22 @@ main () {
     return
   fi
 
+  # Localize binaries
   if [ "$f_localize" == 1 ] ; then
     localize_bin || return 1
     return
+
+  if [ "$f_macIcons" == 1 ] ; then
+    if [[ $OSTYPE =~ ^darwin.* ]]; then
+      echo -e "${IGreen}>>>${RST} Setting icon on Pype files ..."
+      for i in $PYPE_SETUP_PATH/launchers/*.command; do
+        [ -f "$i" ] || break
+        $PYPE_SETUP_PATH/vendor/fileicon.sh set $i $PYPE_SETUP_PATH/pypeapp/pype.icns
+      done
+      $PYPE_SETUP_PATH/vendor/fileicon.sh set $PYPE_SETUP_PATH/pype $PYPE_SETUP_PATH/pypeapp/pype.icns
+    else
+      echo -e "${BIYellow}***${RST} ${Yellow}Setting files icon can be done only on mac.${RST}"
+    fi
   fi
 
   echo -e "${IGreen}>>>${RST} Checking for and running any pre run scripts ..."
