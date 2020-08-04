@@ -830,6 +830,7 @@ main () {
   if [ "$f_localize" == 1 ] ; then
     localize_bin || return 1
     return
+  fi
 
   if [ "$f_macIcons" == 1 ] ; then
     if [[ $OSTYPE =~ ^darwin.* ]]; then
