@@ -182,7 +182,7 @@ def eventserver(debug,
         args.append(ftrack_api_key)
 
     if ftrack_events_path:
-        args.append('-ftrackapikey')
+        args.append('-ftrackeventpaths')
         args.append(ftrack_events_path)
 
     if no_stored_credentials:
