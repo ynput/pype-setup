@@ -22,6 +22,11 @@
       "branch": "master"
     },
     {
+      "name": "openHarmony",
+      "url": "https://github.com/cfourney/OpenHarmony.git",
+      "tag": "0.3.0"
+    },
+    {
       "name": "pype",
       "url": "https://github.com/pypeclub/pype.git",
       "tag": "2.11.5"
