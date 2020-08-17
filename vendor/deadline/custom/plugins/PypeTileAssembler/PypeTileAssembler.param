@@ -1,0 +1,16 @@
+[About]
+Type=label
+Label=About
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=Pype Tile Assembler Plugin for Deadline
+Description=Not configurable
+
+[FFmpeg_RenderExecutable]
+Type=multilinemultifilename
+Label=FFmpeg Executable
+Category=Render Executables
+CategoryOrder=0
+Default=C:\Program Files\FFmpeg\bin\ffmpeg.exe;C:\Program Files (x86)\FFmpeg\bin\ffmpeg.exe;/Applications/FFmpeg/FFmpeg.app/Contents/MacOS/FFmpeg;/usr/local/FFmpeg/ffmpeg
+Description=The path to the FFmpeg executable file used for rendering. Enter alternative paths on separate lines.

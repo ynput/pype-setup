@@ -1,0 +1,17 @@
+[FFmpegPath]
+Type=filename
+Label=FFMpeg location
+Category=FFMMpeg
+Index=0
+Description=FFMpeg executable to use.
+Required=false
+DisableIfBlank=true
+
+[OutputFile]
+Type=filenamesave
+Label=Output File
+Category=Output
+Index=0
+Description=The scene filename as it exists on the network
+Required=false
+DisableIfBlank=true
