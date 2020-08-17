@@ -59,8 +59,7 @@ class PypeTileAssembler(DeadlinePlugin):
     def render_argument(self):
 
         output_file = self.GetPluginInfoEntryWithDefault("OutputFile", "")
-        output_file = RepositoryUtils.CheckPathMapping(output_file)
-        output_file = self.process_path(output_file)
+
 
         data = {}
         with open(self.config_file, "rU") as f:
@@ -77,16 +76,23 @@ class PypeTileAssembler(DeadlinePlugin):
                         print("Failed: {}".format(e))
 
         tile_info = []
-        for tile in range(info["TileCount"]):
+        for tile in range(int(data["TileCount"])):
             tile_info.append({
-                "filepath": info["Tile{}FileName"],
-                "pos_x": info["Tile{}X"],
-                "pos_y": info["Tile{}Y"]
+                "filepath": data["Tile{}".format(tile)],
+                "pos_x": int(data["Tile{}X".format(tile)]),
+                "pos_y": int(data["Tile{}Y".format(tile)])
             })
 
+        output_file = data["ImageFileName"]
+        output_file = RepositoryUtils.CheckPathMapping(output_file)
+        output_file = self.process_path(output_file)
+
         ffmpeg_arguments = self.tile_completer_ffmpeg_args(
-            info["ImageWidth"], info["ImageHeight"], tile_info, output_file)
-        return "".join(ffmpeg_arguments)
+            int(data["ImageWidth"]), int(data["ImageHeight"]),
+            tile_info, output_file)
+        self.LogInfo(
+            "Using ffmpeg arguments: {}".format(" ".join(ffmpeg_arguments)))
+        return " ".join(ffmpeg_arguments)
 
     def process_path(self, filepath):
         if SystemUtils.IsRunningOnWindows():
