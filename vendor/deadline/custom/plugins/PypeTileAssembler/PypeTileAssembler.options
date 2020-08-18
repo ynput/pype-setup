@@ -1,9 +1,9 @@
-[FFmpegPath]
+[OIIOToolPath]
 Type=filename
-Label=FFMpeg location
-Category=FFMMpeg
+Label=OIIO Tool location
+Category=OIIO
 Index=0
-Description=FFMpeg executable to use.
+Description=OIIO Tool executable to use.
 Required=false
 DisableIfBlank=true
 

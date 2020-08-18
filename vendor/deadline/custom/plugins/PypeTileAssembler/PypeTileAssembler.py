@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Tile Assembler Plugin using ffmpeg."""
+"""Tile Assembler Plugin using Open Image IO tool.
+
+Todo:
+    Currently we support only EXRs with their data window set.
+"""
 import os
 
 from System.IO import Path
@@ -9,17 +13,21 @@ from Deadline.Scripting import (
     FileUtils, RepositoryUtils, SystemUtils)
 
 
-def GetDeadlinePlugin():
+def GetDeadlinePlugin():  # noqa: N802
+    """Helper."""
     return PypeTileAssembler()
 
 
-def CleanupDeadlinePlugin(deadlinePlugin):
+def CleanupDeadlinePlugin(deadlinePlugin):  # noqa: N802, N803
+    """Helper."""
     deadlinePlugin.cleanup()
 
 
 class PypeTileAssembler(DeadlinePlugin):
+    """Deadline plugin for assembling tiles using OIIO."""
 
     def __init__(self):
+        """Init."""
         self.InitializeProcessCallback += self.initialize_process
         self.RenderExecutableCallback += self.render_executable
         self.RenderArgumentCallback += self.render_argument
@@ -27,6 +35,7 @@ class PypeTileAssembler(DeadlinePlugin):
         self.PostRenderTasksCallback += self.post_render_tasks
 
     def cleanup(self):
+        """Cleanup function."""
         for stdoutHandler in self.StdoutHandlers:
             del stdoutHandler.HandleCallback
 
@@ -37,6 +46,7 @@ class PypeTileAssembler(DeadlinePlugin):
         del self.PostRenderTasksCallback
 
     def initialize_process(self):
+        """Initialization."""
         self.SingleFramesOnly = True
         self.StdoutHandling = True
 
@@ -44,23 +54,35 @@ class PypeTileAssembler(DeadlinePlugin):
             ".*Error.*").HandleCallback += self.handle_stdout_error
 
     def render_executable(self):
-        ffmpeg_exe_list = self.GetConfigEntry("FFmpeg_RenderExecutable")
-        ffmpeg_exe = FileUtils.SearchFileList(ffmpeg_exe_list)
+        """Get render executable name.
 
-        if ffmpeg_exe == "":
+        Get paths from plugin configuration, find executable and return it.
+
+        Returns:
+            (str): Render executable.
+
+        """
+        oiiotool_exe_list = self.GetConfigEntry("OIIOTool_RenderExecutable")
+        oiiotool_exe = FileUtils.SearchFileList(oiiotool_exe_list)
+
+        if oiiotool_exe == "":
             self.FailRender(("No file found in the semicolon separated "
                              "list \"{}\". The path to the render executable "
                              "can be configured from the Plugin Configuration "
                              "in the Deadline Monitor.").format(
-                                ffmpeg_exe_list))
+                                oiiotool_exe_list))
 
-        return ffmpeg_exe
+        return oiiotool_exe
 
     def render_argument(self):
+        """Generate command line arguments for render executable.
 
-        output_file = self.GetPluginInfoEntryWithDefault("OutputFile", "")
+        Returns:
+            (str): arguments to add to render executable.
 
-
+        """
+        # Read tile config file. This file is in compatible format with
+        # Draft Tile Assembler
         data = {}
         with open(self.config_file, "rU") as f:
             for text in f:
@@ -73,7 +95,17 @@ class PypeTileAssembler(DeadlinePlugin):
                         data[str(info[0])] = info[1]
                     except Exception as e:
                         # should never be called
-                        print("Failed: {}".format(e))
+                        self.FailRender(
+                            "Cannot parse config file: {}".format(e))
+
+        # Get output file. We support only EXRs now.
+        output_file = data["ImageFileName"]
+        output_file = RepositoryUtils.CheckPathMapping(output_file)
+        output_file = self.process_path(output_file)
+        _, ext = os.path.splitext(output_file)
+        if "exr" not in ext:
+            self.FailRender(
+                "[{}] Only EXR format is supported for now.".format(ext))
 
         tile_info = []
         for tile in range(int(data["TileCount"])):
@@ -83,18 +115,18 @@ class PypeTileAssembler(DeadlinePlugin):
                 "pos_y": int(data["Tile{}Y".format(tile)])
             })
 
-        output_file = data["ImageFileName"]
-        output_file = RepositoryUtils.CheckPathMapping(output_file)
-        output_file = self.process_path(output_file)
+        # FFMpeg doesn't support tile coordinates at the moment.
+        # arguments = self.tile_completer_ffmpeg_args(
+        #     int(data["ImageWidth"]), int(data["ImageHeight"]),
+        #     tile_info, output_file)
 
-        ffmpeg_arguments = self.tile_completer_ffmpeg_args(
-            int(data["ImageWidth"]), int(data["ImageHeight"]),
-            tile_info, output_file)
+        arguments = self.tile_oiio_args(tile_info, output_file)
         self.LogInfo(
-            "Using ffmpeg arguments: {}".format(" ".join(ffmpeg_arguments)))
-        return " ".join(ffmpeg_arguments)
+            "Using arguments: {}".format(" ".join(arguments)))
+        return " ".join(arguments)
 
     def process_path(self, filepath):
+        """Handle slashes in file paths."""
         if SystemUtils.IsRunningOnWindows():
             filepath = filepath.replace("/", "\\")
             if filepath.startswith("\\") and not filepath.startswith("\\\\"):
@@ -123,21 +155,49 @@ class PypeTileAssembler(DeadlinePlugin):
             os.chmod(self.config_file, os.stat(self.config_file).st_mode)
 
     def post_render_tasks(self):
+        """Print job finished."""
         self.LogInfo("Pype Tile Assembler Job finished.")
 
     def handle_stdout_error(self):
+        """Handle errors in stdout."""
         self.FailRender(self.GetRegexMatch(0))
+
+    def tile_oiio_args(self, tile_info, output_path):
+        """Generate oiio tool arguments for tile assembly.
+
+        Args:
+            tiles_info (list): List of tile items, each item must be
+                dictionary with `filepath`, `pos_x` and `pos_y` keys
+                representing path to file and x, y coordinates on output
+                image where top-left point of tile item should start.
+            output_path (str): Path to file where should be output stored.
+
+        Returns:
+            (list): oiio tools arguments.
+
+        """
+        tile_paths_count = len(tile_info)
+        args = []
+        for idx, tile in enumerate(tile_info):
+            args.append(tile["filepath"])
+            if idx < tile_paths_count - 1:
+                args.append("--add:mergeroi=1")
+
+        args.append("-o")
+        args.append(output_path)
+
+        return args
 
     def tile_completer_ffmpeg_args(
             self, output_width, output_height, tiles_info, output_path):
-        """Generate fmpeg arguments for tile concatenation.
+        """Generate ffmpeg arguments for tile assembly.
 
         Expected inputs are tiled images.
 
         Args:
             output_width (int): Width of output image.
             output_height (int): Height of output image.
-            tiles_info (list): List of tile items, each item must be modifiable
+            tiles_info (list): List of tile items, each item must be
                 dictionary with `filepath`, `pos_x` and `pos_y` keys
                 representing path to file and x, y coordinates on output
                 image where top-left point of tile item should start.

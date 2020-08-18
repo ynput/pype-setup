@@ -7,10 +7,11 @@ Index=0
 Default=Pype Tile Assembler Plugin for Deadline
 Description=Not configurable
 
-[FFmpeg_RenderExecutable]
+[OIIOTool_RenderExecutable]
 Type=multilinemultifilename
-Label=FFmpeg Executable
+Label=OIIO Tool Executable
 Category=Render Executables
 CategoryOrder=0
-Default=C:\Program Files\FFmpeg\bin\ffmpeg.exe;C:\Program Files (x86)\FFmpeg\bin\ffmpeg.exe;/Applications/FFmpeg/FFmpeg.app/Contents/MacOS/FFmpeg;/usr/local/FFmpeg/ffmpeg
-Description=The path to the FFmpeg executable file used for rendering. Enter alternative paths on separate lines.
+Default=C:\Program Files\OIIO\bin\oiiotool.exe;/usr/bin/oiiotool
+Description=The path to the Open Image IO Tool executable file used for rendering. Enter alternative paths on separate lines.
+W
