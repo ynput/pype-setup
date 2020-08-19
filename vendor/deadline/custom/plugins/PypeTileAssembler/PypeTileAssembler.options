@@ -15,3 +15,12 @@ Index=0
 Description=The scene filename as it exists on the network
 Required=false
 DisableIfBlank=true
+
+[CleanupTiles]
+Type=boolean
+Category=Options
+Index=0
+Label=Cleanup Tiles
+Required=false
+DisableIfBlank=true
+Description=If enabled, the Pype Tile Assembler will cleanup all tiles after assembly.

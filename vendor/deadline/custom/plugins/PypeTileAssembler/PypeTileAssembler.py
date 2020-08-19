@@ -5,12 +5,25 @@ Todo:
     Currently we support only EXRs with their data window set.
 """
 import os
+import subprocess
+from xml.dom import minidom
 
 from System.IO import Path
 
 from Deadline.Plugins import DeadlinePlugin
 from Deadline.Scripting import (
     FileUtils, RepositoryUtils, SystemUtils)
+
+
+INT_KEYS = {
+    "x", "y", "height", "width", "full_x", "full_y",
+    "full_width", "full_height", "full_depth", "full_z",
+    "tile_width", "tile_height", "tile_depth", "deep", "depth",
+    "nchannels", "z_channel", "alpha_channel", "subimages"
+}
+LIST_KEYS = {
+    "channelnames"
+}
 
 
 def GetDeadlinePlugin():  # noqa: N802
@@ -102,17 +115,20 @@ class PypeTileAssembler(DeadlinePlugin):
         output_file = data["ImageFileName"]
         output_file = RepositoryUtils.CheckPathMapping(output_file)
         output_file = self.process_path(output_file)
+        """
         _, ext = os.path.splitext(output_file)
         if "exr" not in ext:
             self.FailRender(
                 "[{}] Only EXR format is supported for now.".format(ext))
-
+        """
         tile_info = []
         for tile in range(int(data["TileCount"])):
             tile_info.append({
                 "filepath": data["Tile{}".format(tile)],
                 "pos_x": int(data["Tile{}X".format(tile)]),
-                "pos_y": int(data["Tile{}Y".format(tile)])
+                "pos_y": int(data["Tile{}Y".format(tile)]),
+                "height": int(data["Tile{}Height".format(tile)]),
+                "width": int(data["Tile{}Width".format(tile)])
             })
 
         # FFMpeg doesn't support tile coordinates at the moment.
@@ -120,7 +136,9 @@ class PypeTileAssembler(DeadlinePlugin):
         #     int(data["ImageWidth"]), int(data["ImageHeight"]),
         #     tile_info, output_file)
 
-        arguments = self.tile_oiio_args(tile_info, output_file)
+        arguments = self.tile_oiio_args(
+            int(data["ImageWidth"]), int(data["ImageHeight"]),
+            tile_info, output_file)
         self.LogInfo(
             "Using arguments: {}".format(" ".join(arguments)))
         return " ".join(arguments)
@@ -162,10 +180,13 @@ class PypeTileAssembler(DeadlinePlugin):
         """Handle errors in stdout."""
         self.FailRender(self.GetRegexMatch(0))
 
-    def tile_oiio_args(self, tile_info, output_path):
+    def tile_oiio_args(
+            self, output_width, output_height, tile_info, output_path):
         """Generate oiio tool arguments for tile assembly.
 
         Args:
+            output_width (int): Width of output image.
+            output_height (int): Height of output image.
             tiles_info (list): List of tile items, each item must be
                 dictionary with `filepath`, `pos_x` and `pos_y` keys
                 representing path to file and x, y coordinates on output
@@ -176,12 +197,38 @@ class PypeTileAssembler(DeadlinePlugin):
             (list): oiio tools arguments.
 
         """
-        tile_paths_count = len(tile_info)
         args = []
-        for idx, tile in enumerate(tile_info):
-            args.append(tile["filepath"])
-            if idx < tile_paths_count - 1:
-                args.append("--add:mergeroi=1")
+
+        # Create new image with output resolution, and with same type and
+        # channels as input
+        first_tile_path = tile_info[0]["filepath"]
+        first_tile_info = self.info_about_input(first_tile_path)
+        create_arg_template = "--create{} {}x{} {}"
+
+        image_type = ""
+        image_format = first_tile_info.get("format")
+        if image_format:
+            image_type = ":type={}".format(image_format)
+
+        create_arg = create_arg_template.format(
+            image_type, output_width,
+            output_height, first_tile_info["nchannels"]
+        )
+        args.append(create_arg)
+
+        for tile in tile_info:
+            path = tile["filepath"]
+            pos_x = tile["pos_x"]
+            tile_height = self.info_about_input(path)["height"]
+            pos_y = output_height - tile["pos_y"] - tile_height
+
+            # Add input path and make sure inputs origin is 0, 0
+            args.append(path)
+            args.append("--origin +0+0")
+            # Swap to have input as foreground
+            args.append("--swap")
+            # Paste foreground to background
+            args.append("--paste +{}+{}".format(pos_x, pos_y))
 
         args.append("-o")
         args.append(output_path)
@@ -259,3 +306,47 @@ class PypeTileAssembler(DeadlinePlugin):
         ffmpeg_args.append("\"{}\"".format(output_path))
 
         return ffmpeg_args
+
+    def info_about_input(self, input_path):
+        args = [self.render_executable(), "--info:format=xml", input_path]
+        popen = subprocess.Popen(
+            " ".join(args),
+            shell=True,
+            stdout=subprocess.PIPE
+        )
+        popen_output = popen.communicate()[0].replace(b"\r\n", b"")
+
+        xmldoc = minidom.parseString(popen_output)
+        image_spec = None
+        for main_child in xmldoc.childNodes:
+            if main_child.nodeName.lower() == "imagespec":
+                image_spec = main_child
+                break
+
+        info = {}
+        if not image_spec:
+            return info
+
+        def child_check(node):
+            if len(node.childNodes) != 1:
+                self.FailRender((
+                    "Implementation BUG. Node {} has more children than 1"
+                ).format(node.nodeName))
+
+        for child in image_spec.childNodes:
+            if child.nodeName in LIST_KEYS:
+                values = []
+                for node in child.childNodes:
+                    child_check(node)
+                    values.append(node.childNodes[0].nodeValue)
+
+                info[child.nodeName] = values
+
+            elif child.nodeName in INT_KEYS:
+                child_check(child)
+                info[child.nodeName] = int(child.childNodes[0].nodeValue)
+
+            else:
+                child_check(child)
+                info[child.nodeName] = child.childNodes[0].nodeValue
+        return info
