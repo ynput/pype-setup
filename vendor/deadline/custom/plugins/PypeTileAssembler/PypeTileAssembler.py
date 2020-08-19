@@ -141,6 +141,7 @@ class PypeTileAssembler(DeadlinePlugin):
             tile_info, output_file)
         self.LogInfo(
             "Using arguments: {}".format(" ".join(arguments)))
+        self.tiles = tile_info
         return " ".join(arguments)
 
     def process_path(self, filepath):
@@ -173,7 +174,22 @@ class PypeTileAssembler(DeadlinePlugin):
             os.chmod(self.config_file, os.stat(self.config_file).st_mode)
 
     def post_render_tasks(self):
-        """Print job finished."""
+        """Cleanup tiles if required."""
+        if self.GetBooleanPluginInfoEntryWithDefault("CleanupTiles", False):
+            self.LogInfo("Cleaning up Tiles...")
+            for tile in self.tiles:
+                try:
+                    self.LogInfo("Deleting: {}".format(tile["filepath"]))
+                    os.remove(tile["filepath"])
+                    # By this time we would have errored out
+                    # if error on missing was enabled
+                except KeyError:
+                    pass
+                except OSError:
+                    self.LogInfo("Failed to delete: {}".format(
+                        tile["filepath"]))
+                    pass
+
         self.LogInfo("Pype Tile Assembler Job finished.")
 
     def handle_stdout_error(self):
