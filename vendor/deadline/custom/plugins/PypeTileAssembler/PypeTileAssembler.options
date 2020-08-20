@@ -24,3 +24,12 @@ Label=Cleanup Tiles
 Required=false
 DisableIfBlank=true
 Description=If enabled, the Pype Tile Assembler will cleanup all tiles after assembly.
+
+[Renderer]
+Type=string
+Label=Renderer
+Category=Quicktime Info
+Index=0
+Description=Renderer name
+Required=false
+DisableIfBlank=true

@@ -62,7 +62,8 @@ class PypeTileAssembler(DeadlinePlugin):
         """Initialization."""
         self.SingleFramesOnly = True
         self.StdoutHandling = True
-
+        self.renderer = self.GetPluginInfoEntryWithDefault(
+            "Renderer", "undefined")
         self.AddStdoutHandlerCallback(
             ".*Error.*").HandleCallback += self.handle_stdout_error
 
@@ -236,7 +237,10 @@ class PypeTileAssembler(DeadlinePlugin):
             path = tile["filepath"]
             pos_x = tile["pos_x"]
             tile_height = self.info_about_input(path)["height"]
-            pos_y = output_height - tile["pos_y"] - tile_height
+            if self.renderer == "vray":
+                pos_y = tile["pos_y"]
+            else:
+                pos_y = output_height - tile["pos_y"] - tile_height
 
             # Add input path and make sure inputs origin is 0, 0
             args.append(path)
