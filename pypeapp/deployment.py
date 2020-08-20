@@ -385,8 +385,8 @@ class Deployment(object):
         import git
         # get tag
         repo = git.Git(path)
-        rtag = repo.describe('--tags')
-        if rtag != tag:
+        rtags = repo.tag('--points-at', 'HEAD').splitlines()
+        if tag not in rtags:
             return False
         return True
 
