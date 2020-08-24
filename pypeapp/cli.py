@@ -124,6 +124,14 @@ def mongodb():
 
 
 @main.command()
+def configuration():
+    """
+    This will launch local mongodb server. Useful for development.
+    """
+    PypeLauncher().launch_config_gui()
+
+
+@main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("--ftrack-url", envvar="FTRACK_SERVER",
               help="Ftrack server url")
