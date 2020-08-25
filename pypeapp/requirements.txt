@@ -68,3 +68,4 @@ xlib==0.21
 zope.interface==5.1.0
 dnspython==1.16.0
 psd-tools==1.9.15
+wsrpc-aiohttp==3.0.1
