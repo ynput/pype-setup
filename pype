@@ -795,6 +795,8 @@ main () {
       return 1
     fi
     upgrade_pip || return 1
+    echo -e "${BIYellow}*** Warning:${RST} This will upgrade all packages to latest available versions."
+    echo -e "${BIYellow}***${RST} Pype can be broken as it has potential to introduce incompatibilities."
     pip3 list --format freeze | sed 's/==.*$//g' | xargs pip3 install -U
     return 0
   fi
