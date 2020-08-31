@@ -361,3 +361,15 @@ def validate_config():
     """
 
     PypeLauncher().validate_jsons()
+
+
+@main.command()
+def update_environment():
+    """
+    Update packages in virtual environment.
+
+    This will update all outdated packages in virtual environment. Afterward
+    you might want to run `pype update-requirements` to bake new environment.
+    """
+    # This is implemented purely in shell script
+    pass

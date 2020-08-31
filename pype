@@ -49,6 +49,7 @@ f_validate=0
 f_force=0
 f_mongodb=0
 f_update=0
+f_updateEnv=0
 f_clean=0
 f_macIcons=0
 f_localize=0
@@ -89,6 +90,9 @@ while :; do
       ;;
     update-requirements)
       f_update=1
+      ;;
+    update-environment)
+      f_updateEnv=1
       ;;
     clean)
       f_clean=1
@@ -772,7 +776,9 @@ main () {
   else
     echo -e "${BIGreen}FOUND${RST} - [${BIWhite} $PYPE_ENV ${RST}]"
     activate_venv $PYPE_ENV || return 1
-    check_environment || return 1
+    if [ "$f_update" == 1 ] || [ "$f_updateEnv" == 1 ] ; then
+      check_environment || return 1
+    fi
   fi
 
   if [ "$f_install" == 1 ] ; then
@@ -782,7 +788,18 @@ main () {
     return 0
   fi
 
-  # Update
+  # Update virtual environment packages
+  if [ "$f_updateEnv" == 1 ] ; then
+    if [ "$_offline" == 1 ] ; then
+      echo -e "${BIRed}!!!${RST} This can be run only when connected to Internet."
+      return 1
+    fi
+    upgrade_pip || return 1
+    pip3 list --format freeze | sed 's/==.*$//g' | xargs pip3 install -U
+    return 0
+  fi
+
+  # Update requirements.txt
   if [ "$f_update" == 1 ] ; then
     update_requirements || return 1
     return 0

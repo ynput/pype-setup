@@ -94,6 +94,9 @@ if($arguments -eq "mongodb") {
 if($arguments -eq "update-requirements") {
   $update=$true
 }
+if($arguments -eq "update-environment") {
+  $updateEnv=$true
+}
 if($arguments -eq "clean") {
   $clean=$true
 }
@@ -653,7 +656,10 @@ if ($needToInstall -eq $true) {
 } else {
   Log-Msg -Text "FOUND", " - [ ", $env:PYPE_ENV, " ]" -Color Green, Gray, White, Gray
   Activate-Venv -Environment $env:PYPE_ENV
-  Check-Environment
+  if ($update -ne $true -and $updateEnv -ne $true) {
+      Check-Environment
+  }
+
   # Upgrade-pip
 }
 if ($install -eq $true) {
@@ -664,7 +670,22 @@ if ($install -eq $true) {
   ExitWithCode 0
 }
 
-# Update
+# Update virtual environment packages
+if ($updateEnv -eq $true) {
+  if ($script:offline -eq $true)
+  {
+    Log-Msg -Text "!!! ", "This can be run only when connected to Internet." -Color Red, Yellow
+    ExitWithCode 1
+  }
+  Upgrade-pip
+  Log-Msg -Text "*** Warning: ", "This will upgrade all packages to latest available versions." -Color Yellow, White
+  Log-Msg -Text "*** ", "Pype can be broken as it has potential to introduce incompatibilities." -Color Yellow, White
+  pip list --outdated --format=freeze | %{$_.split('==')[0]} | %{pip install --upgrade $_}
+  Deactivate-Venv
+  ExitWithCode 0
+}
+
+# Update requirements.txt
 if ($update -eq $true) {
   Update-Requirements
   Deactivate-Venv
