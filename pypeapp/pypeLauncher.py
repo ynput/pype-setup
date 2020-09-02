@@ -577,6 +577,7 @@ class PypeLauncher(object):
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
 
     def run_shell(self):
+        """Run shell applications."""
         from pypeapp.lib.Terminal import Terminal
         from pypeapp import execute
 
@@ -584,7 +585,7 @@ class PypeLauncher(object):
         t = Terminal()
         t.echo(">>> Running pype shell ...")
         if sys.platform == 'win32':
-            execute(['powershell'], shell=True)
+            execute(['powershell', '-NoLogo'])
         else:
             execute(['bash'])
 
