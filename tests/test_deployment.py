@@ -14,7 +14,7 @@ class TestDeployment(object):
     """
 
     _valid_deploy_data = {
-        "PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+        "PYPE_CONFIG": "{PYPE_SETUP_PATH}/repos/pype-config",
         "init_env": ["global"],
         "repositories": [
             {
@@ -32,7 +32,7 @@ class TestDeployment(object):
 
     # missing required url
     _invalid_deploy_data = {
-        "PYPE_CONFIG": "{PYPE_ROOT}/repos/pype-config",
+        "PYPE_CONFIG": "{PYPE_SETUP_PATH}/repos/pype-config",
         "init_env": ["global"],
         "repositories": [
             {
@@ -85,7 +85,7 @@ class TestDeployment(object):
         """
         with pytest.raises(DeployException) as excinfo:
             Deployment('some_invalid_path')
-        assert "PYPE_ROOT" in str(excinfo.value)
+        assert "PYPE_SETUP_PATH" in str(excinfo.value)
 
     def test_read_deployment_file(self, set_path, deploy_file):
         """ Tests if we can read deployment file.
@@ -227,13 +227,15 @@ class TestDeployment(object):
         d = self.setup_deployment(tmp_path, self._valid_deploy_data)
         paths = d.get_environment_data()
         data = self._valid_deploy_data
-        monkeypatch.setitem(os.environ, 'PYPE_ROOT', d._pype_root)
-        pype_config = data.get('PYPE_CONFIG').format(PYPE_ROOT=d._pype_root)
+        monkeypatch.setitem(os.environ, 'PYPE_SETUP_PATH', d._pype_root)
+        pype_config = data.get('PYPE_CONFIG').format(PYPE_SETUP_PATH=d._pype_root)
+        pprint(paths)
         for item in data.get('init_env'):
             path = os.path.join(
                 pype_config, "environments", item + '.json')
             path = os.path.normpath(path)
-            assert any(path in p for p in paths)
+            pprint(path)
+            assert paths[1] in path
 
     def test_deployment_clean(self, tmp_path):
         d = self.setup_deployment(tmp_path)

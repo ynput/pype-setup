@@ -130,9 +130,11 @@ class Terminal:
         """
         T = Terminal
         # if we dont want colors, just print raw message
-        if os.environ.get('PYPE_LOG_NO_COLORS', None) is not None:
+        if os.environ.get('PYPE_LOG_NO_COLORS'):
+            return message
+        else:
             message = re.sub(r'\[(.*)\]', '[ ' + T._SB + T._W +
                              r'\1' + T._RST + ' ]', message)
-        message = T._multiple_replace(message + T._RST, T._sdict)
+            message = T._multiple_replace(message + T._RST, T._sdict)
 
-        return message
+            return message

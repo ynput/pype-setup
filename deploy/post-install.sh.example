@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# This script is addressing issue on mac with Google File Stream.
+# In some cases, if it is not ready during boot it will destroy the link
+# pointing to it, making it into empty directory.
+# This will check if link is still link to directory and if not, it is moved
+# to backup name and recreated. If backup already exists, it is removed.
+
+echo "--- Check Google Drive links ..."
+current_user=$(who -m | awk '{print $1;}')
+root_link_location="/usr/local/pype/root"
+root_cloud_location="/Users/$current_user/Google Drive/My Drive/pypeRoot"
+if [[ -L "$root_link_location" && -d "$root_link_location" ]]; then
+ echo "  - $root_link_location is link, no action needed."
+else
+  if [[ -f "$root_link_location" || -d "$root_link_location" ]]; then
+    if [[ -f "$root_link_location".backup || -d "$root_link_location".backup ]]; then
+      echo "  . backup already exist, removing old ..."
+      rm -rf "$root_link_location".backup
+    fi
+    echo "  - creating backup ..."
+    mv -f "$root_link_location" "$root_link_location".backup
+  fi
+  echo "  - creating new link [ $root_link_location ] -> [ $root_cloud_location ]"
+  ln -s "$root_cloud_location" "$root_link_location"
+fi
+echo "... done"

@@ -12,13 +12,13 @@
 # Print Pype ascii art :)
 art () {
   cat <<-EOF
- ____________  ____      ____  ____________  ____________
-/ \\           \\/\\   \\    /\\   \\/\\           \\/\\           \\
-\\  \\      ---  \\ \\   \\___\\_\\   \\ \\      ---  \\ \\     ------\\
- \\  \\     _____/  \\____     ____\\ \\     _____/  \\    \\___\\
-  \\  \\    \\__/  \\____/ \\    \\__/\\  \\    \\__/  \\  \\    -------\\
-   \\  \\____\\         \\  \\____\\   \\  \\____\\     \\  \\___________\\
-    \\/____/           \\/____/     \\/____/       \\/___________/
+ ____________
+/\\           \\
+\\ \\      ---  \\
+ \\ \\     _____/ ______
+  \\ \\    \\___/ /\\     \\
+   \\ \\____\\    \\ \\_____\\
+    \\/____/     \\/_____/   PYPE Club .
 
 EOF
 }
@@ -29,9 +29,13 @@ THIS=`readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0`
 DIR=`dirname "${THIS}"`
 pushd $DIR > /dev/null
 # Set python interpreter name
-PYTHON="python"
+PYTHON="python3"
 # Set path to environment if not set
-export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
+if [[ "$OSTYPE" =~ ^darwin.* ]]; then
+  export PYPE_ENV=${PYPE_ENV:="/usr/local/pype/pype_env2"}
+else
+  export PYPE_ENV=${PYPE_ENV:="/opt/pype/pype_env2"}
+fi
 # Set debug level if not set
 export PYPE_DEBUG=${PYPE_DEBUG:=0}
 # Process passed arguments
@@ -45,7 +49,10 @@ f_validate=0
 f_force=0
 f_mongodb=0
 f_update=0
-
+f_clean=0
+f_macIcons=0
+f_localize=0
+venv_activated=0
 # Process arguments
 # .
 
@@ -83,6 +90,15 @@ while :; do
     update-requirements)
       f_update=1
       ;;
+    clean)
+      f_clean=1
+      ;;
+    mac-icons)
+      f_macIcons=1
+      ;;
+    localize-bin)
+      f_localize=1
+      ;;
     --)
       shift
       break
@@ -97,24 +113,94 @@ done
 # -----------------------------------------------------------------------------
 # Initialize important environment variables
 
-# Set PYPE_ROOT to path to this script
-export PYPE_ROOT="$(cd $DIR; pwd)"
-# Add PYPE_ROOT to PYTHONPATH if missing
-export PYTHONPATH=${PYTHONPATH:="$PYPE_ROOT/pypeapp"}
-if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT/pypeapp:"* ]]; then
-  export PYTHONPATH="$PYPE_ROOT/pypeapp:$PYTHONPATH"
+# Set PYPE_SETUP_PATH to path to this script
+if [[ -z $PYPE_SETUP_PATH ]]; then
+  export PYPE_SETUP_PATH="$(cd $DIR; pwd)"
 fi
-if [[ ":$PYTHONPATH:" != *":$PYPE_ROOT:"* ]]; then
-  export PYTHONPATH="$PYPE_ROOT:$PYTHONPATH"
+# Add PYPE_SETUP_PATH to PYTHONPATH if missing
+export PYTHONPATH=${PYTHONPATH:="$PYPE_SETUP_PATH/pypeapp"}
+if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_PATH/pypeapp:"* ]]; then
+  export PYTHONPATH="$PYPE_SETUP_PATH/pypeapp:$PYTHONPATH"
 fi
-# add PYPE_ROOT to PATH
-export PATH=${PATH:="$PYPE_ROOT"}
-if [[ ":$PATH:" != *":$PYPE_ROOT:"* ]]; then
-  export PATH="$PYPE_ROOT:$PATH"
+if [[ ":$PYTHONPATH:" != *":$PYPE_SETUP_PATH:"* ]]; then
+  export PYTHONPATH="$PYPE_SETUP_PATH:$PYTHONPATH"
 fi
+# add PYPE_SETUP_PATH to PATH
+export PATH=${PATH:="$PYPE_SETUP_PATH"}
+if [[ ":$PATH:" != *":$PYPE_SETUP_PATH:"* ]]; then
+  export PATH="$PYPE_SETUP_PATH:$PATH"
+fi
+export PATH="$PYPE_SETUP_PATH/vendor/bin/ffmpeg_exec/linux/bin:$PATH"
 
 # Load colors definitions for easy output coloring
-source "$PYPE_ROOT/pypeapp/colors.sh"
+if [[ -z $PYPE_LOG_NO_COLORS ]]; then
+  source "$PYPE_SETUP_PATH/pypeapp/colors.sh"
+fi
+
+
+
+###############################################################################
+# Test if Xcode Command Line tools are installed in MacOS
+###############################################################################
+have_command_line_tools() {
+  [[ -e "/Library/Developer/CommandLineTools/usr/bin/git" ]]
+}
+
+###############################################################################
+# Get command any key from user
+###############################################################################
+getc() {
+  local save_state
+  save_state=$(/bin/stty -g)
+  /bin/stty raw -echo
+  IFS= read -r -n 1 -d '' "$@"
+  /bin/stty "$save_state"
+}
+
+###############################################################################
+# Test if we have access via sudo
+# Used in MacOS
+###############################################################################
+have_sudo_access() {
+  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
+    /usr/bin/sudo -l mkdir &>/dev/null
+    HAVE_SUDO_ACCESS="$?"
+  fi
+
+  if [[ "$HAVE_SUDO_ACCESS" -ne 0 ]]; then
+    echo -e "${BIRed}!!!${RST} Need sudo access on MacOS"
+    return 1
+  fi
+
+  return "$HAVE_SUDO_ACCESS"
+}
+
+###############################################################################
+# Execute command and report failure
+###############################################################################
+execute() {
+  if ! "$@"; then
+    echo -e "${BIRed}!!!${RST} Failed execution of ${BIWhite}[ $@ ]${RST}"
+  fi
+}
+
+###############################################################################
+# Execute command using sudo
+# This is used on MacOS to handle Xcode command line tools installation
+###############################################################################
+execute_sudo() {
+  local -a args=("$@")
+  if [[ -n "${SUDO_ASKPASS-}" ]]; then
+    args=("-A" "${args[@]}")
+  fi
+  if have_sudo_access; then
+    echo -e "${BIGreen}>->${RST} sudo: [${BIWhite} ${args[@]} ${RST}]"
+    execute "/usr/bin/sudo" "${args[@]}"
+  else
+    echo -e "${BIGreen}>->${RST} [${BIWhite} ${args[@]} ${RST}]"
+    execute "${args[@]}"
+  fi
+}
 
 ###############################################################################
 # Display spinner for running job. Job must be running in a background.
@@ -129,21 +215,24 @@ source "$PYPE_ROOT/pypeapp/colors.sh"
 #   None
 ###############################################################################
 spinner () {
-  local pid=$! # Process Id of the previous running command
-  local spin='-\|/'
-  local i=0
-  while kill -0 $pid 2>/dev/null
-  do
-    i=$(( (i+1) %4 ))
-    printf "\r${spin:$i:1}"
-    sleep .1
-  done
+  local pid=$!
+   local delay=0.75
+   local spinstr='|/-\'
+   while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+       local temp=${spinstr#?}
+       printf " [%c]  " "$spinstr"
+       local spinstr=$temp${spinstr%"$temp"}
+       sleep $delay
+       printf "\b\b\b\b\b\b"
+   done
+   printf "    \b\b\b\b"
 }
 
 ###############################################################################
 # Activate virtual environment
 # Globals:
 #   colors
+#   venv_activated
 # Arguments:
 #   environment
 # Returns:
@@ -155,6 +244,25 @@ activate_venv () {
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!!${RST} Failed to activate."
     return 1
+  fi
+  venv_activated=1
+}
+
+##############################################################################
+# Deactivate virtual environment
+# Globals:
+#   colors
+#   venv_activated
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+deactivate_venv () {
+  if [ $venv_activated -eq 1 ] ; then
+    echo -e "${BICyan}<--${RST} Deactivating environment [${BIWhite} $1 ${RST}]"
+    deactivate
+    venv_activated=0
   fi
 }
 
@@ -170,7 +278,7 @@ activate_venv () {
 ###############################################################################
 update_requirements () {
   echo -e "${BICyan}  -${RST} Updating requirements ..."
-  pip freeze > pypeapp/requirements.txt
+  pip3 freeze > pypeapp/requirements.txt
 }
 
 ##############################################################################
@@ -213,7 +321,7 @@ install_environment () {
 # Globals:
 #   colors
 #   f_offline
-#   PYPE_ROOT
+#   PYPE_SETUP_PATH
 # Arguments:
 #   None
 # Returns:
@@ -221,29 +329,43 @@ install_environment () {
 ###############################################################################
 check_environment () {
   echo -e "${IGreen}>>>${RST} Validating environment dependencies ... \c"
-  diff pypeapp/requirements.txt <(pip freeze) > /dev/null
+  $PYTHON "$PYPE_SETUP_PATH/pypeapp/requirements.py"
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}FAILED${RST}"
     echo -e "${BIYellow}***${RST} Environment dependencies inconsistent, fixing ..."
+    test_offline
     if [ "$f_offline" -ne 1 ]; then
-      pip install -r "$PYPE_ROOT/pypeapp/requirements.txt"
+      pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt"
     else
-      pip install -r "$PYPE_ROOT/pypeapp/requirements.txt" --no-index --find-links "$PYPE_ROOT/vendor/packages"
+      pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt" --no-index --find-links "$PYPE_SETUP_PATH/vendor/packages"
     fi
     if [ $? -ne 0 ] ; then
       echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
       return 1
+    fi
+    clean_pyc $PYPE_ENV
+    clean_pyc
+    if [[ $OSTYPE =~ ^darwin.* ]]; then
+      f_macIcons=1
     fi
   else
     echo -e "${BIGreen}OK${RST}"
   fi
 }
 
+##############################################################################
+# Upgrade pip
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
 upgrade_pip () {
   if [ "$f_offline" -ne 1 ] ; then
-    echo -e "${BIGreen}>>>${RST} Updating pip ... \c"
-    pip install --upgrade pip 2> /dev/null &
-    spinner
+    echo -e "${BIGreen}>>>${RST} Updating pip ..."
+    pip3 install --upgrade pip 2> /dev/null
   fi
 }
 
@@ -252,7 +374,7 @@ upgrade_pip () {
 # Globals:
 #   colors
 #   f_offline
-#   PYPE_ROOT
+#   PYPE_SETUP_PATH
 # Arguments:
 #   None
 # Returns:
@@ -266,7 +388,7 @@ bootstrap_pype () {
 
     # install essential dependecies
     echo -e "${BICyan}  -${RST} Installing dependecies ..."
-    pip install -r "$PYPE_ROOT/pypeapp/requirements.txt"
+    pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt"
     if [ $? -ne 0 ] ; then
       echo -e "${BIRed}!!!${RST} Installaton ${BIRed}FAILED${RST}"
       return 1
@@ -274,7 +396,7 @@ bootstrap_pype () {
   else
     # in offline mode, install all from vendor
     echo -e "${BIGreen}>>>${RST} Offline installation ..."
-    pip install -r "$PYPE_ROOT/pypeapp/requirements.txt" --no-index --find-links vendor/packages
+    pip3 install -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt" --no-index --find-links vendor/packages
     if [ $? -ne 0 ] ; then
       echo -e "${BIRed}!!! ${RST} Installation ${BIRed}FAILED${RST}"
       return 1
@@ -296,13 +418,13 @@ bootstrap_pype () {
 ###############################################################################
 deploy_pype () {
   if [ $f_help == 1 ] ; then
-    python -m pypeapp deploy --help
+    $PYTHON -m pypeapp deploy --help
     return 1
   fi
   if [ $f_force == 1 ] ; then
-    python -m pypeapp deploy --force
+    $PYTHON -m pypeapp deploy --force
   else
-    python -m pypeapp deploy
+    $PYTHON -m pypeapp deploy
   fi
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!!${RST} Deployment ${BIRed}FAILED${RST}"
@@ -324,10 +446,10 @@ deploy_pype () {
 ###############################################################################
 validate_pype () {
   if [ "$f_help" == 1 ] ; then
-    python -m pypeapp validate --help
+    $PYTHON -m pypeapp validate --help
     return 1
   fi
-  python -m pypeapp validate
+  $PYTHON -m pypeapp validate
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!! WARNING:${RST} Deployment is invalid."
     echo -e "${BIYellow}  *${RST} Contact your system administrator to resolve this issue."
@@ -366,28 +488,46 @@ detect_mongo () {
 #   None
 ###############################################################################
 detect_python () {
-  echo -e "${BIGreen}>>>${RST} looking for ${BIWhite}[ python ]${RST} ... \c"
-  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
-  # Parse version string
-  local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
-  local python_version="$(python <<< ${version_command})"
-  oIFS="$IFS"
-  IFS=.
-  set -- $python_version
-  IFS="$oIFS"
-  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    echo -e "${BIGreen}$1.$2${RST}"
-  else
-    # Python is old, but maybe we have newer just not symlinked to `python`
-    PYTHON="python3.6"
-    command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
-    # If so, change python interpreter name
+  # override Python interpreter if needed
+  if [[ -z $PYPE_PYTHON_EXE ]]; then
+    echo -e "${BIGreen}>>>${RST} looking for ${BIWhite}[ python ]${RST} ... \c"
+    command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
+    # Parse version string
+    local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
     local python_version="$($PYTHON <<< ${version_command})"
+    export PYTHON_VERSION=$python_version
     oIFS="$IFS"
     IFS=.
     set -- $python_version
     IFS="$oIFS"
-    echo -e "${BIGreen}$1.$2${RST}"
+    if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
+      echo -e "${BIGreen}$1.$2${RST}"
+    else
+      # Python is old, but maybe we have newer just not symlinked to `python`
+      PYTHON="python3.6"
+      command -v $PYTHON >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+      # If so, change python interpreter name
+      local python_version="$($PYTHON <<< ${version_command})"
+      oIFS="$IFS"
+      IFS=.
+      set -- $python_version
+      IFS="$oIFS"
+      echo -e "${BIGreen}$1.$2${RST}"
+    fi
+  else
+    echo -e "${BIYellow}>>>${RST} Forced using python at [ ${BIWhite}[ $PYPE_PYTHON_EXE ]${RST} ... \c"
+    local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
+    local python_version="$($PYPE_PYTHON_EXE <<< ${version_command})"
+    oIFS="$IFS"
+    IFS=.
+    set -- $python_version
+    IFS="$oIFS"
+    if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
+      echo -e "${BIGreen}$1.$2${RST}"
+      PYTHON=$PYPE_PYTHON_EXE
+    else
+      command -v $PYPE_PYTHON_EXE >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    fi
   fi
 }
 
@@ -419,7 +559,11 @@ detect_git () {
 ###############################################################################
 test_offline () {
   echo -e "${BIGreen}>>>${RST} Testing if we are online ... \c"
-  ping -q -w1 -c1 google.com &> /dev/null || { echo -e "${BIYellow}OFFLINE${RST}"; $f_offline=1; return 1; }
+  local wait="-w1"
+  if [[ "$OSTYPE" =~ ^darwin.* ]]; then
+    local wait="-W1"
+  fi
+  ping -q ${wait} -c1 8.8.8.8 &> /dev/null || { echo -e "${BIYellow}OFFLINE${RST}"; f_offline=1; return 1; }
   echo -e "${BIGreen}ONLINE${RST}"
 }
 
@@ -435,15 +579,44 @@ test_offline () {
 ###############################################################################
 download () {
   echo -e "${IGreen}>>>${RST} Downloading packages for offline installation ..."
-  python -m pip download -r "$PYPE_ROOT/pypeapp/requirements.txt" -d "$PYPE_ROOT/vendor/packages"
+  $PYTHON -m pip download -r "$PYPE_SETUP_PATH/pypeapp/requirements.txt" -d "$PYPE_SETUP_PATH/vendor/packages"
   if [ $? -ne 0 ] ; then
     echo -e "${BIYellow}!!!${RST} Download failed"
     return 1
   fi
-  echo -e "${ICyan}<--${RST} Deactivating environment ..."
-  deactivate 2>&1 > /dev/null
-  echo -e "${IPurple}xxx${RST} Terminating ..."
   return 0
+}
+
+##############################################################################
+# Copy vendor/bin to local pype env
+# Globals:
+#   PYPE_ENV
+#   PYPE_SETUP_PATH
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+localize_bin () {
+  echo -e "${IGreen}>>>${RST} Localizing [ ${BIWhite}vendor/bin${RST} ] ..."
+  mkdir -p $PYPE_ENV/localized
+  cp -aR $PYPE_SETUP_PATH/vendor/bin/* $PYPE_ENV/localized/
+}
+
+##############################################################################
+# Clean pyc files in specified directory
+# Globals:
+#   None
+# Arguments:
+#   Optional path to clean
+# Returns:
+#   None
+###############################################################################
+clean_pyc () {
+  path=${1:-$PYPE_SETUP_PATH}
+  echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
+  find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+  echo -e "${BIGreen}DONE${RST}"
 }
 
 # -----------------------------------------------------------------------------
@@ -453,6 +626,14 @@ download () {
 main () {
   art
   echo -e "${IGreen}***${RST} Welcome to ${BIWhite}Pype${RST}!"
+
+  # Clean pyc
+  if [ "$f_clean" == 1 ] ; then
+    clean_pyc
+    echo -e "${ICyan}<<<${RST} Terminating ${IWhite}Pype${RST} ..."
+    return 0
+  fi
+
   # Check invalid argument combination
   if [ "$f_deploy" == 1 ] ; then
     if [ "$f_offline" == 1 ] ; then
@@ -502,14 +683,92 @@ main () {
       fi
       test_offline
 
+      if [[ $OSTYPE =~ ^darwin.* ]]; then
+        if ! have_command_line_tools; then
+          echo -e "${BIYellow}>>>${RST} We need to install ${IWhite}Xcode Command Line Tools${RST}"
+          if [ "$_offline" == 1 ] ; then
+            echo -e "${BIRed}!!!${RST} but you are offline, so we cannot download it. Install it manually or go online and try again"
+            return 1
+          fi
+          echo -e "${IGreen}>>>${RST} Searching online for the Command Line Tools"
+          # This is taken and modified from Homebrew installation script.
+          # All credits should go there.
+          # It seems that we need Xcode command line tools to install dependencies
+          # via pip on MacOS, like Pillow, etc. Also we need to use them to set
+          # few things on newer systems (like 10.14 and 10.15) to point to corrent
+          # location of various header files (zlib, ...)
+          #
+          # This temporary file prompts the 'softwareupdate' utility to list the Command Line Tools
+          clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+          execute_sudo "/usr/bin/touch" "$clt_placeholder"
+
+          clt_label_command="/usr/sbin/softwareupdate -l |
+                              grep -B 1 -E 'Command Line Tools' |
+                              awk -F'*' '/^ *\\*/ {print \$2}' |
+                              sed -e 's/^ *Label: //' -e 's/^ *//' |
+                              sort -V |
+                              tail -n1"
+          clt_label="$(chomp "$(/bin/bash -c "$clt_label_command")")"
+
+          if [[ -n "$clt_label" ]]; then
+            echo -e "${IGreen}>>>${RST} Installing $clt_label"
+            execute_sudo "/usr/sbin/softwareupdate" "-i" "$clt_label"
+            execute_sudo "/bin/rm" "-f" "$clt_placeholder"
+            execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
+          fi
+        else
+          echo -e "${IGreen}>>>${RST} Fixing SDK paths ..."
+          export CPATH=`xcrun --show-sdk-path`/usr/include
+        fi
+        # Headless install may have failed, so fallback to original 'xcode-select' method
+        if ! have_command_line_tools && test -t 0; then
+          echo -e "${IGreen}>>>${RST} Installing the Command Line Tools (expect a GUI popup):"
+          execute_sudo "/usr/bin/xcode-select" "--install"
+          echo -e "${BIPurple}___${RST} Press any key when the installation has completed."
+          getc
+          execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
+        fi
+
+        if ! output="$(/usr/bin/xcrun clang 2>&1)" && [[ "$output" == *"license"* ]]; then
+          echo -e "${BIRed}!!! WARNING:${RST} You have not agreed to the Xcode license."
+          echo -e "${BIYellow}  *${RST} Before running the installer again please agree to the license by opening"
+          echo -e "${BIYellow}  *${RST} ${UCyan}Xcode.app${RST} or running: ${BIWhite}sudo xcodebuild -license${RST}"
+          return 1
+        fi
+        # set icons on Mac
+        echo -e "${IGreen}>>>${RST} Setting icon on Pype files ..."
+        for i in $PYPE_SETUP_PATH/launchers/*.command; do
+          [ -f "$i" ] || break
+          $PYPE_SETUP_PATH/vendor/fileicon.sh set $i $PYPE_SETUP_PATH/pypeapp/pype.icns
+        done
+        $PYPE_SETUP_PATH/vendor/fileicon.sh set $PYPE_SETUP_PATH/pype $PYPE_SETUP_PATH/pypeapp/pype.icns
+
+      fi
+
       # install environment
       install_environment || return 1
 
       # activate environment
       activate_venv $PYPE_ENV || return 1
 
+      # install wheel as it is sometimes missing in default venv
+      echo -e "${IGreen}>>>${RST} Installing wheel ..."
+      if [ "$_offline" == 1 ] ; then
+        pip3 install wheel --no-index --find-links "$PYPE_SETUP_PATH/vendor/packages" 2> /dev/null
+      else
+        pip3 install wheel 2> /dev/null
+      fi
+
       # bootstrap pype
       bootstrap_pype || return 1
+
+      if [[ $OSTYPE =~ ^darwin.* ]]; then
+        echo -e "${IGreen}>>>${RST} Fixing file permissions ...\c"
+        current_sudo_user=$(who -m | awk '{print $1;}')
+        execute_sudo chown -R $current_sudo_user $PYPE_ENV
+        execute_sudo chown -R $current_sudo_user "/Users/$current_sudo_user/Library/Caches/pip"
+        echo -e "${BIGreen}DONE${RST}"
+      fi
   else
     echo -e "${BIGreen}FOUND${RST} - [${BIWhite} $PYPE_ENV ${RST}]"
     activate_venv $PYPE_ENV || return 1
@@ -517,6 +776,8 @@ main () {
   fi
 
   if [ "$f_install" == 1 ] ; then
+    echo -e "${IGreen}>>>${RST} Checking for and running any post-installation scripts ..."
+    find "$PYPE_SETUP_PATH/deploy" -name 'post-install.sh' -print0 | xargs -0 bash -c
     echo -e "${IGreen}***${RST} Installation complete. ${IWhite}Have a nice day!${RST}"
     return 0
   fi
@@ -524,7 +785,6 @@ main () {
   # Update
   if [ "$f_update" == 1 ] ; then
     update_requirements || return 1
-    deactivate
     return 0
   fi
 
@@ -541,6 +801,7 @@ main () {
     echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
     validate_pype || return 1
     echo -e "${BIGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+    return
   fi
 
   # Deploy
@@ -561,14 +822,37 @@ main () {
     echo -e "${IGreen}>>>${RST} Validating ${BIWhite}Pype${RST} deployment ..."
     validate_pype || return 1
     echo -e "${BIGreen}>>>${RST} Deployment is ${BIGreen}OK${RST}"
+    localize_bin || return 1
     return
   fi
 
+  # Localize binaries
+  if [ "$f_localize" == 1 ] ; then
+    localize_bin || return 1
+    return
+  fi
+
+  if [ "$f_macIcons" == 1 ] ; then
+    if [[ $OSTYPE =~ ^darwin.* ]]; then
+      echo -e "${IGreen}>>>${RST} Setting icon on Pype files ..."
+      for i in $PYPE_SETUP_PATH/launchers/*.command; do
+        [ -f "$i" ] || break
+        $PYPE_SETUP_PATH/vendor/fileicon.sh set $i $PYPE_SETUP_PATH/pypeapp/pype.icns
+      done
+      $PYPE_SETUP_PATH/vendor/fileicon.sh set $PYPE_SETUP_PATH/pype $PYPE_SETUP_PATH/pypeapp/pype.icns
+    else
+      echo -e "${BIYellow}***${RST} ${Yellow}Setting files icon can be done only on mac.${RST}"
+    fi
+  fi
+
+  echo -e "${IGreen}>>>${RST} Checking for and running any pre run scripts ..."
+  find "$PYPE_SETUP_PATH/deploy" -name 'pre-run.sh' -print0 | xargs -0 bash -c
   echo -e "${IGreen}>>>${RST} Running ${IWhite}Pype${RST} ..."
-  python -m pypeapp $args
-  echo -e "${ICyan}<--${RST} Deactivating environment ..."
-  deactivate 2>&1 > /dev/null
+  $PYTHON -m pypeapp $args || return $?
   echo -e "${IPurple}xxx${RST} Finishing up. ${IWhite}Have a nice day!${RST}"
 }
 
-main "$args"
+return_code=0
+main "$args" || return_code=$?
+deactivate_venv $PYPE_ENV
+exit $return_code
