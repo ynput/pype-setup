@@ -39,6 +39,11 @@
 	  "google_id": "1YmKxmJcJ9Bp_mPuHtLtCI-GsezxWUTdJ",
 	  "archive_type": "zip",
 	  "skip_first_subfolder": true
-	}
+    }, {
+	  "extract_path": "vendor/bin/oiiotool",
+	  "google_id": "1U1kMJO_mcqPBxfi2CMYgKBfnzal7Pj-h",
+	  "archive_type": "zip",
+	  "skip_first_subfolder": true
+    }
   ]
 }
