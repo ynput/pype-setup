@@ -32,6 +32,14 @@ from .mongo import (
     get_default_components
 )
 
+# By default is mongo loggind enabled
+_mongo_logging = True
+mongo_log_enable = os.environ.get("PYPE_LOG_MONGO_ENABLED")
+if mongo_log_enable is not None:
+    mongo_log_enable = mongo_log_enable.lower()
+    if mongo_log_enable in ("false", "0", "no"):
+        _mongo_logging = False
+
 try:
     import log4mongo
     from log4mongo.handlers import MongoHandler
