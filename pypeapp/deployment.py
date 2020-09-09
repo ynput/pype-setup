@@ -221,7 +221,7 @@ class Deployment(object):
                     "Repo on path [ {} ] is bare".format(test_path), 300)
 
             # check origin
-            if not self._validate_origin(test_path, ritem.get('url')):
+            if not self._validate_origin(test_path, os.path.expandvars(ritem.get('url'))):
                 raise DeployException(
                     "Repo {} origin {} should be {}.".format(
                         test_path,
@@ -432,7 +432,7 @@ class Deployment(object):
             # clone repo
             try:
                 git.Repo.clone_from(
-                    repo.get('url'),
+                    os.path.expandvars(repo.get('url')),
                     path,
                     progress=_GitProgress(),
                     env=None,
@@ -500,7 +500,7 @@ class Deployment(object):
         term.echo(">>> Deploying repositories ...")
         for ritem in deploy.get('repositories'):
             path = os.path.join(
-                self._pype_root, "repos", ritem.get('name'))
+                self._pype_root, "repos", os.path.expandvars(ritem.get('name')))
 
             term.echo(" -- processing [ {} / {} ]".format(
                 ritem.get('name'), ritem.get('branch') or ritem.get('tag')))
@@ -516,7 +516,7 @@ class Deployment(object):
                     # dir is repository
                     repo = git.Repo(path)
                     # is it right one?
-                    if not self._validate_origin(path, str(ritem.get('url'))):
+                    if not self._validate_origin(path, os.path.expandvars(str(ritem.get('url')))):
                         # repository has different origin then specified
                         term.echo("!!! repository has different origin. ")
                         if (self._validate_is_dirty(path) is True and
@@ -569,7 +569,7 @@ class Deployment(object):
                 # path doesn't exist, clone
                 try:
                     git.Repo.clone_from(
-                        ritem.get('url'),
+                        os.path.expandvars(ritem.get('url')),
                         path,
                         progress=_GitProgress(),
                         env=None,

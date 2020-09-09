@@ -170,14 +170,14 @@ class Anatomy:
 
         output = set()
         if isinstance(data, dict):
-            for key, value in data.items():
-                if isinstance(value, dict):
-                    for root in self._root_keys_from_templates(value):
-                        output.add(root)
+            for value in data.values():
+                for root in self._root_keys_from_templates(value):
+                    output.add(root)
 
-                elif isinstance(value, str):
-                    for group in re.findall(self.root_key_regex, value):
-                        output.add(group)
+        elif isinstance(data, str):
+            for group in re.findall(self.root_key_regex, data):
+                output.add(group)
+
         return output
 
     def root_value_for_template(self, template):
