@@ -47,8 +47,6 @@ try:
     MONGO_PROCESS_ID = ObjectId()
 except ImportError:
     _mongo_logging = False
-else:
-    _mongo_logging = True
 
 try:
     unicode
