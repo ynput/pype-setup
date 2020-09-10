@@ -4,7 +4,7 @@
   "repositories": [{
       "name": "avalon-core",
       "url": "https://github.com/pypeclub/avalon-core.git",
-      "tag": "2.11.5-pype"
+      "tag": "2.11.7-pype"
     },
     {
       "name": "avalon-launcher",
@@ -24,7 +24,7 @@
     {
       "name": "pype",
       "url": "https://github.com/pypeclub/pype.git",
-      "tag": "2.11.5"
+      "tag": "2.11.8"
     },
     {
       "name": "pype-config",
