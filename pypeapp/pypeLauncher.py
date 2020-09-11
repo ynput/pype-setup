@@ -294,7 +294,7 @@ class PypeLauncher(object):
         ] + args)
         return returncode
 
-    def launch_config_gui(self):
+    def launch_config_gui(self, develop):
         from pypeapp import execute
         self._initialize()
 
@@ -304,9 +304,10 @@ class PypeLauncher(object):
         ]
         fname = os.path.sep.join(items)
 
-        returncode = execute([
-            sys.executable, "-u", fname
-        ])
+        args = [sys.executable, "-u", fname]
+        if develop:
+            args.append("-dev")
+        returncode = execute(args)
         return returncode
 
     def install(self, force):
