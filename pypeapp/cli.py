@@ -125,11 +125,11 @@ def mongodb():
 
 @main.command()
 @click.option("-dev", "--develop", is_flag=True, help="Adds develop buttons.")
-def configuration(develop):
+def settings(develop):
     """
     This will launch local mongodb server. Useful for development.
     """
-    PypeLauncher().launch_config_gui(develop)
+    PypeLauncher().launch_settings_gui(develop)
 
 
 @main.command()

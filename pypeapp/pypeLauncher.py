@@ -294,13 +294,13 @@ class PypeLauncher(object):
         ] + args)
         return returncode
 
-    def launch_config_gui(self, develop):
+    def launch_settings_gui(self, develop):
         from pypeapp import execute
         self._initialize()
 
         pype_setup = os.getenv('PYPE_SETUP_PATH')
         items = [
-            pype_setup, "repos", "pype", "pype", "tools", "config_setting"
+            pype_setup, "repos", "pype", "pype", "tools", "settings"
         ]
         fname = os.path.sep.join(items)
 
