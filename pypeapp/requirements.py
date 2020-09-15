@@ -10,7 +10,7 @@ import os
 
 # get pip installed packages
 installed_req = subprocess.check_output(
-    [sys.executable, '-m', 'pip', 'freeze'])
+    [sys.executable, '-m', 'pip', 'freeze', '--all'])
 
 # fix encoding, make all lowercase and get it as list
 installed_req = installed_req.decode(sys.getfilesystemencoding())
