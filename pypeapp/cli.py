@@ -124,7 +124,7 @@ def mongodb():
 
 
 @main.command()
-@click.option("-dev", "--develop", is_flag=True, help="Adds develop buttons.")
+@click.option("-d", "--develop", is_flag=True, help="Adds develop buttons.")
 def settings(develop):
     """
     This will launch local mongodb server. Useful for development.
