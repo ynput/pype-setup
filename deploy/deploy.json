@@ -7,11 +7,6 @@
       "tag": "2.12.0-pype"
     },
     {
-      "name": "avalon-launcher",
-      "url": "https://github.com/pypeclub/avalon-launcher.git",
-      "branch": "master"
-    },
-    {
       "name": "pyblish-base",
       "url": "https://github.com/pyblish/pyblish-base.git",
       "branch": "master"
