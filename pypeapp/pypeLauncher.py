@@ -306,7 +306,7 @@ class PypeLauncher(object):
 
         args = [sys.executable, "-u", fname]
         if develop:
-            args.append("-dev")
+            args.append("--develop")
         returncode = execute(args)
         return returncode
 
