@@ -294,6 +294,22 @@ class PypeLauncher(object):
         ] + args)
         return returncode
 
+    def launch_settings_gui(self, develop):
+        from pypeapp import execute
+        self._initialize()
+
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
+        items = [
+            pype_setup, "repos", "pype", "pype", "tools", "settings"
+        ]
+        fname = os.path.sep.join(items)
+
+        args = [sys.executable, "-u", fname]
+        if develop:
+            args.append("--develop")
+        returncode = execute(args)
+        return returncode
+
     def install(self, force):
         """Run venv installation process.
 
