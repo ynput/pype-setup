@@ -592,6 +592,19 @@ class PypeLauncher(object):
         t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
 
+    def run_shell(self):
+        """Run shell applications."""
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp import execute
+
+        self._initialize()
+        t = Terminal()
+        t.echo(">>> Running pype shell ...")
+        if sys.platform == 'win32':
+            execute(['powershell', '-NoLogo'])
+        else:
+            execute(['bash'])
+
     def run_application(self, app, project, asset, task, tools, arguments):
         """Run application in project/asset/task context.
 

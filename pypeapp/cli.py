@@ -370,3 +370,11 @@ def validate_config():
     """
 
     PypeLauncher().validate_jsons()
+
+
+@main.command()
+def shell():
+    """
+    This will exit to shell but with all basic environment set
+    """
+    PypeLauncher().run_shell()
