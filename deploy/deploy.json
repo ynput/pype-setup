@@ -4,7 +4,7 @@
   "repositories": [{
       "name": "avalon-core",
       "url": "https://github.com/pypeclub/avalon-core.git",
-      "tag": "2.12.5-pype"
+      "tag": "2.13.0-pype"
     },
     {
       "name": "pyblish-base",
@@ -19,12 +19,12 @@
     {
       "name": "pype",
       "url": "https://github.com/pypeclub/pype.git",
-      "tag": "2.12.5"
+      "tag": "2.13.0"
     },
     {
       "name": "pype-config",
       "url": "https://github.com/pypeclub/pype-config.git",
-      "tag": "2.12.3"
+      "tag": "2.13.0"
     }
   ],
   "pip": [],
