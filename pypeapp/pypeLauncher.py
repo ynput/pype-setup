@@ -294,6 +294,22 @@ class PypeLauncher(object):
         ] + args)
         return returncode
 
+    def launch_settings_gui(self, develop):
+        from pypeapp import execute
+        self._initialize()
+
+        pype_setup = os.getenv('PYPE_SETUP_PATH')
+        items = [
+            pype_setup, "repos", "pype", "pype", "tools", "settings"
+        ]
+        fname = os.path.sep.join(items)
+
+        args = [sys.executable, "-u", fname]
+        if develop:
+            args.append("--develop")
+        returncode = execute(args)
+        return returncode
+
     def install(self, force):
         """Run venv installation process.
 
@@ -575,6 +591,19 @@ class PypeLauncher(object):
         t.echo(">>> Done. Documentation id generated:")
         t.echo("*** For pype-setup: [ {} ]".format(build_dir_setup))
         t.echo("*** For pype: [ {} ]".format(build_dir_pype))
+
+    def run_shell(self):
+        """Run shell applications."""
+        from pypeapp.lib.Terminal import Terminal
+        from pypeapp import execute
+
+        self._initialize()
+        t = Terminal()
+        t.echo(">>> Running pype shell ...")
+        if sys.platform == 'win32':
+            execute(['powershell', '-NoLogo'])
+        else:
+            execute(['bash'])
 
     def run_application(self, app, project, asset, task, tools, arguments):
         """Run application in project/asset/task context.

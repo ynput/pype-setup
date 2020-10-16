@@ -124,6 +124,15 @@ def mongodb():
 
 
 @main.command()
+@click.option("-d", "--develop", is_flag=True, help="Adds develop buttons.")
+def settings(develop):
+    """
+    This will launch local mongodb server. Useful for development.
+    """
+    PypeLauncher().launch_settings_gui(develop)
+
+
+@main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("--ftrack-url", envvar="FTRACK_SERVER",
               help="Ftrack server url")
@@ -361,3 +370,11 @@ def validate_config():
     """
 
     PypeLauncher().validate_jsons()
+
+
+@main.command()
+def shell():
+    """
+    This will exit to shell but with all basic environment set
+    """
+    PypeLauncher().run_shell()
