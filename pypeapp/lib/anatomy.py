@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import site
 import copy
 import platform
 import collections
@@ -14,6 +15,11 @@ from . import config
 from .log import PypeLogger
 
 try:
+    # Add venv site-packages to site dirs. On linux distributions this
+    # may not happen for `ruamel.yaml` module automatically.
+    site_packages_path = os.getenv("PYPE_SITE_PACKAGES")
+    if site_packages_path:
+        site.addsitedir(site_packages_path)
     import ruamel.yaml as yaml
 except ImportError:
     print("yaml module wasn't found, skipping anatomy")
