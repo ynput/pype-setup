@@ -24,7 +24,7 @@
     {
       "name": "pype-config",
       "url": "https://github.com/pypeclub/pype-config.git",
-      "tag": "2.13.0"
+      "tag": "2.13.4"
     }
   ],
   "pip": [],
