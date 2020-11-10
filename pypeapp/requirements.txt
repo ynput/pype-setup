@@ -24,6 +24,7 @@ jsonschema==2.6.0
 log4mongo==1.7.0
 MarkupSafe==1.1.0
 more-itertools==6.0.0
+numpy==1.19.3
 OpenTimelineIO==0.10.0
 packaging==19.0
 pathlib2==2.3.5
