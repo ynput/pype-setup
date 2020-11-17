@@ -1463,7 +1463,7 @@ class Roots:
     def set_root_environments(self):
         """Set root environments for current project."""
         for key, value in self.root_environments().items():
-            os.environ[key] = value
+            os.environ[key] = str(value)
 
     def root_environments(self):
         """Use root keys to create unique keys for environment variables.
