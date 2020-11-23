@@ -6,6 +6,14 @@ from .log import PypeLogger
 log = PypeLogger().get_logger(__name__)
 
 
+# Prepare json decode error for `json` module (Maya, Nuke)
+if hasattr(json.decoder, "JSONDecodeError"):
+    # JSONDecodeError is defined since Python 3.5
+    JsonError = json.decoder.JSONDecodeError
+else:
+    JsonError = ValueError
+
+
 def get_datetime_data(datetime_obj=None):
     """Returns current datetime data as dictionary.
 
@@ -115,7 +123,7 @@ def load_json(fpath, first_run=False):
     try:
         return json.loads(standard_json)
 
-    except json.decoder.JSONDecodeError:
+    except JsonError:
         # Return empty dict if it is first time that decode error happened
         if not first_run:
             return {}
@@ -126,7 +134,7 @@ def load_json(fpath, first_run=False):
         with open(fpath, "r") as opened_file:
             json.load(opened_file)
 
-    except json.decoder.JSONDecodeError:
+    except JsonError:
         log.warning(
             "File has invalid json format \"{}\"".format(fpath),
             exc_info=True
