@@ -38,8 +38,8 @@ Pygments==2.3.1
 pymongo==3.7.2
 pynput==1.4
 pyparsing==2.3.1
-PyQt5==5.14.2
-PyQt5-sip==12.7.2
+PyQt5==5.15.2
+PyQt5-sip==12.8.1
 pytest==4.3.0
 pytest-cov==2.6.1
 pytest-print==0.1.2
