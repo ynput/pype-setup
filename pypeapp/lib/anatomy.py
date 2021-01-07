@@ -256,6 +256,53 @@ class Anatomy:
         # NOTE does not care if there are different keys than "root"
         return template_path.format(**{"root": self.roots})
 
+    def replace_root_with_env_key(self, filepath, template=None):
+        """Replace root of path with environment key.
+
+        # Example:
+        ## Project with roots:
+        ```
+        {
+            "nas": {
+                "windows": P:/projects",
+                ...
+            }
+            ...
+        }
+        ```
+
+        ## Entered filepath
+        "P:/projects/project/asset/task/animation_v001.ma"
+
+        ## Entered template
+        "<{}>"
+
+        ## Output
+        "<PYPE_PROJECT_ROOT_NAS>/project/asset/task/animation_v001.ma"
+
+        Args:
+            filepath (str): Full file path where root should be replaced.
+            template (str): Optional template for environment key. Must
+                have one index format key.
+                Default value if not entered: "${}"
+
+        Returns:
+            str: Path where root is replaced with environment root key.
+
+        Raise:
+            ValueError: When project's roots were not found in entered path.
+        """
+        success, rootless_path = self.find_root_template_from_path(filepath)
+        if not success:
+            raise ValueError(
+                "{}: Project's roots were not found in path: {}".format(
+                    self.project_name, filepath
+                )
+            )
+
+        data = self.root_environmets_fill_data(template)
+        return rootless_path.format(**data)
+
 
 class TemplateMissingKey(Exception):
     """Exception for cases when key does not exist in Anatomy."""
