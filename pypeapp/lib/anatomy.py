@@ -139,7 +139,7 @@ class Anatomy:
         return self._roots_obj
 
     def root_environments(self):
-        """Return PYPE_ROOT_* environments for current project in dict."""
+        """Return PYPE_PROJECT_ROOT_* environments for current project."""
         return self._roots_obj.root_environments()
 
     def find_root_template_from_path(self, *args, **kwargs):
@@ -155,7 +155,7 @@ class Anatomy:
         return self.roots_obj.all_root_paths()
 
     def set_root_environments(self):
-        """Set PYPE_ROOT_* environments for current project."""
+        """Set PYPE_PROJECT_ROOT_* environments for current project."""
         self._roots_obj.set_root_environments()
 
     def root_names(self):
@@ -1351,7 +1351,7 @@ class Roots:
             `keep_updated` are ignored and are used parent's values.
     """
 
-    env_prefix = "PYPE_ROOT"
+    env_prefix = "PYPE_PROJECT_ROOT"
     roots_filename = "roots.json"
 
     def __init__(
@@ -1468,7 +1468,7 @@ class Roots:
     def root_environments(self):
         """Use root keys to create unique keys for environment variables.
 
-        Concatenates prefix "PYPE_ROOT" with root keys to create unique keys.
+        Concatenates prefix "PYPE_PROJECT_ROOT" with root keys to create unique keys.
 
         Returns:
             dict: Result is `{(str): (str)}` dicitonary where key represents
@@ -1490,13 +1490,13 @@ class Roots:
 
             Result on windows platform::
                 {
-                    "PYPE_ROOT_WORK": "P:/projects/work",
-                    "PYPE_ROOT_PUBLISH": "P:/projects/publish"
+                    "PYPE_PROJECT_ROOT_WORK": "P:/projects/work",
+                    "PYPE_PROJECT_ROOT_PUBLISH": "P:/projects/publish"
                 }
 
             Short example when multiroot is not used::
                 {
-                    "PYPE_ROOT": "P:/projects"
+                    "PYPE_PROJECT_ROOT": "P:/projects"
                 }
         """
         return self._root_environments()
