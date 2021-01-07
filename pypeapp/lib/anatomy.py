@@ -142,6 +142,15 @@ class Anatomy:
         """Return PYPE_PROJECT_ROOT_* environments for current project."""
         return self._roots_obj.root_environments()
 
+    def root_environmets_fill_data(self, template=None):
+        """Environment variable values in dictionary for rootless path.
+
+        Args:
+            template (str): Template for environment variable key fill.
+                By default is set to `"${}"`.
+        """
+        return self.roots_obj.root_environmets_fill_data(template)
+
     def find_root_template_from_path(self, *args, **kwargs):
         """Wrapper for Roots `find_root_template_from_path`."""
         return self.roots_obj.find_root_template_from_path(*args, **kwargs)
@@ -1532,6 +1541,41 @@ class Roots:
             _keys = list(keys)
             _keys.append(_key)
             output.update(self._root_environments(_keys, _value))
+        return output
+
+    def root_environmets_fill_data(self, template=None):
+        """Environment variable values in dictionary for rootless path.
+
+        Args:
+            template (str): Template for environment variable key fill.
+                By default is set to `"${}"`.
+        """
+        if template is None:
+            template = "${}"
+        return self._root_environmets_fill_data(template)
+
+    def _root_environmets_fill_data(self, template, keys=None, roots=None):
+        if keys is None and roots is None:
+            return {
+                "root": self._root_environmets_fill_data(
+                    template, [], self.roots
+                )
+            }
+
+        if isinstance(roots, RootItem):
+            key_items = [Roots.env_prefix]
+            for _key in keys:
+                key_items.append(_key.upper())
+            key = "_".join(key_items)
+            return template.format(key)
+
+        output = {}
+        for key, value in roots.items():
+            _keys = list(keys)
+            _keys.append(key)
+            output[key] = self._root_environmets_fill_data(
+                template, _keys, value
+            )
         return output
 
     @property
