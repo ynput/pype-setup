@@ -256,7 +256,8 @@ class Anatomy:
         # NOTE does not care if there are different keys than "root"
         return template_path.format(**{"root": self.roots})
 
-    def fill_root_with_path(self, rootless_path, root_path):
+    @classmethod
+    def fill_root_with_path(cls, rootless_path, root_path):
         """Fill path without filled "root" key with passed path.
 
         This is helper to fill root with different directory path than anatomy
@@ -274,7 +275,7 @@ class Anatomy:
             str: Path with filled root.
         """
         output = str(rootless_path)
-        for group in re.findall(self.root_key_regex, rootless_path):
+        for group in re.findall(cls.root_key_regex, rootless_path):
             replacement = "{" + group + "}"
             output = output.replace(replacement, root_path)
 
