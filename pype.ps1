@@ -142,11 +142,11 @@ function Start-Progress {
   param(
     $code
   )
-  $script = [scriptblock]::Create($code)
+  $scriptBlock = [ScriptBlock]::Create($code)
   $scroll = "/-\|/-\|"
   $idx = 0
   $origpos = $host.UI.RawUI.CursorPosition
-  $newPowerShell = [PowerShell]::Create().AddScript($script)
+  $newPowerShell = [PowerShell]::Create().AddScript($scriptBlock)
   $handle = $newPowerShell.BeginInvoke()
   while ($handle.IsCompleted -eq $false) {
     $host.UI.RawUI.CursorPosition = $origpos
