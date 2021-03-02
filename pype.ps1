@@ -140,13 +140,13 @@ function ExitWithCode($exitcode) {
 
 function Start-Progress {
   param(
-    [ScriptBlock]
     $code
   )
+  $scriptBlock = [ScriptBlock]::Create($code)
   $scroll = "/-\|/-\|"
   $idx = 0
   $origpos = $host.UI.RawUI.CursorPosition
-  $newPowerShell = [PowerShell]::Create().AddScript($code)
+  $newPowerShell = [PowerShell]::Create().AddScript($scriptBlock)
   $handle = $newPowerShell.BeginInvoke()
   while ($handle.IsCompleted -eq $false) {
     $host.UI.RawUI.CursorPosition = $origpos
@@ -342,9 +342,7 @@ function Upgrade-pip {
   if ($script:offline -ne $true)
   {
     Log-Msg -Text ">>> ", "Updating pip ... " -Color Green, Gray -NoNewLine
-    Start-Progress {
-      & $python -m pip install --upgrade pip | out-null
-    }
+    Start-Progress "& $python -m pip install --upgrade pip | out-null"
     Write-Host ""
   }
   <#
@@ -541,9 +539,6 @@ function Download {
   Log-Msg -Text ">>> ", "Downloading packages for offline installation ... " -Color Green, Gray
   Log-Msg -Text "  - ", "For platform [ ", "win_amd64", " ]... " -Color Cyan, Gray, White, Gray
   & pip download -r "$($env:PYPE_SETUP_PATH)\pypeapp\requirements.txt" -d "$($env:PYPE_SETUP_PATH)\vendor\packages"
-  Log-Msg -Text "<-- ", "Deactivating environment ..." -Color Cyan, Gray
-  Deactivate-Venv
-  Log-Msg -Text "+++ ", "Terminating ..." -Color Magenta, Gray
   <#
   .SYNOPSIS
   Download required packages
@@ -590,7 +585,7 @@ Log-Msg -Text "*** ", "Welcome to ", "Pype", " !" -Color Green, Gray, White, Gra
 # Clean pyc
 if ($clean -eq $true) {
   Pyc-Cleaner
-  Log-Msg -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
+  Log-Msg -Text "<<< ", "Terminating ", "pype", " ..." -Color Cyan, Gray, White
   ExitWithCode 0
 }
 
@@ -675,6 +670,7 @@ if ($update -eq $true) {
 # This will download pip packages to vendor/packages for later offline installation and exit
 if ($download -eq $true) {
   Download
+  Log-Msg -Text "+++ ", "Terminating ..." -Color Magenta, Gray
   Deactivate-Venv
   ExitWithCode 0
 }
@@ -755,6 +751,6 @@ $return_code = 0
 if ($LASTEXITCODE -ne 0) {
   $return_code = $LASTEXITCODE
 }
-Log-Msg -Text "<<< ", "Terminanting ", "pype", " ..." -Color Cyan, Gray, White
+Log-Msg -Text "<<< ", "Terminating ", "pype", " ..." -Color Cyan, Gray, White
 Deactivate-Venv
 ExitWithCode $return_code
