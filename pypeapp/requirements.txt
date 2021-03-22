@@ -72,5 +72,5 @@ dnspython==1.16.0
 psd-tools==1.9.15
 wsrpc-aiohttp==3.0.1
 google-api-python-client==1.12.1
-aiohttp==3.7.2
+aiohttp==3.7.4
 aiohttp-json-rpc==0.13.2
