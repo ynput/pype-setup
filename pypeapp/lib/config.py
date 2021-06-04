@@ -14,6 +14,10 @@ else:
     JsonError = ValueError
 
 
+# Keep track of project from 'get_presets' last call
+global_last_project = None
+
+
 def get_datetime_data(datetime_obj=None):
     """Returns current datetime data as dictionary.
 
@@ -214,6 +218,9 @@ def get_presets(project=None, first_run=False):
     if not project:
         project = os.environ.get('AVALON_PROJECT', None)
 
+    global global_last_project
+    if first_run:
+        global_last_project = None
     if not project:
         return default_data
 
@@ -230,6 +237,9 @@ def get_presets(project=None, first_run=False):
             project, project_config_path
         ))
         return default_data
+    if project != global_last_project:
+        first_run = True
+        global_last_project = project
     project_data = collect_json_from_path(project_config_path, first_run)
 
     return update_dict(default_data, project_data)
