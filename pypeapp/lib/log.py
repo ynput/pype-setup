@@ -21,6 +21,10 @@ import platform
 import getpass
 import socket
 import traceback
+# this is added because of MongoClient check for port. It is using
+# isinstance(port, int) and that will fail when `futures` module is used
+# for example in Houdini
+from builtins import int, str
 
 from logging.handlers import TimedRotatingFileHandler
 
