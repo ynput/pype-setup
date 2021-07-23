@@ -461,38 +461,48 @@ function Detect-Mongo {
   #>
 }
 
-
-function Detect-Python {
+function Detect-Python() {
   if (Test-Path "env:PYPE_PYTHON_EXE") {
     Log-Msg -Text ">>> ", "Forced using python at [ ", "$($env:PYPE_PYTHON_EXE)" ," ] ... " -Color Yellow, Gray, White, Gray -NoNewLine
     $script:python = $env:PYPE_PYTHON_EXE
   } else {
-    Log-Msg -Text ">>> ", "Detecting python ... " -Color Green, Gray -NoNewLine
-    if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-      Log-Msg -Text "FAILED", " Python not detected" -Color Red, Yellow
-      ExitWithCode 1
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Detecting host Python ... " -NoNewline
+    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+         $script:python = & pyenv which python
+    }
+    if (-not (Get-Command "python3" -ErrorAction SilentlyContinue)) {
+        Write-Host "!!! Python not detected" -ForegroundColor red
+        Set-Location -Path $current_dir
+        Exit-WithCode 1
     }
   }
-  $version_command = @'
+    
+    $version_command = @'
 import sys
 print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
-  $p = & $python -c $version_command
+  $p = & $script:python -c $version_command
   $env:PYTHON_VERSION = $p
   $m = $p -match '(\d+)\.(\d+)'
   if(-not $m) {
-    Log-Msg -Text "FAILED", " Cannot determine version" -Color Red, Yellow
-    ExitWithCode 1
+    Write-Host "!!! Cannot determine version" -ForegroundColor red
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
   }
-  # We are supporting python 3.6 and up
-  if(($matches[1] -lt 3) -or ($matches[2] -lt 6)) {
-    Log-Msg -Text "FAILED", " Version [ ", $p, " ] is old and unsupported" -Color Red, Yellow, Cyan, Yellow
-    ExitWithCode 1
+  # We are supporting python 3.7 only
+  if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
+    Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
+  } elseif (($matches[1] -eq 3) -and ($matches[2] -gt 7)) {
+    Write-Host "WARNING Version [ $p ] is unsupported, use at your own risk." -ForegroundColor yellow
+    Write-Host "*** " -NoNewline -ForegroundColor yellow
+    Write-Host "OpenPype supports only Python 3.7" -ForegroundColor white
+  } else {
+    Write-Host "OK [ $p ]" -ForegroundColor green
   }
-
-  Log-Msg -Text "OK" -Color Green -NoNewLine
-  Log-Msg -Text " - version [ ", $p ," ]" -Color Gray, Cyan, Gray
   <#
   .SYNOPSIS
   Function detecting supported python
