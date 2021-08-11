@@ -719,6 +719,7 @@ class PypeLauncher(object):
 
         tools_attr = [os.environ["AVALON_APP"], os.environ["AVALON_APP_NAME"]]
         tools_attr += avalon_tools
+        tools_attr = [t.replace("/", "_") for t in tools_attr]
 
         print("TOOLS: {}".format(tools_attr))
 
