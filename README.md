@@ -1,7 +1,10 @@
 # Readme
 
+This is 2.0 incarnation of setup wrapper around [PYPE](https://github.com/pypeclub/pype).
 
-### This is 2.0 incarnation of setup wrapper around [PYPE](https://github.com/pypeclub/pype).
+**OpenPype 3** no longer uses this repository and it is kept only for reference for users of pype 2
+
+### Please use [OpenPype](https://github.com/pypeclub/openpype) repository instead .
 
 
 ## Documentation
