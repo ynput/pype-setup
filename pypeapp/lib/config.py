@@ -14,6 +14,10 @@ else:
     JsonError = ValueError
 
 
+# Keep track of project from 'get_presets' last call
+global_last_project = None
+
+
 def get_datetime_data(datetime_obj=None):
     """Returns current datetime data as dictionary.
 
@@ -86,7 +90,7 @@ def get_datetime_data(datetime_obj=None):
     }
 
 
-def load_json(fpath, first_run=False):
+def load_json(fpath, report_errors=True):
     # Load json data
     with open(fpath, "r") as opened_file:
         lines = opened_file.read().splitlines()
@@ -110,12 +114,12 @@ def load_json(fpath, first_run=False):
     standard_json = standard_json.replace(",]", "]")
     standard_json = standard_json.replace(",}", "}")
 
-    if extra_comma and first_run:
+    if extra_comma and report_errors:
         log.error("Extra comma in json file: \"{}\"".format(fpath))
 
     # return empty dict if file is empty
     if standard_json == "":
-        if first_run:
+        if report_errors:
             log.error("Empty json file: \"{}\"".format(fpath))
         return {}
 
@@ -125,7 +129,7 @@ def load_json(fpath, first_run=False):
 
     except JsonError:
         # Return empty dict if it is first time that decode error happened
-        if not first_run:
+        if not report_errors:
             return {}
 
     # Repreduce the exact same exception but traceback contains better
@@ -143,7 +147,7 @@ def load_json(fpath, first_run=False):
     return {}
 
 
-def collect_json_from_path(input_path, first_run=False):
+def collect_json_from_path(input_path, report_errors=True):
     r""" Json collector
     iterate through all subfolders and json files in *input_path*
 
@@ -165,17 +169,17 @@ def collect_json_from_path(input_path, first_run=False):
         for file in os.listdir(input_path):
             full_path = os.path.sep.join([input_path, file])
             if os.path.isdir(full_path):
-                loaded = collect_json_from_path(full_path, first_run)
+                loaded = collect_json_from_path(full_path, report_errors)
                 if loaded:
                     output[file] = loaded
             else:
                 basename, ext = os.path.splitext(os.path.basename(file))
                 if ext == '.json':
-                    output[basename] = load_json(full_path, first_run)
+                    output[basename] = load_json(full_path, report_errors)
     else:
         basename, ext = os.path.splitext(os.path.basename(input_path))
         if ext == '.json':
-            output = load_json(input_path, first_run)
+            output = load_json(input_path, report_errors)
 
     return output
 
@@ -214,6 +218,9 @@ def get_presets(project=None, first_run=False):
     if not project:
         project = os.environ.get('AVALON_PROJECT', None)
 
+    global global_last_project
+    if first_run:
+        global_last_project = None
     if not project:
         return default_data
 
@@ -230,6 +237,9 @@ def get_presets(project=None, first_run=False):
             project, project_config_path
         ))
         return default_data
+    if project != global_last_project:
+        first_run = True
+        global_last_project = project
     project_data = collect_json_from_path(project_config_path, first_run)
 
     return update_dict(default_data, project_data)
