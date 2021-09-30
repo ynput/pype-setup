@@ -626,7 +626,7 @@ class PypeLauncher(object):
         :type tools: Str
         :param arguments: List of other arguments passed to app
         :type: List
-        :rtype: None
+        :rtype: Exit code
         """
         import toml
         import subprocess
@@ -647,7 +647,7 @@ class PypeLauncher(object):
         if abspath is None:
             t.echo("!!! Application [ {} ] is not registered.".format(app))
             t.echo("*** Please define its toml file.")
-            return
+            return 1
 
         app_toml = toml.load(abspath)
 
@@ -752,16 +752,16 @@ class PypeLauncher(object):
                                                           " ".join(arguments)))
                     args = [execfile]
                     args.extend(arguments)
-                    subprocess.run(args, env=env)
+                    return subprocess.run(args, env=env).returncode
 
                 except ValueError as e:
                     t.echo("!!! Error while launching application:")
                     t.echo(e)
-                    return
+                    return 1
             else:
                 t.echo(
                     "!!! cannot find application launcher [ {} ]".format(app))
-                return
+                return 1
 
         if sys.platform.startswith('linux'):
             execfile = os.path.join(launchers_path.strip('"'), executable)
