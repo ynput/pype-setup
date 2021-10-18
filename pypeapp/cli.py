@@ -360,7 +360,10 @@ def launch(app, project, asset, task,
         print("!!! Missing required arguments")
         return
 
-    PypeLauncher().run_application(app, project, asset, task, tools, arguments)
+    exit_code = PypeLauncher().run_application(
+        app, project, asset, task, tools, arguments
+    )
+    sys.exit(exit_code)
 
 
 @main.command()
